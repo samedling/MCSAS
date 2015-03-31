@@ -32,14 +32,20 @@ dictionary = {'advanced':0, 'altitude':45, 'analytic': 2, 'ave_dist': 0.6, 'azim
 length_dictionary = len(dictionary)
 
 #####            Importing data or using defaults              #############
+
+#root_folder = os.path.dirname(sys.argv[0]) #Doesn't work when called from ipython.
+root_folder = os.getcwd()
+#print root_folder
+#Check for write access?
+
 try:
-    d = pickle.load(open(os.path.dirname(sys.argv[0])+"/default.txt", 'rb'))
+    d = pickle.load(open(root_folder+"/default.txt", 'rb'))
     if length_dictionary != len(d): #I check that it is the same length - This is needed if any new variables are added to dictionary
         a= 1/0
     dictionary = d
 except:
     print "Previously used variables could not be loaded. \nUsing default settings instead."
-    with open(os.path.dirname(sys.argv[0])+"/default.txt", 'wb') as f:
+    with open(root_folder+"/default.txt", 'wb') as f:
        pickle.dump(dictionary, f)
 
 dictionary = {x:dictionary[x] for x in dictionary} #This contains the unaltered parameters
@@ -104,12 +110,12 @@ def get_numbers_from_gui():
                dictionary[x] = int(dictionary[x])
         except:
             None
-    if not os.path.exists(os.path.dirname(sys.argv[0])+'/'+dictionary_SI['subfolder']):#making the subfolder, if it doesn't exist
-       os.makedirs(os.path.dirname(sys.argv[0])+'/'+dictionary_SI['subfolder'])
+    if not os.path.exists(root_folder+'/'+dictionary_SI['subfolder']):#making the subfolder, if it doesn't exist
+       os.makedirs(root_folder+'/'+dictionary_SI['subfolder'])
        time.sleep(2) #Making the subfolder takes a few seconds, so we need to delay the program, otherwise it will try save things into the folder before it is made.
 
     dictionary_SI = {x: dictionary[x] for x in dictionary}
-    dictionary_SI['path_to_subfolder'] = os.path.join(os.path.dirname(sys.argv[0]),dictionary['subfolder'],dictionary['save_name']) #This is for convienience
+    dictionary_SI['path_to_subfolder'] = os.path.join(root_folder,dictionary['subfolder'],dictionary['save_name']) #This is for convienience
 
     #Converting to SI units.
     dictionary_SI["z_dim"] = dictionary["z_dim"]*10**-9
@@ -139,7 +145,7 @@ def get_numbers_from_gui():
        dictionary_SI["y_theta"] = dictionary["y_theta"]*3.1416/180
        dictionary_SI["z_theta"] = dictionary["z_theta"]*3.1416/180
 
-    with open(os.path.dirname(sys.argv[0])+"/default.txt", 'wb') as f:
+    with open(root_folder+"/default.txt", 'wb') as f:
         pickle.dump(dictionary, f)#Saving the infomation from dictionary so it can be loaded later
 
     with open(dictionary_SI['path_to_subfolder']+"default.txt", 'wb') as f:
@@ -148,10 +154,10 @@ def get_numbers_from_gui():
 
 def load_functions(): #This loads the functions from the other files. It needs to be dynamic, hence I cannot use import.
    global dictionary, dictionary_SI
-   execfile(os.path.dirname(sys.argv[0])+"/Monte_Carlo_Functions.py",globals())
-   execfile(os.path.dirname(sys.argv[0])+"/Plotting_Functions.py", globals())
-   execfile(os.path.dirname(sys.argv[0])+"/density_formula.py", globals())
-   execfile(os.path.dirname(sys.argv[0])+"/analytic_formula.py", globals())
+   execfile(root_folder+"/Monte_Carlo_Functions.py",globals())
+   execfile(root_folder+"/Plotting_Functions.py", globals())
+   execfile(root_folder+"/density_formula.py", globals())
+   execfile(root_folder+"/analytic_formula.py", globals())
 
 def change_units(number): #Used for sequences. A value is converted to SI units.
         global dictionary_SI
@@ -520,217 +526,184 @@ def radio(variable_name, MODES, ROW, COL): #Radiobutton
 
 ###########THE GUI STARTS HERE#####################
 
-master = Tk()
-master.title("Monte Carlo Small Angle Scattering, By Max Proft")
-ROW = 0
-COL = 0
-Label(master, text = "Model Type", font = "Times 16 bold").grid(row = ROW, column = COL, sticky = W)
-ROW+=1
-
-Label(master, text = "Choose a Monte Carlo Model").grid(row = ROW, column = COL, sticky = W)
-dictionary_in['shape'] = StringVar(master)
-dictionary_in['shape'].set(MC_num_and_name[dictionary['shape']][0])
-OptionMenu(master, dictionary_in['shape'], *MC_num_and_name[:,0]).grid(row = ROW, column = COL+1)
-
-ROW+=1
-tick("symmetric", "Radial Symmetry", ROW,COL)
-ROW+=1
-tick('Qz',"Small Angle Approximation (Qz=0)", ROW, COL)
-
-ROW+=1
-Label(master, text = "Choose an Analytic Model").grid(row = ROW, column = COL, sticky = W)
-dictionary_in['analytic'] = StringVar(master)
-dictionary_in['analytic'].set(Analytic_options[dictionary['analytic']][0])
-OptionMenu(master, dictionary_in['analytic'], *Analytic_options[:,0]).grid(row = ROW, column = COL+1)
-
-
-
-
-
-ROW+=1
-Label(master, text = "Parameters", font = "Times 16 bold").grid(row = ROW, column = COL, sticky = W)
-ROW+=1
-enter_num('num_plots', "Number of Plots to Average", ROW, COL)
-ROW+=1
-enter_num('radius_1', "Radius 1 (nm)", ROW, COL)
-ROW+=1
-enter_num('radius_2', "Radius 2 (nm)", ROW, COL)
-ROW+=1
-enter_num('z_dim', "Length (nm)", ROW, COL)
-ROW+=1
-enter_num('rho_1', 'Rho 1', ROW, COL)
-ROW+=1
-enter_num('rho_2', 'Rho 2', ROW, COL)
-ROW+=1
-MODES_energy_wave = [('Energy (keV)', '0'),('Wavelength (nm)','1'),]
-radio('energy_wavelength_box', MODES_energy_wave, ROW, COL)
-ROW+=1
-enter_num('energy_wavelength', "Energy/Wavelength", ROW, COL)
-ROW+=1
-enter_num('QSize', "Q Range (nm^-1)\nof ENTIRE Detector", ROW, COL)
-ROW+=1
-
-Label(master, text = "Angle of rotation", font = "Times 11 underline").grid(row = ROW, column = COL, sticky = W)
-ROW+=1
-MODES_angle = [('Degrees', '1'),('Radians','0'),]
-radio('degrees', MODES_angle, ROW, COL)
-ROW+=1
-enter_num('x_theta', 'x rotation', ROW, COL)
-ROW+=1
-enter_num('y_theta', 'y rotation', ROW, COL)
-ROW+=1
-enter_num('z_theta', 'z rotation', ROW, COL)
-ROW+=1
-
-
-
-
-
-
-
-
-Label(master, text="Sequence Options", font = "Times 16 bold").grid(row= ROW, column=COL, sticky = W)
-COL+=1
-if dictionary['seq_hide'] == 0:
-   seq_button = Button(master, text="Edit Sequence", font = "Times 12 bold")
-else:
-   seq_button = Button(master, text="No Sequence", font = "Times 12 bold")
-seq_button.bind("<Button-1>", hide_sequence)
-seq_button.grid(row=ROW, column = COL, pady=4)
-COL-=1
-ROW+=1
-enter_num('s_step', 'Number of Frames', ROW, COL)
-ROW+=1
-enter_str('s_var', "Which Variable?", ROW, COL)
-ROW+=1
-Button(master, text='Common Variables', command=show_sequence_variables).grid(row=ROW, column = COL, sticky=W, pady=4)
-
-ROW+=1
-MODES_gauss = [('Linear Sequesnce', '0'),('Gaussian', '1'),]
-radio('gauss',MODES_gauss, ROW, COL)
-ROW+=1
-temp_row = ROW
-enter_vert_num('s_start', "Sequence Start", ROW, COL)
-ROW+=2
-enter_vert_num('s_stop', "Sequence Stop", ROW, COL)
-ROW+=1
-COL+=1
-ROW = temp_row
-enter_vert_num('SD', 'Standard Deviation', ROW, COL)
-ROW+=1
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-COL+=2
-ROW=0
-Label(master, text="Output Options", font = "Times 16 bold").grid(row= ROW, column=COL, sticky = W)
-COL+=1
-if dictionary['advanced'] == 0:
-   advbutton = Button(master, text="Advanced Options", font = "Times 12 bold")
-else:
-   advbutton = Button(master, text="Simple Options", font = "Times 12 bold")
-advbutton.bind("<Button-1>", hide)
-advbutton.grid(row=ROW, column = COL, pady=4)
-COL-=1
-
-ROW+=1
-tick('save_img', 'Save Images?', ROW, COL)
-COL+=1
-tick('scale', "Make Axes to Scale when\nPlotting Real Space", ROW, COL)
-COL-=1
-ROW+=1
-tick('log_scale', "Plot on a Log Scale?", ROW, COL)
-COL+=1
-tick('ThreeD', "Plot the Intensity in 3D", ROW, COL)
-COL-=1
-ROW+=1
-Label(master, text="Choose Alt/Az for 3D plots (degrees)").grid(row= ROW, column=COL, sticky = W)
-ROW+=1
-enter_num('altitude', "Altitude", ROW, COL)
-ROW+=1
-enter_num('azimuth', "Azimuth", ROW, COL)
-ROW+=1
-enter_num('pixels', "Number of Pixels", ROW, COL)
-ROW+=1
-enter_num('ave_dist', "Neighbouring Point Distance (nm)", ROW, COL)
-ROW+=1
-enter_num('z_scale','z-direction scaling of\nneighbouring point distance', ROW, COL)
-ROW+=1
-tick('bound', "Upper and Lower Bounds?", ROW, COL)
-dictionary_in['bound2']['font'] = "Times 11 underline"
-ROW+=1
-enter_num('minimum', "Minimum (enter it in the form: 3e-7)", ROW, COL)
-ROW+=1
-enter_num('maximum', "Maximum", ROW, COL)
-ROW+=1
-
-
-
-
-
-Label(master, text="File Infomation", font = "Times 16 bold").grid(row= ROW, column=COL, sticky = W)
-ROW+=1
-enter_str('title', 'Plot Title', ROW, COL)
-ROW+=1
-enter_str('save_name', 'File Name', ROW, COL)
-ROW+=1
-enter_str('subfolder', 'Subfolder', ROW, COL)
-ROW+=1
-Label(master, text="(No spaces at the start or end of File Name or Subfolder!)").grid(row= ROW, column=COL, columnspan = 2, sticky = W)
-ROW+=1
-ROW+=1
-HEIGHT = 3
-WIDTH = 25
-enter_text("comments", "Description (optional):", WIDTH, HEIGHT, ROW, COL)
-ROW+=3
-
-
-
-
-ROW+=1
-
-
-button_row = ROW
-if dictionary['seq_hide'] == 0:
-   int_button = Button(master, text="Calculate Intensity", command = int_seq, font = "Times 16 bold")
-else:
-   int_button = Button(master, text="Calculate Sequence", command = int_seq, font = "Times 16 bold")
-int_button.grid(row=ROW, column = COL,rowspan = 2, pady=4)
-
-COL+=1
-Button(master, text='Real Space', command=plot_points, font = "Times 16 bold").grid(row=ROW, column = COL,rowspan = 2, pady=4)
-COL-=1
-ROW+=2
-Button(master, text='Replot Intensity', command=view_intensity, font = "Times 16 bold").grid(row=ROW, column = COL,rowspan = 2, pady=4)
-COL+=1
-Button(master, text='Plot a Ring', command=circ, font = "Times 16 bold").grid(row=ROW, column = COL, rowspan = 2, pady=4)
-COL-=1
-ROW+=2
-enter_num('circ_delta', 'Ring Thickness (pixels)', ROW, COL)
-ROW+=1
-enter_num('theta_delta','Number of Points',ROW, COL)
-ROW+=1
-enter_num('proportional_radius', 'Proportional Radius', ROW, COL)
-ROW+=1
-
-mainloop()
-
+if __name__ == "__main__":
+   master = Tk()
+   master.title("Monte Carlo Small Angle Scattering, By Max Proft")
+   ROW = 0
+   COL = 0
+   Label(master, text = "Model Type", font = "Times 16 bold").grid(row = ROW, column = COL, sticky = W)
+   ROW+=1
+   
+   Label(master, text = "Choose a Monte Carlo Model").grid(row = ROW, column = COL, sticky = W)
+   dictionary_in['shape'] = StringVar(master)
+   dictionary_in['shape'].set(MC_num_and_name[dictionary['shape']][0])
+   OptionMenu(master, dictionary_in['shape'], *MC_num_and_name[:,0]).grid(row = ROW, column = COL+1)
+   
+   ROW+=1
+   tick("symmetric", "Radial Symmetry", ROW,COL)
+   ROW+=1
+   tick('Qz',"Small Angle Approximation (Qz=0)", ROW, COL)
+   
+   ROW+=1
+   Label(master, text = "Choose an Analytic Model").grid(row = ROW, column = COL, sticky = W)
+   dictionary_in['analytic'] = StringVar(master)
+   dictionary_in['analytic'].set(Analytic_options[dictionary['analytic']][0])
+   OptionMenu(master, dictionary_in['analytic'], *Analytic_options[:,0]).grid(row = ROW, column = COL+1)
+   
+   
+   ROW+=1
+   Label(master, text = "Parameters", font = "Times 16 bold").grid(row = ROW, column = COL, sticky = W)
+   ROW+=1
+   enter_num('num_plots', "Number of Plots to Average", ROW, COL)
+   ROW+=1
+   enter_num('radius_1', "Radius 1 (nm)", ROW, COL)
+   ROW+=1
+   enter_num('radius_2', "Radius 2 (nm)", ROW, COL)
+   ROW+=1
+   enter_num('z_dim', "Length (nm)", ROW, COL)
+   ROW+=1
+   enter_num('rho_1', 'Rho 1', ROW, COL)
+   ROW+=1
+   enter_num('rho_2', 'Rho 2', ROW, COL)
+   ROW+=1
+   MODES_energy_wave = [('Energy (keV)', '0'),('Wavelength (nm)','1'),]
+   radio('energy_wavelength_box', MODES_energy_wave, ROW, COL)
+   ROW+=1
+   enter_num('energy_wavelength', "Energy/Wavelength", ROW, COL)
+   ROW+=1
+   enter_num('QSize', "Q Range (nm^-1)\nof ENTIRE Detector", ROW, COL)
+   ROW+=1
+   
+   Label(master, text = "Angle of rotation", font = "Times 11 underline").grid(row = ROW, column = COL, sticky = W)
+   ROW+=1
+   MODES_angle = [('Degrees', '1'),('Radians','0'),]
+   radio('degrees', MODES_angle, ROW, COL)
+   ROW+=1
+   enter_num('x_theta', 'x rotation', ROW, COL)
+   ROW+=1
+   enter_num('y_theta', 'y rotation', ROW, COL)
+   ROW+=1
+   enter_num('z_theta', 'z rotation', ROW, COL)
+   ROW+=1
+   
+   
+   Label(master, text="Sequence Options", font = "Times 16 bold").grid(row= ROW, column=COL, sticky = W)
+   COL+=1
+   if dictionary['seq_hide'] == 0:
+      seq_button = Button(master, text="Edit Sequence", font = "Times 12 bold")
+   else:
+      seq_button = Button(master, text="No Sequence", font = "Times 12 bold")
+   seq_button.bind("<Button-1>", hide_sequence)
+   seq_button.grid(row=ROW, column = COL, pady=4)
+   COL-=1
+   ROW+=1
+   enter_num('s_step', 'Number of Frames', ROW, COL)
+   ROW+=1
+   enter_str('s_var', "Which Variable?", ROW, COL)
+   ROW+=1
+   Button(master, text='Common Variables', command=show_sequence_variables).grid(row=ROW, column = COL, sticky=W, pady=4)
+   
+   ROW+=1
+   MODES_gauss = [('Linear Sequesnce', '0'),('Gaussian', '1'),]
+   radio('gauss',MODES_gauss, ROW, COL)
+   ROW+=1
+   temp_row = ROW
+   enter_vert_num('s_start', "Sequence Start", ROW, COL)
+   ROW+=2
+   enter_vert_num('s_stop', "Sequence Stop", ROW, COL)
+   ROW+=1
+   COL+=1
+   ROW = temp_row
+   enter_vert_num('SD', 'Standard Deviation', ROW, COL)
+   ROW+=1
+   
+   
+   COL+=2
+   ROW=0
+   Label(master, text="Output Options", font = "Times 16 bold").grid(row= ROW, column=COL, sticky = W)
+   COL+=1
+   if dictionary['advanced'] == 0:
+      advbutton = Button(master, text="Advanced Options", font = "Times 12 bold")
+   else:
+      advbutton = Button(master, text="Simple Options", font = "Times 12 bold")
+   advbutton.bind("<Button-1>", hide)
+   advbutton.grid(row=ROW, column = COL, pady=4)
+   COL-=1
+   
+   ROW+=1
+   tick('save_img', 'Save Images?', ROW, COL)
+   COL+=1
+   tick('scale', "Make Axes to Scale when\nPlotting Real Space", ROW, COL)
+   COL-=1
+   ROW+=1
+   tick('log_scale', "Plot on a Log Scale?", ROW, COL)
+   COL+=1
+   tick('ThreeD', "Plot the Intensity in 3D", ROW, COL)
+   COL-=1
+   ROW+=1
+   Label(master, text="Choose Alt/Az for 3D plots (degrees)").grid(row= ROW, column=COL, sticky = W)
+   ROW+=1
+   enter_num('altitude', "Altitude", ROW, COL)
+   ROW+=1
+   enter_num('azimuth', "Azimuth", ROW, COL)
+   ROW+=1
+   enter_num('pixels', "Number of Pixels", ROW, COL)
+   ROW+=1
+   enter_num('ave_dist', "Neighbouring Point Distance (nm)", ROW, COL)
+   ROW+=1
+   enter_num('z_scale','z-direction scaling of\nneighbouring point distance', ROW, COL)
+   ROW+=1
+   tick('bound', "Upper and Lower Bounds?", ROW, COL)
+   dictionary_in['bound2']['font'] = "Times 11 underline"
+   ROW+=1
+   enter_num('minimum', "Minimum (enter it in the form: 3e-7)", ROW, COL)
+   ROW+=1
+   enter_num('maximum', "Maximum", ROW, COL)
+   ROW+=1
+   
+   
+   Label(master, text="File Infomation", font = "Times 16 bold").grid(row= ROW, column=COL, sticky = W)
+   ROW+=1
+   enter_str('title', 'Plot Title', ROW, COL)
+   ROW+=1
+   enter_str('save_name', 'File Name', ROW, COL)
+   ROW+=1
+   enter_str('subfolder', 'Subfolder', ROW, COL)
+   ROW+=1
+   Label(master, text="(No spaces at the start or end of File Name or Subfolder!)").grid(row= ROW, column=COL, columnspan = 2, sticky = W)
+   ROW+=1
+   ROW+=1
+   HEIGHT = 3
+   WIDTH = 25
+   enter_text("comments", "Description (optional):", WIDTH, HEIGHT, ROW, COL)
+   ROW+=3
+   
+   
+   ROW+=1
+   
+   
+   button_row = ROW
+   if dictionary['seq_hide'] == 0:
+      int_button = Button(master, text="Calculate Intensity", command = int_seq, font = "Times 16 bold")
+   else:
+      int_button = Button(master, text="Calculate Sequence", command = int_seq, font = "Times 16 bold")
+   int_button.grid(row=ROW, column = COL,rowspan = 2, pady=4)
+   
+   COL+=1
+   Button(master, text='Real Space', command=plot_points, font = "Times 16 bold").grid(row=ROW, column = COL,rowspan = 2, pady=4)
+   COL-=1
+   ROW+=2
+   Button(master, text='Replot Intensity', command=view_intensity, font = "Times 16 bold").grid(row=ROW, column = COL,rowspan = 2, pady=4)
+   COL+=1
+   Button(master, text='Plot a Ring', command=circ, font = "Times 16 bold").grid(row=ROW, column = COL, rowspan = 2, pady=4)
+   COL-=1
+   ROW+=2
+   enter_num('circ_delta', 'Ring Thickness (pixels)', ROW, COL)
+   ROW+=1
+   enter_num('theta_delta','Number of Points',ROW, COL)
+   ROW+=1
+   enter_num('proportional_radius', 'Proportional Radius', ROW, COL)
+   ROW+=1
+   
+   mainloop()
+   
