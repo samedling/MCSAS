@@ -12,6 +12,14 @@ from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 from matplotlib import cm
 
+#Looks for fastmath.so to speed up intensity calculation.
+try:
+   import fastmath
+   accelerated = True
+   print "Accelerating using f2py."
+except ImportError:
+   accelerated = False
+   print "Could not accelerate using f2py; if speedup is desired, run `make`."
 
 
 #These are the default settings

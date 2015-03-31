@@ -1,6 +1,7 @@
 import random, os, sys, pylab, time
 import numpy as np
 
+global accelerated
 
 
 ######################          Finding the Point used in the Calculation         ##################
@@ -60,11 +61,10 @@ if symmetric == 0 and Qz == 0:
         QSize = dictionary_SI['QSize']
         pixels = dictionary_SI['pixels']
         EHC = dictionary_SI['EHC']
-        try:
-            import fastmath
+        if accelerated:
             return fastmath.fastmath.sumintensity00(QSize,pixels,EHC,Points)
-        except ImportError:
-            print "FYI: Could not accelerate using f2py."
+        else:
+            #print "FYI: Could not accelerate using f2py."
             Intensity = np.array([[np.sum(np.cos(np.sum(
                 [row*QSize/pixels-0.5*QSize, col*QSize/pixels-0.5*QSize, 2*EHC*np.sin((((row-0.5*pixels)**2 + (col-0.5*pixels)**2)**0.5)*QSize/pixels/2/EHC)**2]
                 *Points[:,0:3], axis = 1))*np.transpose(Points[:,3:4]))**2
@@ -82,11 +82,10 @@ if symmetric == 0 and Qz == 1:
         QSize = dictionary_SI['QSize']
         pixels = dictionary_SI['pixels']
         EHC = dictionary_SI['EHC']
-        try:
-            import fastmath
+        if accelerated:
             return fastmath.fastmath.sumintensity01(QSize,pixels,EHC,Points)
-        except ImportError:
-            print "FYI: Could not accelerate using f2py."
+        else:
+            #print "FYI: Could not accelerate using f2py."
             Intensity = np.array([[np.sum(np.cos(np.sum(
                 [row*QSize/pixels-0.5*QSize, col*QSize/pixels-0.5*QSize, 0]
                 *Points[:,0:3], axis = 1))*np.transpose(Points[:,3:4]))**2
@@ -104,11 +103,10 @@ if symmetric == 1 and Qz == 0:
         QSize = dictionary_SI['QSize']
         pixels = dictionary_SI['pixels']
         EHC = dictionary_SI['EHC']
-        try:
-            import fastmath
+        if accelerated:
             return fastmath.fastmath.sumintensity10(QSize,pixels,EHC,Points)
-        except ImportError:
-            print "FYI: Could not accelerate using f2py."
+        else:
+            #print "FYI: Could not accelerate using f2py."
             Intensity = np.array([[np.sum(np.cos(np.sum(
                 [row*QSize/pixels-0.5*QSize, col*QSize/pixels-0.5*QSize, 2*EHC*np.sin((((row-0.5*pixels)**2 + (col-0.5*pixels)**2)**0.5)*QSize/pixels/2/EHC)**2]
                 *Points[:,0:3],axis =1))*np.transpose(Points[:,3:4]))**2
@@ -123,11 +121,10 @@ if symmetric == 1 and Qz == 1:
         QSize = dictionary_SI['QSize']
         pixels = dictionary_SI['pixels']
         EHC = dictionary_SI['EHC']
-        try:
-            import fastmath
+        if accelerated:
             return fastmath.fastmath.sumintensity11(QSize,pixels,Points)
-        except ImportError:
-            print "FYI: Could not accelerate using f2py."
+        else:
+            #print "FYI: Could not accelerate using f2py."
             Intensity = np.array([[np.sum(np.cos(np.sum(
                 [row*QSize/pixels-0.5*QSize, col*QSize/pixels-0.5*QSize, 0.]
                 *Points[:,0:3],axis =1))*np.transpose(Points[:,3:4]))**2
