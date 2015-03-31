@@ -6,9 +6,7 @@ global accelerated
 
 ######################          Finding the Point used in the Calculation         ##################
 
-def Points_For_Calculation():
-    global dictionary_SI
-    
+def Points_For_Calculation(dictionary_SI):
     x_dim = dictionary_SI['x_dim']
     y_dim = dictionary_SI['y_dim']
     z_dim = dictionary_SI['z_dim']
@@ -56,8 +54,7 @@ Qz = dictionary_SI['Qz']
 #for asymmetric objects, no small angle approximation
 if symmetric == 0 and Qz == 0:
     #print "No symmetry; no small angle approximation."
-    def Detector_Intensity(Points):
-        global dictionary_SI
+    def Detector_Intensity(Points,dictionary_SI):
         QSize = dictionary_SI['QSize']
         pixels = dictionary_SI['pixels']
         EHC = dictionary_SI['EHC']
@@ -77,8 +74,7 @@ if symmetric == 0 and Qz == 0:
 #for asymmetric objects, small angle approximation
 if symmetric == 0 and Qz == 1:
     #print "No symmetry; small angle approximation."
-    def Detector_Intensity(Points):
-        global dictionary_SI
+    def Detector_Intensity(Points,dictionary_SI):
         QSize = dictionary_SI['QSize']
         pixels = dictionary_SI['pixels']
         EHC = dictionary_SI['EHC']
@@ -98,8 +94,7 @@ if symmetric == 0 and Qz == 1:
 #for symmetric objects, no small angle approximation
 if symmetric == 1 and Qz == 0:
     #print "Symmetry; no small angle approximation."
-    def Detector_Intensity(Points):
-        global dictionary_SI
+    def Detector_Intensity(Points,dictionary_SI):
         QSize = dictionary_SI['QSize']
         pixels = dictionary_SI['pixels']
         EHC = dictionary_SI['EHC']
@@ -116,8 +111,7 @@ if symmetric == 1 and Qz == 0:
 #for symmetric objects, small angle approximation
 if symmetric == 1 and Qz == 1:
     #print "Symmetry; small angle approximation."
-    def Detector_Intensity(Points):
-        global dictionary_SI
+    def Detector_Intensity(Points,dictionary_SI):
         QSize = dictionary_SI['QSize']
         pixels = dictionary_SI['pixels']
         EHC = dictionary_SI['EHC']
@@ -136,8 +130,7 @@ if symmetric == 1 and Qz == 1:
 
 ###########          Average Intensity         #############
 
-def Average_Intensity():
-    global dictionary_SI
+def Average_Intensity(dictionary_SI):
     num_plots = dictionary_SI['num_plots']
     print "START TIME: "+time.strftime("%X")
     sim_info = open(dictionary_SI['path_to_subfolder']+"simulation_infomation.txt","a")
@@ -153,11 +146,11 @@ def Average_Intensity():
 
         try:
             dictionary_SI['TEMP_VAR'] #This is here so it will only make the estimated time once.
-            ##Intensity = Detector_Intensity(Points_For_Calculation())  #Commented and separated so I can time these separately.
-            Points = Points_For_Calculation()
-            Intensity = Detector_Intensity(Points)
+            ##Intensity = Detector_Intensity(Points_For_Calculation(dictionary_SI),dictionary_SI)  #Commented and separated so I can time these separately.
+            Points = Points_For_Calculation(dictionary_SI)
+            Intensity = Detector_Intensity(Points,dictionary_SI)
         except KeyError:
-            Points = Points_For_Calculation()
+            Points = Points_For_Calculation(dictionary_SI)
             try:
                 dictionary_SI['current_value']
                 est_time = 0# 10**-7*len(Points)*dictionary_SI['pixels']**2*dictionary_SI['num_plots']*dictionary_SI['s_step']
@@ -167,7 +160,7 @@ def Average_Intensity():
             hours, mins = divmod(est_time, 60)
             #print "Estimated time to finish all calculations: " + str(int(hours)) + " hours, " + str(int(mins)) + " minutes and " + str(int(secs)) + " seconds."
             dictionary_SI['TEMP_VAR'] = 0
-            Intensity = Detector_Intensity(Points)
+            Intensity = Detector_Intensity(Points,dictionary_SI)
             print "FINISHED FIRST CALCULATION: "+time.strftime("%X")
 
         
@@ -188,8 +181,7 @@ def Average_Intensity():
 
 
 ###############################         Radial Intensity          #######################################
-def radial(Intensity):
-    global dictionary_SI
+def radial(Intensity,dictionary_SI):
     QSize = dictionary_SI['QSize']
     pixels = dictionary_SI['pixels']
     EHC = dictionary_SI['EHC']
@@ -202,8 +194,7 @@ def radial(Intensity):
 
 
 #########################             Plot Angle at a fixed radius           ###########################
-def plotting_circle(Intensity):
-    global dictionary_SI
+def plotting_circle(Intensity,dictionary_SI):
     pixels = dictionary_SI['pixels']
     xrow, yrow = np.shape(Intensity)
     
