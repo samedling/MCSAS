@@ -12,7 +12,6 @@ from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 from matplotlib import cm
 
-
 #Looks for fastmath.so to speed up intensity calculation.
 try:
    import fastmath
@@ -24,7 +23,6 @@ except ImportError:
 
 
 #These are the default settings
-global dictionary
 dictionary = {'advanced':0, 'altitude':45, 'analytic': 2, 'ave_dist': 0.6, 'azimuth':45, 'bound': 0, 'circ_delta':5, 'comments':'',
               'degrees': 1, 'energy_wavelength': 12, 'energy_wavelength_box': 0, 'gauss':0, 'log_scale': 1, 'maximum': 0.01, 'minimum': 0,
               'num_plots': 2, 'pixels': 100, 'proportional_radius':0.5, 'QSize': 6,'Qz': 0, 'radius_1': 5, 'radius_2': 2.5, 'rho_1': 1, 'rho_2': -0.5,
@@ -89,18 +87,21 @@ def xy_dim(): #Since x_dim and y_dim are not defined by the user any more, the f
 
 def get_numbers_from_gui():
     global dictionary, dictionary_in, dictionary_SI
-    #Here I get all parameters from the GUI and put them into dictionary  #Is this comment for this section or the whole function?
-    for x in dictionary:      #Deepcopy?
+    #Here I get all parameters from the GUI and put them into dictionary
+    for x in dictionary:
        if x=='comments':
           dictionary[x] = dictionary_in[x].get(1.0,END).rstrip()
-       elif x=='advanced' or x=='seq_hide':
-          dictionary[x] = dictionary[x]
-       elif x=='shape':
-          dictionary[x] = MC_num_and_name_dict[dictionary_in['shape'].get()]
-       elif x=='analytic':
-          dictionary[x] = Analytic_dict[dictionary_in['analytic'].get()]
        else:
-          dictionary[x] = dictionary_in[x].get() 
+          if x=='advanced' or x== 'seq_hide':
+             dictionary[x] = dictionary[x]
+          else:
+             if x=='shape':
+                dictionary[x] = MC_num_and_name_dict[dictionary_in['shape'].get()]
+             else:
+                if x=='analytic':
+                   dictionary[x] = Analytic_dict[dictionary_in['analytic'].get()]
+                else:
+                   dictionary[x] = dictionary_in[x].get() 
     
     for x in dictionary:
         try:
@@ -174,12 +175,12 @@ def change_units(number): #Used for sequences. A value is converted to SI units.
                  dictionary_SI[x] = number*10**9
               if x == "energy_wavelength":
                   if dictionary_SI['energy_wavelength_box'] == 1:
-                     dictionary_SI['EHC'] = 2.*np.pi*number*1.602176487*10**10/(6.62606896*2.99792458)
+                     dictionary_SI['EHC'] = 2.*3.14159265*number*1.602176487*10**10/(6.62606896*2.99792458)
                   else:
-                     dictionary['EHC'] = 2. * np.pi / number
+                     dictionary['EHC'] = 2. * 3.14159265 / number
               if x == "x_theta" or x == "y_theta" or x == "z_theta":
                   if dictionary_SI['degrees'] == 1:
-                      dictionary_SI[x] = number*np.pi/180
+                      dictionary_SI[x] = number*3.1416/180
 
 def save_vars_to_file(extra): #here I save all the infomation into a text file that is easy to read. extra is a string of extra infomation that you might want to include.
    global dictionary_SI, dictionary
@@ -256,7 +257,7 @@ def plot_points(): #This runs the Real Space to plot the points in Real Space
        else:
           current_value = np.random.normal(loc = dictionary[dictionary['s_var']], scale = dictionary['SD'])
        change_units(current_value)
-    Points_Plot(Points_For_Calculation(dictionary_SI), 'points', 1)
+    Points_Plot(Points_For_Calculation(), 'points', 1)
     clear_mem()
     print "Program Finished"
 
@@ -276,9 +277,9 @@ def make_intensity(): #This makes an intensity
     get_numbers_from_gui()
     save_vars_to_file("Monte Carlo Intensity")
     load_functions()
-    Intensity = Average_Intensity(dictionary_SI)
+    Intensity = Average_Intensity()
     save(Intensity, "intensity")
-    radial_intensity = radial(Intensity,dictionary_SI)
+    radial_intensity = radial(Intensity)
     save(radial_intensity, "radial_intensity")
     if dictionary_SI['save_img'] == 1:
       view_intensity()
@@ -304,9 +305,9 @@ def sequence(): #This makes a sequence of intensities
        else:
           current_value = np.random.normal(loc = dictionary[dictionary['s_var']], scale = dictionary['SD'])
        change_units(current_value)
-       Intensity = Average_Intensity(dictionary_SI)
+       Intensity = Average_Intensity()
        save(Intensity, "intensity"+str(frame_num+1))
-       radial_intensity = radial(Intensity,dictionary_SI)
+       radial_intensity = radial(Intensity)
        save(radial_intensity, "radial_intensity"+str(frame_num+1))
        try:
            cumulative += np.asarray(Intensity)
@@ -319,7 +320,7 @@ def sequence(): #This makes a sequence of intensities
        clear_mem()
     Intensity = cumulative / dictionary_SI['s_step']
     save(Intensity, "intensity")
-    radial_intensity = radial(Intensity,dictionary_SI)
+    radial_intensity = radial(Intensity)
     save(radial_intensity, "radial_intensity")
     dictionary_SI['title'] = dictionary_SI['title']+" Averaged" + dictionary_SI['s_var']
     if dictionary_SI['save_img'] == 1:
@@ -333,9 +334,9 @@ def theory_plot(): #This plots an analytic model
    get_numbers_from_gui()
    save_vars_to_file("Analytic Intensity")
    load_functions()
-   Intensity = theory_csv(dictionary_SI)
+   Intensity = theory_csv()
    save(Intensity, "intensity")
-   radial_intensity = radial(Intensity,dictionary_SI)
+   radial_intensity = radial(Intensity)
    save(radial_intensity, "radial_intensity")
    if dictionary_SI['save_img'] == 1:
       view_intensity()
@@ -363,9 +364,9 @@ def theory_seq(): #This plots a sequence created with the analytic model
        else:
           current_value = np.random.normal(loc = dictionary[dictionary['s_var']], scale = dictionary['SD'])
        change_units(current_value)
-       Intensity = theory_csv(dictionary_SI)
+       Intensity = theory_csv()
        save(Intensity, "intensity"+str(frame_num+1))
-       radial_intensity = radial(Intensity,dictionary_SI)
+       radial_intensity = radial(Intensity)
        save(radial_intensity, "radial_intensity"+str(frame_num+1))
        try:
            cumulative += np.asarray(Intensity)
@@ -378,7 +379,7 @@ def theory_seq(): #This plots a sequence created with the analytic model
        clear_mem()
     Intensity = cumulative / dictionary_SI['s_step']
     save(Intensity, "intensity")
-    radial_intensity = radial(Intensity,dictionary_SI)
+    radial_intensity = radial(Intensity)
     save(radial_intensity, "radial_intensity")
     dictionary_SI['title'] = dictionary_SI['title']+" Averaged" + dictionary_SI['s_var']
     if dictionary_SI['save_img'] == 1:
@@ -392,7 +393,7 @@ def circ(): #This plots a the angle at a fixed radius
    get_numbers_from_gui()
    load_functions()
    Intensity = np.asarray(pylab.loadtxt(dictionary_SI['path_to_subfolder']+"intensity.csv", delimiter=","))
-   data = plotting_circle(Intensity,dictionary_SI)
+   data = plotting_circle(Intensity)
    radial_intensity_plot(data, "theta"+str(dictionary['radius_2']), dictionary['title']+" "+str(dictionary['radius_2']), 0)
    angle_plot(data, "Angle"+str(dictionary['radius_2']), dictionary['title']+" "+str(dictionary['radius_2']), 1)
    print "finsihed"

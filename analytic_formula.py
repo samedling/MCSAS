@@ -70,7 +70,8 @@ elif dictionary_SI['analytic'] == 4:
 
 
 
-def theory_csv(dictionary_SI):
+def theory_csv():
+        global dictionary_SI
         QSize = dictionary_SI['QSize']
         pixels = dictionary_SI['pixels']
         EHC = dictionary_SI['EHC']
