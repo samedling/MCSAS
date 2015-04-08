@@ -13,7 +13,9 @@ from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 from matplotlib import cm
 
-from fit import *
+#from fit import *
+from PIL import Image
+from scipy.optimize import leastsq
 
 #Looks for fastmath.so to speed up intensity calculation.
 try:
@@ -32,7 +34,7 @@ dictionary = {'advanced':0, 'altitude':45, 'analytic': 2, 'ave_dist': 0.6, 'azim
               'save_img':1, 'save_name': 'save_name', 'scale': 1,'SD':1, 'seq_hide':0, 'shape': 2, 's_start': 0, 's_step': 2,
               's_stop': 1, 'subfolder':'subfolder', 's_var': 'x_theta', 'symmetric': 0,
               'theta_delta':20, 'ThreeD': 0, 'title': 'title', 'x_theta': 0,'y_theta': 0,'z_theta': 0,'z_dim': 10,'z_scale':1,#}
-              'fit_file': 'fit_file', 'crop': (0,0,0,0), 'max_iter': 0, 'update_freq': 0, 'plot_fit_tick': 1, 'plot_residuals_tick': 1, 'mask_threshold': 100}
+              'fit_file': 'fit_file', 'center': (0,0), 'border': 0, 'max_iter': 0, 'update_freq': 0, 'plot_fit_tick': 1, 'plot_residuals_tick': 1, 'mask_threshold': 100}
 length_dictionary = len(dictionary)
 
 #####            Importing data or using defaults              #############
@@ -418,6 +420,190 @@ def int_seq(): #This is the button, it runs a sequence or a single image dependi
 
 
 
+
+
+
+
+### Fitting Functions ###
+
+def load_exp_image(preview=False):
+   '''Loads experimental data from file, cropping it and downsampling it if neccessary, and normalizes.  Also outputs the mask corresponding to the beamstop.'''
+   global dictionary
+   downsample=(dictionary['pixels'],dictionary['pixels'])
+   center=[int(i) for i in dictionary['center'].split()]
+   border=int(dictionary['border'])
+   mask_threshold=dictionary['mask_threshold']
+   filename=dictionary['fit_file']
+   if preview:
+      exp_data=np.array(Image.open(filename))
+      normalize = 1.0/np.sum(exp_data)
+      exp_data=exp_data*normalize
+      return exp_data
+   else:
+      if sum(center):
+         img=Image.open(filename)
+         #crop_to=(crop[0],crop[1],img.size[0]-crop[2],img.size[1]-crop[3])      #(left,top,right,bottom) in the image view, but (left,bottom,right,top) in the matplotlib plot
+         radius=min(center[0],center[1],img.size[0]-center[0],img.size[1]-center[1])
+         l=center[0]-radius+border
+         b=center[1]-radius+border
+         r=center[0]+radius-border
+         t=center[1]+radius-border
+         crop_to=(l,b,r,t)
+         cropped=img.crop(crop_to)
+         print("Cropped to {0}.".format(cropped.size))
+      else:
+         cropped=Image.open(filename)
+      downsampled=cropped.resize(downsample,Image.ANTIALIAS)      #NEAREST,BILINEAR,BICUBIC,ANTIALIAS (worst to best; fastest to slowest)
+      exp_data=np.array(downsampled)
+      mask=np.ones(np.product(exp_data.shape)).reshape(exp_data.shape)
+      for i in range(mask.shape[0]):
+         for j in range(mask.shape[1]):
+            if exp_data[i,j] < mask_threshold:        #do after normalize?
+               mask[i,j] = 0
+      normalize = 1.0/np.sum(exp_data)
+      exp_data=exp_data*normalize
+      #img=Image.fromarray(exp_data)   #To go back to an image.
+      return exp_data,mask
+
+def plot_exp_data(threshold=1e-5,zero_value=1e-5):
+    global dictionary,dictionary_SI
+    get_numbers_from_gui()
+    load_functions()    #Needed for plotting routines.
+    if dictionary['center'] == "0 0":
+        image=load_exp_image(preview=True)
+        print('Original image size is {0} x {1} pixels.'.format(image.shape[0],image.shape[1]))
+        image[image<threshold]=zero_value
+        Intensity_plot(image,"exp_data",'Before Cropping or Downsampling',1)
+    else:
+        cropped=load_exp_image()
+        #cropped[cropped<threshold]=zero_value
+        #Intensity_plot(cropped,"exp_data2",'After Cropping and Downsampling',1)
+        masked=cropped[0]*cropped[1]
+        masked[masked<threshold]=zero_value
+        Intensity_plot(masked,"exp_data2",'After Cropping and Downsampling',1)
+    return
+
+def sync_dict(parameters):
+   '''Copies parameters to dictionary_SI.'''
+   global dictionary_SI
+   parameters = r1,r2,z_dim,rho1,rho2,z_theta
+   dictionary_SI['radius_1'] = r1
+   dictionary_SI['radius_2'] = r2
+   dictionary_SI['z_dim'] = z_dim
+   dictionary_SI['rho_1'] = rho1
+   dictionary_SI['rho_2'] = rho2
+   dictionary_SI['z_theta'] = z_theta
+
+def print_parameters(SI=0):
+   global dictionary_SI
+   convert_from_SI()
+   if SI:
+      print('Radius 1 is {0} nm.'.format(dictionary['radius_1']))
+      print('Radius 2 is {0} nm.'.format(dictionary['radius_2']))
+      print('Length is {0} nm.'.format(dictionary['z_dim']))
+      print('Rho 1 is {0}.'.format(dictionary['rho_1']))
+      print('Rho 2 is {0}.'.format(dictionary['rho_2']))
+      if dictionary["degrees"] == 1:
+         print('z rotation is {0} degrees.'.format(dictionary['z_theta']))
+      else:
+         print('z rotation is {0} radians.'.format(dictionary['z_theta']))
+   else:
+      print('Radius 1 is {0} m.'.format(dictionary_SI['radius_1']))
+      print('Radius 2 is {0} m.'.format(dictionary_SI['radius_2']))
+      print('Length is {0} m.'.format(dictionary_SI['z_dim']))
+      print('Rho 1 is {0}.'.format(dictionary_SI['rho_1']))
+      print('Rho 2 is {0}.'.format(dictionary_SI['rho_2']))
+      print('z rotation is {0} radians.'.format(dictionary_SI['z_theta']))
+   return
+
+def residuals(param,exp_data,mask=1):
+   '''Returns residual array of difference between experimental data and data calculated from passed parameters.'''
+   #global dictionary_SI
+   sync_dict(param)
+   err = np.zeros(np.product(exp_data.shape)).reshape(exp_data.shape)
+   load_functions()    #DO I NEED?  #Reintilizes functions with the new parameters.
+   #calc_intensity = Average_Intensity() #might just take longer or might be necessary to accomodate randomness in Points_For_Calculation
+   calc_intensity = Detector_Intensity(Points_For_Calculation())  #like Average_Intensity() but just runs once and without time printouts
+   normalize = 1.0/np.sum(calc_intensity)
+   for i in range(len(n_pixels)):
+      for j in range(len(n_pixels)):
+         err[i,j] = exp_data[i,j]-calc_intensity[i,j]*normalize
+   return err.ravel(mask*err)  #flattens err since leastsq only takes a 1D array
+
+def fit_step(exp_data,update_freq=20):
+   '''Runs a small number of iterations of fitting exp_data.'''
+   global dictionary_SI
+   guess=[dictionary_SI['radius_1'],dictionary_SI['radius_2'],dictionary_SI['z_dim'],dictionary_SI['rho_1'],dictionary_SI['rho_2'],dictionary['z_theta']]
+   fit_param = leastsq(residuals,guess,args=(exp_data),full_output=1,maxfev=update_freq)
+   sync_dict(fit_param[0])    #Save Final Fit Parameters
+   return fit_param
+
+def perform_fit():  #Gets run when you press the Button.
+   '''Loads experimental data from filename, fits the data using current dictionary as initial guesses, leaves final parameters in dictionary.'''
+   global dictionary,dictionary_SI
+   get_numbers_from_gui()
+   #load_functions() #Not sure if I need this here.
+   filename = dictionary['fit_file']
+   maxiter = dictionary['max_iter']
+   update_freq = dictionary['update_freq']
+   #need to refresh dictionary_SI?
+   total_steps = 0
+   if update_freq == 0:
+      update_freq = max_iter
+   exp_data,mask=load_exp_image()
+   print('{0}: Starting fit...'.format(time.strftime("%X")))
+   total_steps = 0
+   while total_steps < maxiter:
+      fit_param = fit_step(exp_data,update_freq)
+      total_steps+=fit_param[2]['nfev']
+      if fit_param[2]['nfev'] < update_freq:      #Better parameter to see if fit is completed?
+         print('{0}: Converged after {1} function calls.'.format(time.strftime("%X"),total_steps))
+         print_parameters()
+         break
+      else: #This line not necessary, but I think it improves readability.
+         print('{0}: On function call {1}...'.format(time.strftime("%X"),total_steps))
+         print(fit_param[0])
+         view_fit(exp_data,fit,diff)
+   if total_steps >= maxiter:
+      print('{0}: Fit did not converge in {1} steps.'.format(time.strftime("%X"),total_steps))
+      print_parameters()
+   fit=Average_Intensity()
+   save(fit,_fit)
+   #diff=residuals(fit_param[0],exp_data).reshape(exp_data.shape)
+   diff=fit_param[2]['fvec'].reshape(exp_data.shape)
+   save(diff,_fit_residuals)
+   view_fit(exp_data,fit,diff)
+
+def view_fit(exp_data,fit,residuals):
+   '''Copied from view_intensity() with minor changes to plot all relevant fitting plots.'''
+   global dictionary,dictionary_SI
+   plot_fit = dictionary['plot_fit_tick']
+   plot_residuals = dictionary['plot_residuals_tick']
+   #get_numbers_from_gui()
+   #load_functions()
+   if plot_fit:
+      Intensity_plot(exp_data,"exp_data",dictionary_SI['title'],0)
+      Intensity_plot(fit,"fit",dictionary_SI['title'],1)
+   if plot_residuals:
+      Intensity_plot(residuals,"residuals",dictionary_SI['title'],2)
+   clear_mem()
+   print "Program Finished"
+
+
+def convert_from_SI():
+    global dictionary,dictionary_SI
+    dictionary["radius_1"] = dictionary_SI["radius_1"]*10**9
+    dictionary["radius_2"] = dictionary_SI["radius_2"]*10**9
+    dictionary["z_dim"] = dictionary_SI["z_dim"]*10**9
+    if dictionary["degrees"] == 1: #Conveting from radians
+       dictionary["z_theta"] = dictionary_SI["z_theta"]*180/np.pi
+
+### End Fitting Functions ###
+
+
+
+
+
 ################          MAKING THE GUI            #################
 advanced = ['log_scale2', 'bound2', 'minimum', 'ave_dist', 'scale2',
               'ThreeD2', 'pixels', 'maximum', 'altitude', 'azimuth', 'z_scale']
@@ -733,7 +919,9 @@ if __name__ == "__main__":
    ROW += 1
    enter_num('fit_file', "Experimental Data Filename", ROW, COL)
    ROW += 1
-   enter_num('crop', "Crop Experimental Data (L,T,B,R)", ROW, COL)
+   enter_num('center', "Center of Beamstop (x y)", ROW, COL)
+   ROW += 1
+   enter_num('border', "Additional Cropping", ROW, COL)
    ROW += 1
    enter_num('mask_threshold', "Mask Threshhold", ROW, COL)
    ROW += 1
@@ -757,3 +945,6 @@ if __name__ == "__main__":
    
    mainloop()
    
+
+
+

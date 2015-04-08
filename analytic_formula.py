@@ -24,7 +24,7 @@ elif dictionary_SI['analytic'] == 1:
 
 
 elif dictionary_SI['analytic'] == 2:
-    print "Analytic Cyliner"
+    print "Analytic Cylinder"
     def theory(distance_from_origin):
         QR = distance_from_origin*dictionary_SI['radius_1']
         def function(x):
