@@ -1,3 +1,4 @@
+#!/Users/scott/Library/Enthought/Canopy_64bit/User/bin/python
 #!/usr/bin/python
 
 try:
@@ -11,6 +12,8 @@ from scipy.special import *
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 from matplotlib import cm
+
+from fit import *
 
 #Looks for fastmath.so to speed up intensity calculation.
 try:
@@ -28,7 +31,8 @@ dictionary = {'advanced':0, 'altitude':45, 'analytic': 2, 'ave_dist': 0.6, 'azim
               'num_plots': 2, 'pixels': 100, 'proportional_radius':0.5, 'QSize': 6,'Qz': 0, 'radius_1': 5, 'radius_2': 2.5, 'rho_1': 1, 'rho_2': -0.5,
               'save_img':1, 'save_name': 'save_name', 'scale': 1,'SD':1, 'seq_hide':0, 'shape': 2, 's_start': 0, 's_step': 2,
               's_stop': 1, 'subfolder':'subfolder', 's_var': 'x_theta', 'symmetric': 0,
-              'theta_delta':20, 'ThreeD': 0, 'title': 'title', 'x_theta': 0,'y_theta': 0,'z_theta': 0,'z_dim': 10,'z_scale':1}
+              'theta_delta':20, 'ThreeD': 0, 'title': 'title', 'x_theta': 0,'y_theta': 0,'z_theta': 0,'z_dim': 10,'z_scale':1,#}
+              'fit_file': 'fit_file', 'crop': (0,0,0,0), 'max_iter': 0, 'update_freq': 0, 'plot_fit_tick': 1, 'plot_residuals_tick': 1, 'mask_threshold': 100}
 length_dictionary = len(dictionary)
 
 #####            Importing data or using defaults              #############
@@ -704,6 +708,36 @@ if __name__ == "__main__":
    ROW+=1
    enter_num('proportional_radius', 'Proportional Radius', ROW, COL)
    ROW+=1
+
+   ## Fitting Options ##
+
+   COL += 2
+   ROW = 0
+   Label(master, text="Fitting Options", font = "Times 16 bold").grid(row= ROW, column=COL, sticky = W)
+   ROW += 1
+   enter_num('fit_file', "Experimental Data Filename", ROW, COL)
+   ROW += 1
+   enter_num('crop', "Crop Experimental Data (left,top,bottom,right)", ROW, COL)
+   ROW += 1
+   enter_num('mask_threshold', "Mask Threshhold", ROW, COL)
+   ROW += 1
+   COL += 1
+   Button(master, text="Plot Exp Data", command = plot_exp_data, font = "Times 16 bold").grid(row=ROW, column=COL, pady=4)
+   COL -= 1
+   ROW += 1
+   Label(master, text="(Fit Parameters: Radius 1, Radius 2, Length, Rho 1, Rho 2, z rotation)").grid(row= ROW, column=COL, columnspan =2, sticky = W)
+   ROW += 1
+   enter_num('max_iter', "Maximum Iterations (0=default)", ROW, COL)
+   ROW += 1
+   enter_num('update_freq', "Update Interval", ROW, COL)
+   ROW += 1
+   tick('plot_fit_tick',"Plot Fit Results", ROW, COL)
+   COL += 1
+   tick('plot_residuals_tick',"Plot Fit Residuals", ROW, COL)
+   ROW += 1
+   Button(master, text="Fit Exp Data", command = perform_fit, font = "Times 16 bold").grid(row=ROW, column=COL, pady=4)
+   COL -= 1
+
    
    mainloop()
    
