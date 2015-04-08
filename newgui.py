@@ -533,6 +533,9 @@ def radio(variable_name, MODES, ROW, COL): #Radiobutton
 if __name__ == "__main__":
    master = Tk()
    master.title("Monte Carlo Small Angle Scattering, By Max Proft")
+
+   ### Model Type ###
+
    ROW = 0
    COL = 0
    Label(master, text = "Model Type", font = "Times 16 bold").grid(row = ROW, column = COL, sticky = W)
@@ -554,6 +557,7 @@ if __name__ == "__main__":
    dictionary_in['analytic'].set(Analytic_options[dictionary['analytic']][0])
    OptionMenu(master, dictionary_in['analytic'], *Analytic_options[:,0]).grid(row = ROW, column = COL+1)
    
+   ### Parameters ###
    
    ROW+=1
    Label(master, text = "Parameters", font = "Times 16 bold").grid(row = ROW, column = COL, sticky = W)
@@ -588,39 +592,16 @@ if __name__ == "__main__":
    enter_num('y_theta', 'y rotation', ROW, COL)
    ROW+=1
    enter_num('z_theta', 'z rotation', ROW, COL)
-   ROW+=1
    
-   
-   Label(master, text="Sequence Options", font = "Times 16 bold").grid(row= ROW, column=COL, sticky = W)
-   COL+=1
-   if dictionary['seq_hide'] == 0:
-      seq_button = Button(master, text="Edit Sequence", font = "Times 12 bold")
-   else:
-      seq_button = Button(master, text="No Sequence", font = "Times 12 bold")
-   seq_button.bind("<Button-1>", hide_sequence)
-   seq_button.grid(row=ROW, column = COL, pady=4)
-   COL-=1
+   ROW+=3
+   enter_num('circ_delta', 'Ring Thickness (pixels)', ROW, COL)
    ROW+=1
-   enter_num('s_step', 'Number of Frames', ROW, COL)
+   enter_num('theta_delta','Number of Points',ROW, COL)
    ROW+=1
-   enter_str('s_var', "Which Variable?", ROW, COL)
+   enter_num('proportional_radius', 'Proportional Radius', ROW, COL)
    ROW+=1
-   Button(master, text='Common Variables', command=show_sequence_variables).grid(row=ROW, column = COL, sticky=W, pady=4)
-   
-   ROW+=1
-   MODES_gauss = [('Linear Sequesnce', '0'),('Gaussian', '1'),]
-   radio('gauss',MODES_gauss, ROW, COL)
-   ROW+=1
-   temp_row = ROW
-   enter_vert_num('s_start', "Sequence Start", ROW, COL)
-   ROW+=2
-   enter_vert_num('s_stop', "Sequence Stop", ROW, COL)
-   ROW+=1
-   COL+=1
-   ROW = temp_row
-   enter_vert_num('SD', 'Standard Deviation', ROW, COL)
-   ROW+=1
-   
+  
+   ### Output Options ###
    
    COL+=2
    ROW=0
@@ -665,6 +646,7 @@ if __name__ == "__main__":
    enter_num('maximum', "Maximum", ROW, COL)
    ROW+=1
    
+   ### File Information ###
    
    Label(master, text="File Infomation", font = "Times 16 bold").grid(row= ROW, column=COL, sticky = W)
    ROW+=1
@@ -694,25 +676,59 @@ if __name__ == "__main__":
    int_button.grid(row=ROW, column = COL,rowspan = 2, pady=4)
    
    COL+=1
-   Button(master, text='Real Space', command=plot_points, font = "Times 16 bold").grid(row=ROW, column = COL,rowspan = 2, pady=4)
+   Button(master, text='Replot Intensity', command=view_intensity, font = "Times 16 bold").grid(row=ROW, column = COL,rowspan = 2, pady=4)
    COL-=1
    ROW+=2
-   Button(master, text='Replot Intensity', command=view_intensity, font = "Times 16 bold").grid(row=ROW, column = COL,rowspan = 2, pady=4)
+   Button(master, text='Real Space', command=plot_points, font = "Times 16 bold").grid(row=ROW, column = COL,rowspan = 2, pady=4)
    COL+=1
    Button(master, text='Plot a Ring', command=circ, font = "Times 16 bold").grid(row=ROW, column = COL, rowspan = 2, pady=4)
    COL-=1
-   ROW+=2
-   enter_num('circ_delta', 'Ring Thickness (pixels)', ROW, COL)
-   ROW+=1
-   enter_num('theta_delta','Number of Points',ROW, COL)
-   ROW+=1
-   enter_num('proportional_radius', 'Proportional Radius', ROW, COL)
    ROW+=1
 
-   ## Fitting Options ##
 
+
+
+
+
+   ### Sequence Options ###
+   
    COL += 2
    ROW = 0
+   Label(master, text="Sequence Options", font = "Times 16 bold").grid(row= ROW, column=COL, sticky = W)
+   COL+=1
+   if dictionary['seq_hide'] == 0:
+      seq_button = Button(master, text="Edit Sequence", font = "Times 12 bold")
+   else:
+      seq_button = Button(master, text="No Sequence", font = "Times 12 bold")
+   seq_button.bind("<Button-1>", hide_sequence)
+   seq_button.grid(row=ROW, column = COL, pady=4)
+   COL-=1
+   ROW+=1
+   enter_num('s_step', 'Number of Frames', ROW, COL)
+   ROW+=1
+   enter_str('s_var', "Which Variable?", ROW, COL)
+   ROW+=1
+   Button(master, text='Common Variables', command=show_sequence_variables).grid(row=ROW, column = COL, sticky=W, pady=4)
+   
+   ROW+=1
+   MODES_gauss = [('Linear Sequesnce', '0'),('Gaussian', '1'),]
+   radio('gauss',MODES_gauss, ROW, COL)
+   ROW+=1
+   temp_row = ROW
+   enter_vert_num('s_start', "Sequence Start", ROW, COL)
+   ROW+=2
+   enter_vert_num('s_stop', "Sequence Stop", ROW, COL)
+   ROW+=1
+   COL+=1
+   ROW = temp_row
+   enter_vert_num('SD', 'Standard Deviation', ROW, COL)
+   ROW+=4
+   COL -=1
+
+
+
+   ### Fitting Options ###
+
    Label(master, text="Fitting Options", font = "Times 16 bold").grid(row= ROW, column=COL, sticky = W)
    ROW += 1
    enter_num('fit_file', "Experimental Data Filename", ROW, COL)
