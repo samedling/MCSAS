@@ -62,8 +62,6 @@ elif dictionary_SI['shape'] == 3:
 #
 #
 
-
-
 elif dictionary_SI['shape'] == 4:
     print "Monte Carlo Gaussian"
     def density(coords):
@@ -154,11 +152,43 @@ elif dictionary_SI['shape'] == 10:
 
 elif dictionary_SI['shape'] == 11:
     print "double slit"
-    
     def density(coords):
         if -dictionary_SI['radius_1']/2 <coords[0:1]<-dictionary_SI['radius_2']/2 or dictionary_SI['radius_2']/2 <coords[0:1]<dictionary_SI['radius_1']/2:
             return dictionary_SI['rho_1']
         else:
             return 0
 
+elif dictionary_SI['shape']==12:
+    print "N-gon Truncated Cone"
+    #rho_2 is the number of sides
+    def density(coords):
+        angle_number = np.float(np.floor(np.angle(coords[0:1]+1j*coords[1:2])*dictionary_SI['rho_2']/(2*3.14159265)))
+        zrad = coords[2:3]*(dictionary_SI['radius_2']-dictionary_SI['radius_1'])/dictionary_SI['z_dim']+(dictionary_SI['radius_2']+dictionary_SI['radius_1'])/2.
+    
+        slope = (np.sin((angle_number+1)*2.*3.14159265/float(dictionary_SI['rho_2']))-np.sin((angle_number)*2.*3.14159265/float(dictionary_SI['rho_2'])))/(np.cos((angle_number+1)*2.*3.14159265/float(dictionary_SI['rho_2']))-np.cos((angle_number)*2.*3.14159265/float(dictionary_SI['rho_2'])))
 
+        x_intercept = zrad*(slope*np.cos(angle_number*2*3.14159265/float(dictionary_SI['rho_2']))-np.sin(angle_number*2*3.14159265/float(dictionary_SI['rho_2'])))/(coords[1:2]/coords[0:1]-slope)
+        y_intercept = x_intercept*coords[1:2]/coords[0:1]
+        if x_intercept**2+y_intercept**2 > coords[0:1]**2+coords[1:2]**2:
+            return dictionary_SI['rho_1']
+        else:
+            return 0
+
+elif dictionary_SI['shape'] == 13:
+    print "Sine-shaped-oscillation"
+    def density(coords):
+        if np.sqrt(np.sum(coords[0:2]**2)) < (dictionary_SI['radius_1']+dictionary_SI['radius_2'])/2 + (dictionary_SI['radius_1']-dictionary_SI['radius_2'])/2*np.sin(coords[2:3]*dictionary_SI['rho_2']*2*np.pi/dictionary_SI['z_dim']):
+            b = dictionary_SI['rho_1']
+        else:
+            b=0
+        return b            
+           
+elif dictionary_SI['shape'] == 14:
+    print 'Double Cone'
+    def density(coords):
+        if np.sqrt(np.sum(coords[0:2]**2)) < abs(coords[2:3])*(dictionary_SI['radius_1']-dictionary_SI['radius_2'])/(dictionary_SI['z_dim']/2.)+dictionary_SI['radius_2']:
+            b = dictionary_SI['rho_1']
+        else:
+            b=0
+        return b  
+ 

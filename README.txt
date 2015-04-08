@@ -1,12 +1,14 @@
 Basic Installation:
-1. Edit the first line of newgui.py to point to your python installation.
-2. If possible, run `make` to compile the fortran code to achieve 2-100x speedup (depending on number of cores).
+1. Make sure you have the latest version:
+   Go to https://github.com/samedling/MCSAS and click Download ZIP in the lower right.
+   Or a current zipfile may be at https://drive.google.com/open?id=0B8EbmzXGZtaZV3MxUlhSUjczQm8
+2. If possible, run `make` to compile the fortran code to achieve 2-100x speedup (depending on number of cores).  Or, try copying the fastmath-OS_CPU.so file to fastmath.so.
 
 Operation:
-3. `Run ./newgui.py` each time you want to start the program.
+Run `python newgui.py`.
+
 
 Tested using gfortran on Ubuntu14.10, ifort on a raijin login node (no OpenMP), and both on CentOS.  Default is gfortran; to use ifort simply edit the makefile.
-(FYI, I had some difficulty with multiple F2PY versions on CentOS such that you need to make sure you are using the version of F2PY which matches your version of Python (2.7+), otherwise just loading the Fortran module causes a Segmentation Fault.)
 
 
 OS X Fortran Installation:
@@ -18,7 +20,10 @@ Basically:
 2. Install the Command Line Tools by running xcode-select --install
 3. Download the latest stable gfortran version from http://hpc.sourceforge.net
 
-Note that on OS X you need to close all the old plots before you can run things again.  Otherwise, it's otherwise unresponsive for some reason.
-
 Tested on OS X 10.10 "Yosemite".
 
+
+Some Troubleshooting:
+OS X/EPD/Tkinter: Make sure you have Canopy.  EPD might tell you it's updated everything, but it's still not the same as Canopy.
+Centos/F2PY: Make sure you are using the version of F2PY which matches your version of Python (2.7+), otherwise just loading the Fortran module causes a Segmentation Fault.
+OS X (and Windows?): You need to close all the old plots before you can run things again.  Otherwise, it's otherwise unresponsive for some reason.
