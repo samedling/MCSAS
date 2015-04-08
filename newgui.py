@@ -141,13 +141,13 @@ def get_numbers_from_gui():
 
 
     if dictionary_SI["energy_wavelength_box"] == 0: #Checkbox
-       dictionary_SI["EHC"] = 2.*3.14159265*(dictionary_SI["energy_wavelength"])*1.602176487*10**10/(6.62606896*2.99792458) #Energy to 2pi/lambda
+       dictionary_SI["EHC"] = 2.*np.pi*(dictionary_SI["energy_wavelength"])*1.602176487*10**10/(6.62606896*2.99792458) #Energy to 2pi/lambda
     else:
-       dictionary_SI["EHC"] = 2. * 3.14159265 / dictionary_SI["energy_wavelength"]#lambda to 2pi/lambda
+       dictionary_SI["EHC"] = 2. * np.pi / dictionary_SI["energy_wavelength"]#lambda to 2pi/lambda
     if dictionary_SI["degrees"] == 1: #Conveting to radians
-       dictionary_SI["x_theta"] = dictionary["x_theta"]*3.1416/180
-       dictionary_SI["y_theta"] = dictionary["y_theta"]*3.1416/180
-       dictionary_SI["z_theta"] = dictionary["z_theta"]*3.1416/180
+       dictionary_SI["x_theta"] = dictionary["x_theta"]*np.pi/180
+       dictionary_SI["y_theta"] = dictionary["y_theta"]*np.pi/180
+       dictionary_SI["z_theta"] = dictionary["z_theta"]*np.pi/180
 
     with open(root_folder+"/default.txt", 'wb') as f:
         pickle.dump(dictionary, f)#Saving the infomation from dictionary so it can be loaded later
@@ -179,12 +179,12 @@ def change_units(number): #Used for sequences. A value is converted to SI units.
                  dictionary_SI[x] = number*10**9
               if x == "energy_wavelength":
                   if dictionary_SI['energy_wavelength_box'] == 1:
-                     dictionary_SI['EHC'] = 2.*3.14159265*number*1.602176487*10**10/(6.62606896*2.99792458)
+                     dictionary_SI['EHC'] = 2.*np.pi*number*1.602176487*10**10/(6.62606896*2.99792458)
                   else:
-                     dictionary['EHC'] = 2. * 3.14159265 / number
+                     dictionary['EHC'] = 2. * np.pi / number
               if x == "x_theta" or x == "y_theta" or x == "z_theta":
                   if dictionary_SI['degrees'] == 1:
-                      dictionary_SI[x] = number*3.1416/180
+                      dictionary_SI[x] = number*np.pi/180
 
 def save_vars_to_file(extra): #here I save all the infomation into a text file that is easy to read. extra is a string of extra infomation that you might want to include.
    global dictionary_SI, dictionary
@@ -733,7 +733,7 @@ if __name__ == "__main__":
    ROW += 1
    enter_num('fit_file', "Experimental Data Filename", ROW, COL)
    ROW += 1
-   enter_num('crop', "Crop Experimental Data (left,top,bottom,right)", ROW, COL)
+   enter_num('crop', "Crop Experimental Data (L,T,B,R)", ROW, COL)
    ROW += 1
    enter_num('mask_threshold', "Mask Threshhold", ROW, COL)
    ROW += 1

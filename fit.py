@@ -11,13 +11,13 @@ from scipy.optimize import leastsq
 #Fit parameters: r1,r2,z_dim(length),rho1,rho2,z_theta
 
 #To Do:
-#Figure out image importing on Mac OS X?
-#Convert SI parameters back to non-SI.
-#Need to run make SI thing?
 #Add ability to import experimental data from files already cropped/downsampled.
 #Allow to crop by specifying center instead of edges?
 #Add checkboxes to hold some fit parameters fixed.
 
+#global load_functions,get_numbers_from_gui,Intensity_plot
+from newgui import load_functions,get_numbers_from_gui
+from Plotting_Functions import Intensity_plot
 
 
 def load_exp_image():
@@ -26,7 +26,7 @@ def load_exp_image():
    downsample=(dictionary['pixels'],dictionary['pixels'])
    crop=dictionary['crop']
    mask_threshold=dictionary['mask_threshold']
-   filename=dictonary['filename']
+   filename=dictionary['filename']
    #exp_data=np.asarray(Image.open(filename))
    if sum(crop):
       img=Image.open(filename)
@@ -48,6 +48,7 @@ def load_exp_image():
 
 def plot_exp_data():
     global dictionary_SI
+    get_numbers_from_gui()
     image=load_exp_image()
     Intensity_plot(image[0],"exp_data",dictionary_SI['title'],0)
     return
@@ -63,14 +64,26 @@ def sync_dict(parameters):
    dictionary_SI['rho_2'] = rho2
    dictionary_SI['z_theta'] = z_theta
 
-def print_parameters():
+def print_parameters(SI=0):
    global dictionary_SI
-   print('Radius 1 is {0}.'.format(dictionary_SI['radius_1']))
-   print('Radius 2 is {0}.'.format(dictionary_SI['radius_2']))
-   print('Length is {0}.'.format(dictionary_SI['z_dim']))
-   print('Rho 1 is {0}.'.format(dictionary_SI['rho_1']))
-   print('Rho 2 is {0}.'.format(dictionary_SI['rho_2']))
-   print('z rotation is {0}.'.format(dictionary_SI['z_theta']))
+   convert_from_SI()
+   if SI:
+      print('Radius 1 is {0} nm.'.format(dictionary['radius_1']))
+      print('Radius 2 is {0} nm.'.format(dictionary['radius_2']))
+      print('Length is {0} nm.'.format(dictionary['z_dim']))
+      print('Rho 1 is {0}.'.format(dictionary['rho_1']))
+      print('Rho 2 is {0}.'.format(dictionary['rho_2']))
+      if dictionary["degrees"] == 1:
+         print('z rotation is {0} degrees.'.format(dictionary['z_theta']))
+      else:
+         print('z rotation is {0} radians.'.format(dictionary['z_theta']))
+   else:
+      print('Radius 1 is {0} m.'.format(dictionary_SI['radius_1']))
+      print('Radius 2 is {0} m.'.format(dictionary_SI['radius_2']))
+      print('Length is {0} m.'.format(dictionary_SI['z_dim']))
+      print('Rho 1 is {0}.'.format(dictionary_SI['rho_1']))
+      print('Rho 2 is {0}.'.format(dictionary_SI['rho_2']))
+      print('z rotation is {0} radians.'.format(dictionary_SI['z_theta']))
    return
 
 def residuals(param,exp_data,mask=1):
@@ -95,9 +108,11 @@ def fit_step(exp_data,update_freq=20):
    sync_dict(fit_param[0])    #Save Final Fit Parameters
    return fit_param
 
-def perform_fit():
+def perform_fit():  #Gets run when you press the Button.
    '''Loads experimental data from filename, fits the data using current dictionary as initial guesses, leaves final parameters in dictionary.'''
    global dictionary,dictionary_SI
+   get_numbers_from_gui()
+   #load_functions() #Not sure if I need this here.
    filename = dictionary['fit_file']
    maxiter = dictionary['max_iter']
    update_freq = dictionary['update_freq']
@@ -121,6 +136,7 @@ def perform_fit():
          view_fit(exp_data,fit,diff)
    if total_steps >= maxiter:
       print('{0}: Fit did not converge in {1} steps.'.format(time.strftime("%X"),total_steps))
+      print_parameters()
    fit=Average_Intensity()
    save(fit,_fit)
    #diff=residuals(fit_param[0],exp_data).reshape(exp_data.shape)
@@ -143,6 +159,14 @@ def view_fit(exp_data,fit,residuals):
    clear_mem()
    print "Program Finished"
 
+
+def convert_from_SI():
+    global dictionary,dictionary_SI
+    dictionary["radius_1"] = dictionary_SI["radius_1"]*10**9
+    dictionary["radius_2"] = dictionary_SI["radius_2"]*10**9
+    dictionary["z_dim"] = dictionary_SI["z_dim"]*10**9
+    if dictionary["degrees"] == 1: #Conveting from radians
+       dictionary["z_theta"] = dictionary_SI["z_theta"]*180/np.pi
 
 
 
