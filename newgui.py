@@ -16,6 +16,8 @@ from matplotlib import cm
 #from fit import *
 from PIL import Image
 from scipy.optimize import leastsq
+#from scipy import misc
+from scipy import ndimage
 
 #Looks for fastmath.so to speed up intensity calculation.
 try:
@@ -438,6 +440,7 @@ def load_exp_image(preview=False):
       exp_data=np.array(Image.open(filename))
       normalize = 1.0/np.sum(exp_data)
       exp_data=exp_data*normalize
+      #exp_data=ndimage.gaussian_filter(exp_data,sigma=3)
       return exp_data
    else:
       if sum(center):
@@ -465,19 +468,23 @@ def load_exp_image(preview=False):
       #img=Image.fromarray(exp_data)   #To go back to an image.
       return exp_data,mask
 
-def plot_exp_data(threshold=1e-5,zero_value=1e-5):
+def plot_exp_data():#threshold=1e-7,zero_value=1e-7):
     global dictionary,dictionary_SI
     get_numbers_from_gui()
     load_functions()    #Needed for plotting routines.
     if dictionary['center'] == "0 0":
         image=load_exp_image(preview=True)
         print('Original image size is {0} x {1} pixels.'.format(image.shape[0],image.shape[1]))
+        threshold=np.median(image)/10
+        zero_value=threshold
         image[image<threshold]=zero_value
         Intensity_plot(image,"exp_data",'Before Cropping or Downsampling',1)
     else:
         cropped=load_exp_image()
         #cropped[cropped<threshold]=zero_value
         #Intensity_plot(cropped,"exp_data2",'After Cropping and Downsampling',1)
+        threshold=np.median(cropped[0])/10
+        zero_value=threshold
         masked=cropped[0]*cropped[1]
         masked[masked<threshold]=zero_value
         Intensity_plot(masked,"exp_data2",'After Cropping and Downsampling',1)
