@@ -30,13 +30,14 @@ except ImportError:
 
 
 #These are the default settings
-dictionary = {'advanced':0, 'altitude':45, 'analytic': 2, 'ave_dist': 0.6, 'azimuth':45, 'bound': 0, 'circ_delta':5, 'comments':'',
+dictionary = {'advanced':1, 'altitude':45, 'analytic': 2, 'ave_dist': 0.6, 'azimuth':45, 'bound': 0, 'circ_delta':5, 'comments':'',
               'degrees': 1, 'energy_wavelength': 12, 'energy_wavelength_box': 0, 'gauss':0, 'log_scale': 1, 'maximum': 0.01, 'minimum': 0,
-              'num_plots': 2, 'pixels': 100, 'proportional_radius':0.5, 'QSize': 6,'Qz': 0, 'radius_1': 5, 'radius_2': 2.5, 'rho_1': 1, 'rho_2': -0.5,
+              'num_plots': 1, 'pixels': 100, 'proportional_radius':0.5, 'QSize': 6,'Qz': 0, 'radius_1': 5, 'radius_2': 2.5, 'rho_1': 1, 'rho_2': -0.5,
               'save_img':1, 'save_name': 'save_name', 'scale': 1,'SD':1, 'seq_hide':0, 'shape': 2, 's_start': 0, 's_step': 2,
               's_stop': 1, 'subfolder':'subfolder', 's_var': 'x_theta', 'symmetric': 0,
               'theta_delta':20, 'ThreeD': 0, 'title': 'title', 'x_theta': 0,'y_theta': 0,'z_theta': 0,'z_dim': 10,'z_scale':1,#}
-              'fit_file': 'fit_file', 'center': (0,0), 'border': 0, 'max_iter': 0, 'update_freq': 0, 'plot_fit_tick': 1, 'plot_residuals_tick': 1, 'mask_threshold': 100}
+              'fit_file': 'fit_file', 'center': (0,0), 'border': 0, 'max_iter': 0, 'update_freq': 0, 'plot_fit_tick': 1, 'plot_residuals_tick': 1, 'mask_threshold': 100,
+              'fit_r1': 1, 'fit_r2': 0, 'fit_p1': 1, 'fit_p2': 0, 'fit_l': 1, 'fit_x': 1, 'fit_y': 1, 'fit_z': 1}
 length_dictionary = len(dictionary)
 
 #####            Importing data or using defaults              #############
@@ -68,11 +69,14 @@ MC_num_and_name = np.array([["Analytic Model Only",0],
                         ["Gaussian",4],
                         ["Cone Model",5],
                         ["Hexagonal Prism",6],
-                        ["Rectangular prism",7],
-                        ["String of bubbles",8],
-                        ["Chopped up cylinder",9],
-                        ["Custom CSV defining the Radius",10],
-                        ["Double Slit",11]
+                        ["Rectangular Prism",7],
+                        ["String of Bubbles",8],
+                        ["Chopped up Cylinder",9],
+                        ["Custom CSV Defining the Radius",10],
+                        ["Double Slit",11],
+                        ["N-gon Truncated Cone",12],
+                        ["Sine Shaped Oscillation",13],
+                        ["Double Cone",14]
                         ])
 MC_num_and_name_dict = {x[0]:x[1] for x in MC_num_and_name} #This is needed, so that when an option is chosen, we can find the shape number.
 
@@ -493,7 +497,7 @@ def plot_exp_data():#threshold=1e-7,zero_value=1e-7):
 def sync_dict(parameters):
    '''Copies parameters to dictionary_SI.'''
    global dictionary_SI
-   parameters = r1,r2,z_dim,rho1,rho2,z_theta
+   r1,r2,z_dim,rho1,rho2,z_theta = parameters
    dictionary_SI['radius_1'] = r1
    dictionary_SI['radius_2'] = r2
    dictionary_SI['z_dim'] = z_dim
@@ -501,7 +505,7 @@ def sync_dict(parameters):
    dictionary_SI['rho_2'] = rho2
    dictionary_SI['z_theta'] = z_theta
 
-def print_parameters(SI=0):
+def print_parameters(SI=1):
    global dictionary_SI
    convert_from_SI()
    if SI:
@@ -527,15 +531,17 @@ def residuals(param,exp_data,mask=1):
    '''Returns residual array of difference between experimental data and data calculated from passed parameters.'''
    #global dictionary_SI
    sync_dict(param)
+   print(param)
    err = np.zeros(np.product(exp_data.shape)).reshape(exp_data.shape)
    load_functions()    #DO I NEED?  #Reintilizes functions with the new parameters.
    #calc_intensity = Average_Intensity() #might just take longer or might be necessary to accomodate randomness in Points_For_Calculation
    calc_intensity = Detector_Intensity(Points_For_Calculation())  #like Average_Intensity() but just runs once and without time printouts
    normalize = 1.0/np.sum(calc_intensity)
-   for i in range(len(n_pixels)):
-      for j in range(len(n_pixels)):
+   for i in range(exp_data.shape[0]):
+      for j in range(exp_data.shape[1]):
          err[i,j] = exp_data[i,j]-calc_intensity[i,j]*normalize
-   return err.ravel(mask*err)  #flattens err since leastsq only takes a 1D array
+   return np.ravel(mask*err)  #flattens err since leastsq only takes a 1D array
+      
 
 def fit_step(exp_data,update_freq=20):
    '''Runs a small number of iterations of fitting exp_data.'''
@@ -551,7 +557,7 @@ def perform_fit():  #Gets run when you press the Button.
    get_numbers_from_gui()
    #load_functions() #Not sure if I need this here.
    filename = dictionary['fit_file']
-   maxiter = dictionary['max_iter']
+   max_iter = dictionary['max_iter']
    update_freq = dictionary['update_freq']
    #need to refresh dictionary_SI?
    total_steps = 0
@@ -560,7 +566,7 @@ def perform_fit():  #Gets run when you press the Button.
    exp_data,mask=load_exp_image()
    print('{0}: Starting fit...'.format(time.strftime("%X")))
    total_steps = 0
-   while total_steps < maxiter:
+   while total_steps < max_iter:
       fit_param = fit_step(exp_data,update_freq)
       total_steps+=fit_param[2]['nfev']
       if fit_param[2]['nfev'] < update_freq:      #Better parameter to see if fit is completed?
@@ -571,14 +577,14 @@ def perform_fit():  #Gets run when you press the Button.
          print('{0}: On function call {1}...'.format(time.strftime("%X"),total_steps))
          print(fit_param[0])
          view_fit(exp_data,fit,diff)
-   if total_steps >= maxiter:
+   if total_steps >= max_iter:
       print('{0}: Fit did not converge in {1} steps.'.format(time.strftime("%X"),total_steps))
       print_parameters()
    fit=Average_Intensity()
-   save(fit,_fit)
+   save(fit,"_fit")
    #diff=residuals(fit_param[0],exp_data).reshape(exp_data.shape)
    diff=fit_param[2]['fvec'].reshape(exp_data.shape)
-   save(diff,_fit_residuals)
+   save(diff,"_fit_residuals")
    view_fit(exp_data,fit,diff)
 
 def view_fit(exp_data,fit,residuals):
@@ -589,6 +595,9 @@ def view_fit(exp_data,fit,residuals):
    #get_numbers_from_gui()
    #load_functions()
    if plot_fit:
+      threshold=np.median(exp_data)/10
+      zero_value=threshold
+      exp_data[exp_data<threshold]=zero_value
       Intensity_plot(exp_data,"exp_data",dictionary_SI['title'],0)
       Intensity_plot(fit,"fit",dictionary_SI['title'],1)
    if plot_residuals:
@@ -603,6 +612,8 @@ def convert_from_SI():
     dictionary["radius_2"] = dictionary_SI["radius_2"]*10**9
     dictionary["z_dim"] = dictionary_SI["z_dim"]*10**9
     if dictionary["degrees"] == 1: #Conveting from radians
+       dictionary["x_theta"] = dictionary_SI["x_theta"]*180/np.pi
+       dictionary["y_theta"] = dictionary_SI["y_theta"]*180/np.pi
        dictionary["z_theta"] = dictionary_SI["z_theta"]*180/np.pi
 
 ### End Fitting Functions ###
@@ -742,7 +753,9 @@ if __name__ == "__main__":
    ROW+=1
    tick("symmetric", "Radial Symmetry", ROW,COL)
    ROW+=1
-   tick('Qz',"Small Angle Approximation (Qz=0)", ROW, COL)
+   #COL+=1
+   tick('Qz',"Small Angle Approx. (Qz=0)", ROW, COL)
+   #COL-=1
    
    ROW+=1
    Label(master, text = "Choose an Analytic Model").grid(row = ROW, column = COL, sticky = W)
@@ -936,7 +949,27 @@ if __name__ == "__main__":
    Button(master, text="Plot Exp Data", command = plot_exp_data, font = "Times 16 bold").grid(row=ROW, column=COL, pady=4)
    COL -= 1
    ROW += 1
-   Label(master, text="(Fit Parameters: Radius 1, Radius 2, Length, Rho 1, Rho 2, z rotation)").grid(row= ROW, column=COL, columnspan =2, sticky = W)
+   Label(master, text="Fit Parameters:").grid(row= ROW, column=COL, columnspan =2, sticky = W)
+   ROW+=1
+   tick("fit_r1", "Radius 1", ROW,COL)
+   COL+=1
+   tick("fit_r2", "Radius 2", ROW,COL)
+   COL-=1
+   ROW+=1
+   tick("fit_p1", "Rho 1", ROW,COL)
+   COL+=1
+   tick("fit_p2", "Rho 2", ROW,COL)
+   COL-=1
+   ROW+=1
+   tick("fit_l", "Length", ROW,COL)
+   COL+=1
+   tick("fit_x", "x rotation", ROW,COL)
+   COL-=1
+   ROW+=1
+   tick("fit_y", "y rotation", ROW,COL)
+   COL+=1
+   tick("fit_z", "z rotation", ROW,COL)
+   COL-=1
    ROW += 1
    enter_num('max_iter', "Maximum Iterations (0=default)", ROW, COL)
    ROW += 1
