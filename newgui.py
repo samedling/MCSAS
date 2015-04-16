@@ -14,10 +14,11 @@ import matplotlib.pyplot as plt
 from matplotlib import cm
 
 #from fit import *
+#import fit
 from PIL import Image
 from scipy.optimize import leastsq
-#from scipy import misc
-from scipy import ndimage
+#from scipy import misc     #alternative to PIL
+#from scipy import ndimage  #possible smoothing of exp_data fore viewing
 
 #Looks for fastmath.so to speed up intensity calculation.
 try:
@@ -37,7 +38,7 @@ dictionary = {'advanced':1, 'altitude':45, 'analytic': 2, 'ave_dist': 0.6, 'azim
               's_stop': 1, 'subfolder':'subfolder', 's_var': 'x_theta', 'symmetric': 0,
               'theta_delta':20, 'ThreeD': 0, 'title': 'title', 'x_theta': 0,'y_theta': 0,'z_theta': 0,'z_dim': 10,'z_scale':1,#}
               'fit_file': 'fit_file', 'center': (0,0), 'border': 0, 'max_iter': 0, 'update_freq': 0, 'plot_fit_tick': 1, 'plot_residuals_tick': 1, 'mask_threshold': 100,
-              'fit_r1': 1, 'fit_r2': 0, 'fit_p1': 1, 'fit_p2': 0, 'fit_l': 1, 'fit_x': 1, 'fit_y': 1, 'fit_z': 1}
+              'fit_radius_1': 1, 'fit_radius_2': 0, 'fit_rho_1': 1, 'fit_rho_2': 0, 'fit_z_dim': 1, 'fit_x_theta': 1, 'fit_y_theta': 1, 'fit_z_theta': 1}
 length_dictionary = len(dictionary)
 
 #####            Importing data or using defaults              #############
@@ -87,8 +88,8 @@ Analytic_options = np.array([["None",0],
                         ["Core shell cylinder",3],
                         ["Gaussian - check this formula",4]
                         ])
-
 Analytic_dict = {x[0]:x[1] for x in Analytic_options} #This is needed, so that when an option is chosen, we can find the shape number.
+
 
 def xy_dim(): #Since x_dim and y_dim are not defined by the user any more, the function to define them is here.
    global dictionary, dictionary_SI
@@ -103,17 +104,14 @@ def get_numbers_from_gui():
     for x in dictionary:
        if x=='comments':
           dictionary[x] = dictionary_in[x].get(1.0,END).rstrip()
+       elif x=='advanced' or x== 'seq_hide':
+          dictionary[x] = dictionary[x]
+       elif x=='shape':
+          dictionary[x] = MC_num_and_name_dict[dictionary_in['shape'].get()]
+       elif x=='analytic':
+          dictionary[x] = Analytic_dict[dictionary_in['analytic'].get()]
        else:
-          if x=='advanced' or x== 'seq_hide':
-             dictionary[x] = dictionary[x]
-          else:
-             if x=='shape':
-                dictionary[x] = MC_num_and_name_dict[dictionary_in['shape'].get()]
-             else:
-                if x=='analytic':
-                   dictionary[x] = Analytic_dict[dictionary_in['analytic'].get()]
-                else:
-                   dictionary[x] = dictionary_in[x].get() 
+          dictionary[x] = dictionary_in[x].get() 
     
     for x in dictionary:
         try:
@@ -210,8 +208,8 @@ def save_vars_to_file(extra): #here I save all the infomation into a text file t
    sim_info.close()
    
 def clear_mem():#This function clears memory to try and reduce mem useage.
-   try:
-      Intensity = None
+   try:                     #You don't actually need try/except, but if you are,
+      Intensity = None      #then you should "except NameError", not everything.
    except:
       None
    try:
@@ -432,6 +430,71 @@ def int_seq(): #This is the button, it runs a sequence or a single image dependi
 
 ### Fitting Functions ###
 
+
+class Fit_Parameters():
+   def __init__(self):
+      global dictionary,dictionary_SI
+      shape=dictionary['shape']
+      always=('x_theta','y_theta','z_theta')
+      self.names=[]
+      if shape in (1,2,6):    #Sphere, Cylinder, or Hex Prism
+         self.density_params=('radius_1','rho_1')
+      elif shape == 3:        #Core Shell
+         self.density_params=('radius_1','radius_2','rho_1','rho_2')
+      elif shape == 4:        #Gaussian
+         self.density_params=('radius_1','radius_2')     #radius_1 only for scaling.
+      elif shape in (5,14):   #Chopped Cone, Double Done
+         self.density_params=('radius_1','radius_2','rho_1','z_dim')
+      elif shape == 7:        #Rect. Prism
+         self.density_params=('radius_1','radius_2','rho_1')   #radius_1 only for scaling.
+      elif shape in (8,11):   #Bubbles, Double Slit
+         self.density_params=('radius_1','radius_2','rho_1')
+      elif shape in (9,12,13):#Chopped Cylinder, N-Shaped Chopped Cone, Sine
+         self.density_params=('radius_1','radius_2','rho_1','rho_2','z_dim')
+      elif shape == 10:
+         print('Model not supported.')
+      else:
+         print('Unknown model. Assuming model uses all parameters.')
+         self.density_params=('radius_1','radius_2','rho_1','rho_2','z_dim')
+      for name in (self.density_params+always):
+         if dictionary['fit_'+name]:
+            self.names.append(name)
+      self.values=[dictionary_SI[var] for var in self.names]
+      self.length=len(self.values)
+      self.units=[]
+      for i in range(self.length):
+         if self.names[i][2:] == 'theta':
+            if dictionary['degrees']:
+               self.units.append(' degrees')
+            else:
+               self.units.append(' radians')
+         elif self.names[i][:-2] == 'radius':
+            self.units.append(' nm')
+         elif self.names[i] == 'z_dim':
+            self.units.append(' nm')
+         else:
+            self.units.append('')
+      print('Starting values:')
+      self.print_param()
+
+   def sync_dict(self):
+      '''Copies parameters to dictionary_SI.'''
+      global dictionary_SI
+      for i in range(self.length):
+         dictionary_SI[self.names[i]] = self.values[i]
+
+   def print_param(self):
+      global dictionary
+      convert_from_SI()
+      for i in range(self.length):
+         print('{0} is {1}{2}.'.format(self.names[i],self.values[i],self.units[i]))
+
+   def get_param(self):
+      return self.values
+
+   def set_param(self,parameters):
+      self.values = parameters
+
 def load_exp_image(preview=False):
    '''Loads experimental data from file, cropping it and downsampling it if neccessary, and normalizes.  Also outputs the mask corresponding to the beamstop.'''
    global dictionary
@@ -479,6 +542,7 @@ def plot_exp_data():#threshold=1e-7,zero_value=1e-7):
     if dictionary['center'] == "0 0":
         image=load_exp_image(preview=True)
         print('Original image size is {0} x {1} pixels.'.format(image.shape[0],image.shape[1]))
+        print('This takes a minute...')
         threshold=np.median(image)/10
         zero_value=threshold
         image[image<threshold]=zero_value
@@ -495,7 +559,7 @@ def plot_exp_data():#threshold=1e-7,zero_value=1e-7):
     return
 
 def sync_dict(parameters):
-   '''Copies parameters to dictionary_SI.'''
+   '''Copies parameters to dictionary_SI.'''    #No longer used; see class in fit.py.
    global dictionary_SI
    r1,r2,z_dim,rho1,rho2,z_theta = parameters
    dictionary_SI['radius_1'] = r1
@@ -506,7 +570,7 @@ def sync_dict(parameters):
    dictionary_SI['z_theta'] = z_theta
 
 def print_parameters(SI=1):
-   global dictionary_SI
+   global dictionary,dictionary_SI
    convert_from_SI()
    if SI:
       print('Radius 1 is {0} nm.'.format(dictionary['radius_1']))
@@ -530,7 +594,10 @@ def print_parameters(SI=1):
 def residuals(param,exp_data,mask=1):
    '''Returns residual array of difference between experimental data and data calculated from passed parameters.'''
    #global dictionary_SI
-   sync_dict(param)
+   global parameters
+   parameters.set_param(param)
+   parameters.sync_dict()
+   #sync_dict(param)
    print(param)
    err = np.zeros(np.product(exp_data.shape)).reshape(exp_data.shape)
    load_functions()    #DO I NEED?  #Reintilizes functions with the new parameters.
@@ -545,49 +612,55 @@ def residuals(param,exp_data,mask=1):
 
 def fit_step(exp_data,update_freq=20):
    '''Runs a small number of iterations of fitting exp_data.'''
-   global dictionary_SI
-   guess=[dictionary_SI['radius_1'],dictionary_SI['radius_2'],dictionary_SI['z_dim'],dictionary_SI['rho_1'],dictionary_SI['rho_2'],dictionary['z_theta']]
+   global dictionary_SI,parameters
+   #guess=[dictionary_SI['radius_1'],dictionary_SI['radius_2'],dictionary_SI['z_dim'],dictionary_SI['rho_1'],dictionary_SI['rho_2'],dictionary['z_theta']]
+   guess = parameters.get_param()
    fit_param = leastsq(residuals,guess,args=(exp_data),full_output=1,maxfev=update_freq)
-   sync_dict(fit_param[0])    #Save Final Fit Parameters
+   parameters.set_param(fit_param[0])   #These two lines shouldn't really be needed.
+   parameters.sync_dict()
+   #sync_dict(fit_param[0])    #Save Final Fit Parameters
    return fit_param
 
 def perform_fit():  #Gets run when you press the Button.
    '''Loads experimental data from filename, fits the data using current dictionary as initial guesses, leaves final parameters in dictionary.'''
-   global dictionary,dictionary_SI
+   global dictionary,dictionary_SI,parameters
    get_numbers_from_gui()
-   #load_functions() #Not sure if I need this here.
+   load_functions()
    filename = dictionary['fit_file']
    max_iter = dictionary['max_iter']
    update_freq = dictionary['update_freq']
-   #need to refresh dictionary_SI?
    total_steps = 0
    if update_freq == 0:
       update_freq = max_iter
    exp_data,mask=load_exp_image()
    print('{0}: Starting fit...'.format(time.strftime("%X")))
+   parameters=Fit_Parameters()  #Creates class of parameters with values and names.
    total_steps = 0
-   while total_steps < max_iter:
+   while total_steps < max_iter or max_iter == 0: #have to make sure it runs even if max_iter=0
       fit_param = fit_step(exp_data,update_freq)
       total_steps+=fit_param[2]['nfev']
       if fit_param[2]['nfev'] < update_freq:      #Better parameter to see if fit is completed?
          print('{0}: Converged after {1} function calls.'.format(time.strftime("%X"),total_steps))
-         print_parameters()
+         parameters.print_param()
+         #print_parameters()
          break
       else: #This line not necessary, but I think it improves readability.
          print('{0}: On function call {1}...'.format(time.strftime("%X"),total_steps))
          print(fit_param[0])
-         view_fit(exp_data,fit,diff)
+         #view_fit(exp_data,fit,diff)
    if total_steps >= max_iter:
       print('{0}: Fit did not converge in {1} steps.'.format(time.strftime("%X"),total_steps))
-      print_parameters()
-   fit=Average_Intensity()
-   save(fit,"_fit")
+      parameters.print_param()
+      #print_parameters()
+   fit_results=Average_Intensity()
+   save(fit_results,"_fit")
    #diff=residuals(fit_param[0],exp_data).reshape(exp_data.shape)
    diff=fit_param[2]['fvec'].reshape(exp_data.shape)
+   #need to refresh dictionary_SI?
    save(diff,"_fit_residuals")
-   view_fit(exp_data,fit,diff)
+   view_fit(exp_data,fit_results,diff)
 
-def view_fit(exp_data,fit,residuals):
+def view_fit(exp_data,fit_results,residuals):
    '''Copied from view_intensity() with minor changes to plot all relevant fitting plots.'''
    global dictionary,dictionary_SI
    plot_fit = dictionary['plot_fit_tick']
@@ -599,11 +672,11 @@ def view_fit(exp_data,fit,residuals):
       zero_value=threshold
       exp_data[exp_data<threshold]=zero_value
       Intensity_plot(exp_data,"exp_data",dictionary_SI['title'],0)
-      Intensity_plot(fit,"fit",dictionary_SI['title'],1)
+      Intensity_plot(fit_results,"fit",dictionary_SI['title'],1)
    if plot_residuals:
       Intensity_plot(residuals,"residuals",dictionary_SI['title'],2)
    clear_mem()
-   print "Program Finished"
+   print("Program Finished.")
 
 
 def convert_from_SI():
@@ -951,24 +1024,24 @@ if __name__ == "__main__":
    ROW += 1
    Label(master, text="Fit Parameters:").grid(row= ROW, column=COL, columnspan =2, sticky = W)
    ROW+=1
-   tick("fit_r1", "Radius 1", ROW,COL)
+   tick("fit_radius_1", "Radius 1", ROW,COL)
    COL+=1
-   tick("fit_r2", "Radius 2", ROW,COL)
+   tick("fit_radius_2", "Radius 2", ROW,COL)
    COL-=1
    ROW+=1
-   tick("fit_p1", "Rho 1", ROW,COL)
+   tick("fit_rho_1", "Rho 1", ROW,COL)
    COL+=1
-   tick("fit_p2", "Rho 2", ROW,COL)
+   tick("fit_rho_2", "Rho 2", ROW,COL)
    COL-=1
    ROW+=1
-   tick("fit_l", "Length", ROW,COL)
+   tick("fit_z_dim", "Length", ROW,COL)
    COL+=1
-   tick("fit_x", "x rotation", ROW,COL)
+   tick("fit_x_theta", "x rotation", ROW,COL)
    COL-=1
    ROW+=1
-   tick("fit_y", "y rotation", ROW,COL)
+   tick("fit_y_theta", "y rotation", ROW,COL)
    COL+=1
-   tick("fit_z", "z rotation", ROW,COL)
+   tick("fit_z_theta", "z rotation", ROW,COL)
    COL-=1
    ROW += 1
    enter_num('max_iter', "Maximum Iterations (0=default)", ROW, COL)

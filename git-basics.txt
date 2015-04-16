@@ -1,0 +1,15 @@
+Basic Git Use (do every time you edit):
+`git pull origin master`    #Download latest changes.  Run this every time you start.
+
+`git add <filename>`        #Adds a filename
+`git add <filename2>`       #Adds another filename, etc.
+
+`git status`                #Tells you which files have been changed and/or added.
+
+`git commit -m "<Insert a short message about what you did here.>"  #Saves added changes locally.
+`git push -u origin master` #Uploads changes to respository.
+
+Other Useful Git Commands:
+`git log --oneline`     #Displays summary of each commit.
+`git log -<n>`          #Displays last n commit details.
+`git log --after="<yyyy-mm-dd>"`
