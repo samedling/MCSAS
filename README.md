@@ -1,6 +1,6 @@
 ## Basic Installation ##
 
-Download from https://www.enthought.com/products/canopy either the free or academic version of Enthought Canopy.
+Download from https://www.enthought.com/products/canopy either the free or academic version of Enthought Canopy.  Your Python version must be 2.7 or newer.
 
 Make sure you have the latest version.
 
@@ -12,7 +12,7 @@ Make sure you have the latest version.
  
 If possible, run `make` to compile the fortran code to achieve 2-100x speedup (depending on number of cores).  Or, try copying the fastmath-OS_CPU.so file to fastmath.so.
 
-Run  `python newgui.py` on the command line.
+Run `python newgui.py` on the command line or open it in Canopy and click run.
 
 
 ### Linux Installation ###
@@ -78,7 +78,7 @@ Finally (after some testing), use git to add/commit/push or e-mail a collaborato
 
 
 
-## Git ##
+## Uploading Changes with Git ##
 
 ### Git Setup ###
 Make sure you have git and a github account.
@@ -132,6 +132,6 @@ If you want to go back just to look, make sure you've committed any changes and 
 
 To create a new branch so you can make commits based on an older version (again, make sure you've committed any changes), run
 
-    git checkout -b <branch_name> <hex_number>To add a Monte Carlo model:
+    git checkout -b <branch_name> <hex_number>
 
 
