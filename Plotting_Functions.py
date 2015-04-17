@@ -6,7 +6,7 @@ from matplotlib import cm
 
 
 ###################               Plotting the points created              ##############################
-def Points_Plot(Points, save_name, show):
+def Points_Plot(Points, save_name, show=1):
     global dictionary_SI
     fig = plt.figure()
     ax = fig.gca(projection='3d')
@@ -133,7 +133,7 @@ def Intensity_plot(Intensity, name, title, show):
 
     ax.set_title(title)
     plt.savefig(dictionary_SI['path_to_subfolder']+name+".png")
-    if show == 1:
+    if show:
         plt.show()
 
 
