@@ -595,7 +595,10 @@ def residuals(param,exp_data,mask=1,random_seed=2015):
    for i in range(exp_data.shape[0]):
       for j in range(exp_data.shape[1]):
          err[i,j] = exp_data[i,j]-calc_intensity[i,j]*normalize
-   return np.ravel(mask*err)  #flattens err since leastsq only takes a 1D array
+   #return np.ravel(mask*err)  #flattens err since leastsq only takes a 1D array
+   to_return = np.ravel(mask*err)   #flattens err since leastsq only takes a 1D array
+   print('{1}: Total error = {0}'.format(to_return.sum(),time.strftime("%X")))
+   return to_return
       
 
 def fit_step(exp_data,update_freq=20):
@@ -648,11 +651,11 @@ def perform_fit():  #Gets run when you press the Button.
    save(diff,"_fit_residuals")
    view_fit(exp_data,fit_results,diff)
 
-def view_fit(exp_data,fit_results,residuals):
+def view_fit(exp_data,fit_results,fit_residuals):
    '''Copied from view_intensity() with minor changes to plot all relevant fitting plots.'''
    global dictionary,dictionary_SI
    plot_fit = dictionary['plot_fit_tick']
-   plot_residuals = dictionary['plot_residuals_tick']
+   plot_residuals = dictionary['plot_residuals_tick'] #local name
    #get_numbers_from_gui()
    #load_functions()
    if plot_fit:
@@ -662,7 +665,7 @@ def view_fit(exp_data,fit_results,residuals):
       Intensity_plot(exp_data,"exp_data",dictionary_SI['title'],1)
       Intensity_plot(fit_results,"fit",dictionary_SI['title'],1)
    if plot_residuals:
-      Intensity_plot(residuals,"residuals",dictionary_SI['title'],1)
+      Intensity_plot(fit_residuals,"residuals",dictionary_SI['title'],1)
    clear_mem()
    print("Program Finished.")
 
@@ -672,10 +675,32 @@ def convert_from_SI():
     dictionary["radius_1"] = dictionary_SI["radius_1"]*10**9
     dictionary["radius_2"] = dictionary_SI["radius_2"]*10**9
     dictionary["z_dim"] = dictionary_SI["z_dim"]*10**9
-    if dictionary["degrees"] == 1: #Conveting from radians
+    if dictionary["degrees"] == 1: #Converting from radians
        dictionary["x_theta"] = dictionary_SI["x_theta"]*180/np.pi
        dictionary["y_theta"] = dictionary_SI["y_theta"]*180/np.pi
        dictionary["z_theta"] = dictionary_SI["z_theta"]*180/np.pi
+
+def plot_residuals():
+   #global dictionary,dictionary_SI,parameters
+   get_numbers_from_gui()
+   load_functions()
+   filename = dictionary['fit_file']
+   print('{0}: Starting calculation...'.format(time.strftime("%X")))
+   exp_data,mask=load_exp_image()
+   calc_intensity=Average_Intensity()
+   save(calc_intensity,"_calc")     #wrong suffix!!
+   normalize = 1.0/np.sum(calc_intensity)
+   err = np.zeros(np.product(exp_data.shape)).reshape(exp_data.shape)
+   for i in range(exp_data.shape[0]):
+      for j in range(exp_data.shape[1]):
+         err[i,j] = exp_data[i,j]-calc_intensity[i,j]*normalize
+   guess_residuals = mask*err
+   save(guess_residuals,"_guess_residuals")
+   print('{1}: Total error = {0}'.format(guess_residuals.sum(),time.strftime("%X")))
+   view_fit(exp_data,calc_intensity,guess_residuals)
+
+
+
 
 ### End Fitting Functions ###
 
@@ -1039,7 +1064,10 @@ if __name__ == "__main__":
    tick('plot_fit_tick',"Plot Fit Results", ROW, COL)
    COL += 1
    tick('plot_residuals_tick',"Plot Fit Residuals", ROW, COL)
+   COL-=1
    ROW += 1
+   Button(master, text="Plot Residuals", command = plot_residuals, font = "Times 16 bold").grid(row=ROW, column=COL, pady=4)
+   COL+= 1
    Button(master, text="Fit Exp Data", command = perform_fit, font = "Times 16 bold").grid(row=ROW, column=COL, pady=4)
    COL -= 1
 
