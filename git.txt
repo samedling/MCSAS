@@ -10,7 +10,7 @@ To configure your local git, run
     git config --global color.ui auto       #Improves readability.
     git config --global core.editor vim     #If you like.
 
-To download the respository, run
+To download the respository into the current directory, run
     git clone https://github.com/samedling/MCSAS.git
 
 

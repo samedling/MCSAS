@@ -13,7 +13,7 @@ from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 from matplotlib import cm
 
-#from fit import *
+#from fit import *   #Need to put 'global variables' in separate dictionary file in order to be able to call them from other files.
 #import fit
 from PIL import Image
 from scipy.optimize import leastsq
@@ -432,6 +432,9 @@ def int_seq(): #This is the button, it runs a sequence or a single image dependi
 
 
 class Fit_Parameters():
+   '''Class to keep track of which parameters are being varied, based on shape and checkboxes.
+      Contains functions to synchronize these parameters with global dictionaries.
+      Also contains list of units for user-friendly output.'''
    def __init__(self):
       global dictionary,dictionary_SI
       shape=dictionary['shape']
@@ -457,12 +460,12 @@ class Fit_Parameters():
          print('Unknown model. Assuming model uses all parameters.')
          self.density_params=('radius_1','radius_2','rho_1','rho_2','z_dim')
       for name in (self.density_params+always):
-         if dictionary['fit_'+name]:
+         if dictionary['fit_'+name]:   #Looks for checkbox values.
             self.names.append(name)
       self.values=[dictionary_SI[var] for var in self.names]
       self.length=len(self.values)
       self.units=[]
-      for i in range(self.length):
+      for i in range(self.length):     #Makes array of unit names correlated with values (for printing).
          if self.names[i][2:] == 'theta':
             if dictionary['degrees']:
                self.units.append(' degrees')
@@ -484,15 +487,18 @@ class Fit_Parameters():
          dictionary_SI[self.names[i]] = self.values[i]
 
    def print_param(self):
+      '''Prints parameters to the screen in a user-friendly format.'''
       global dictionary
       convert_from_SI()
       for i in range(self.length):
-         print('{0} is {1}{2}.'.format(self.names[i],self.values[i],self.units[i]))
+         print('{0} is {1}{2}.'.format(self.names[i],self.values[i],self.units[i])) #Units always wrong?
 
    def get_param(self):
+      '''Returns array usable by fitting routines.'''
       return self.values
 
    def set_param(self,parameters):
+      '''Sets parameters from array from fitting routine.'''
       self.values = parameters
 
 def load_exp_image(preview=False):
@@ -567,6 +573,8 @@ def sync_dict(parameters):
    dictionary_SI['z_dim'] = z_dim
    dictionary_SI['rho_1'] = rho1
    dictionary_SI['rho_2'] = rho2
+   dictionary_SI['x_theta'] = x_theta
+   dictionary_SI['y_theta'] = y_theta
    dictionary_SI['z_theta'] = z_theta
 
 def print_parameters(SI=1):
@@ -1023,7 +1031,7 @@ if __name__ == "__main__":
    COL -= 1
    ROW += 1
    Label(master, text="Fit Parameters:").grid(row= ROW, column=COL, columnspan =2, sticky = W)
-   ROW+=1
+   ROW+=1      # These are checkboxes which, if unchecked, will hold fixed fit parameters.
    tick("fit_radius_1", "Radius 1", ROW,COL)
    COL+=1
    tick("fit_radius_2", "Radius 2", ROW,COL)
