@@ -6,8 +6,11 @@ global accelerated
 
 ######################          Finding the Point used in the Calculation         ##################
 
-def Points_For_Calculation():
+def Points_For_Calculation(seed=0):
     global dictionary_SI
+
+    if seed:
+       np.random.seed([seed])
     
     x_dim = dictionary_SI['x_dim']
     y_dim = dictionary_SI['y_dim']

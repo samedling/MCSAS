@@ -491,7 +491,8 @@ class Fit_Parameters():
       global dictionary
       convert_from_SI()
       for i in range(self.length):
-         print('{0} is {1}{2}.'.format(self.names[i],self.values[i],self.units[i])) #Units always wrong?
+         print('{0} is {1}{2}.'.format(self.names[i],dictionary[self.names[i]],self.units[i]))
+         #print('{0} is {1}{2}.'.format(self.names[i],self.values[i],self.units[i])) #Units always wrong?
 
    def get_param(self):
       '''Returns array usable by fitting routines.'''
@@ -577,29 +578,8 @@ def sync_dict(parameters):
    dictionary_SI['y_theta'] = y_theta
    dictionary_SI['z_theta'] = z_theta
 
-def print_parameters(SI=1):
-   global dictionary,dictionary_SI
-   convert_from_SI()
-   if SI:
-      print('Radius 1 is {0} nm.'.format(dictionary['radius_1']))
-      print('Radius 2 is {0} nm.'.format(dictionary['radius_2']))
-      print('Length is {0} nm.'.format(dictionary['z_dim']))
-      print('Rho 1 is {0}.'.format(dictionary['rho_1']))
-      print('Rho 2 is {0}.'.format(dictionary['rho_2']))
-      if dictionary["degrees"] == 1:
-         print('z rotation is {0} degrees.'.format(dictionary['z_theta']))
-      else:
-         print('z rotation is {0} radians.'.format(dictionary['z_theta']))
-   else:
-      print('Radius 1 is {0} m.'.format(dictionary_SI['radius_1']))
-      print('Radius 2 is {0} m.'.format(dictionary_SI['radius_2']))
-      print('Length is {0} m.'.format(dictionary_SI['z_dim']))
-      print('Rho 1 is {0}.'.format(dictionary_SI['rho_1']))
-      print('Rho 2 is {0}.'.format(dictionary_SI['rho_2']))
-      print('z rotation is {0} radians.'.format(dictionary_SI['z_theta']))
-   return
 
-def residuals(param,exp_data,mask=1):
+def residuals(param,exp_data,mask=1,random_seed=2015):
    '''Returns residual array of difference between experimental data and data calculated from passed parameters.'''
    #global dictionary_SI
    global parameters
@@ -610,7 +590,7 @@ def residuals(param,exp_data,mask=1):
    err = np.zeros(np.product(exp_data.shape)).reshape(exp_data.shape)
    load_functions()    #DO I NEED?  #Reintilizes functions with the new parameters.
    #calc_intensity = Average_Intensity() #might just take longer or might be necessary to accomodate randomness in Points_For_Calculation
-   calc_intensity = Detector_Intensity(Points_For_Calculation())  #like Average_Intensity() but just runs once and without time printouts
+   calc_intensity = Detector_Intensity(Points_For_Calculation(seed=random_seed))  #like Average_Intensity() but just runs once and without time printouts
    normalize = 1.0/np.sum(calc_intensity)
    for i in range(exp_data.shape[0]):
       for j in range(exp_data.shape[1]):
@@ -679,10 +659,10 @@ def view_fit(exp_data,fit_results,residuals):
       threshold=np.median(exp_data)/10
       zero_value=threshold
       exp_data[exp_data<threshold]=zero_value
-      Intensity_plot(exp_data,"exp_data",dictionary_SI['title'],0)
+      Intensity_plot(exp_data,"exp_data",dictionary_SI['title'],1)
       Intensity_plot(fit_results,"fit",dictionary_SI['title'],1)
    if plot_residuals:
-      Intensity_plot(residuals,"residuals",dictionary_SI['title'],2)
+      Intensity_plot(residuals,"residuals",dictionary_SI['title'],1)
    clear_mem()
    print("Program Finished.")
 
