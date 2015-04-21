@@ -13,8 +13,6 @@ from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 from matplotlib import cm
 
-#from fit import *   #Need to put 'global variables' in separate dictionary file in order to be able to call them from other files.
-#import fit
 from PIL import Image
 from scipy.optimize import leastsq
 #from scipy import misc     #alternative to PIL
@@ -502,7 +500,7 @@ class Fit_Parameters():
       '''Sets parameters from array from fitting routine.'''
       self.values = parameters
 
-def load_exp_image(preview=False,large_mask=1):
+def load_exp_image(preview=False,enlarge_mask=1):
    '''Loads experimental data from file, cropping it and downsampling it if neccessary, and normalizes.  Also outputs the mask corresponding to the beamstop.'''
    global dictionary
    downsample=(dictionary['pixels'],dictionary['pixels'])
@@ -530,7 +528,7 @@ def load_exp_image(preview=False,large_mask=1):
          print("Cropped to {0}.".format(cropped.size))
       else:
          cropped=Image.open(filename)
-      downsampled=cropped.resize(downsample,Image.ANTIALIAS)      #NEAREST,BILINEAR,BICUBIC,ANTIALIAS (worst to best; fastest to slowest)
+      downsampled=cropped.resize(downsample,Image.BICUBIC)      #NEAREST,BILINEAR,BICUBIC,ANTIALIAS (worst to best; fastest to slowest)
       exp_data=np.array(downsampled)
       padded=np.lib.pad(exp_data,((1,1),(1,1)),'edge')   #pads the array for enlarging mask
       mask=np.ones(np.product(exp_data.shape)).reshape(exp_data.shape)
@@ -538,7 +536,7 @@ def load_exp_image(preview=False,large_mask=1):
          for j in range(mask.shape[1]):
             if exp_data[i,j] < mask_threshold:        #do after normalize?
                mask[i,j] = 0
-            elif large_mask and padded[i:i+3,j:j+3].min() < mask_threshold:        #do after normalize?
+            elif enlarge_mask and padded[i:i+3,j:j+3].min() < mask_threshold:        #do after normalize?
                mask[i,j] = 0  #could set to ~0.1 if want to decrease but not zero it.
       normalize = 1.0/np.sum(exp_data)
       exp_data=exp_data*normalize
@@ -561,25 +559,12 @@ def plot_exp_data():#threshold=1e-7,zero_value=1e-7):
         cropped=load_exp_image()
         #cropped[cropped<threshold]=zero_value
         #Intensity_plot(cropped,"exp_data2",'After Cropping and Downsampling',1)
-        threshold=np.median(cropped[0])/10      #Remove this since upper/lower bounds is the same.
-        zero_value=threshold
+        #threshold=np.median(cropped[0])/10      #Remove this since upper/lower bounds is the same.
+        #zero_value=threshold
         masked=cropped[0]*cropped[1]
-        masked[masked<threshold]=zero_value
+        #masked[masked<threshold]=zero_value
         Intensity_plot(masked,"exp_data2",'After Cropping and Downsampling',1)
     return
-
-def sync_dict(parameters):
-   '''Copies parameters to dictionary_SI.'''    #No longer used; see class in fit.py.
-   global dictionary_SI
-   r1,r2,z_dim,rho1,rho2,z_theta = parameters
-   dictionary_SI['radius_1'] = r1
-   dictionary_SI['radius_2'] = r2
-   dictionary_SI['z_dim'] = z_dim
-   dictionary_SI['rho_1'] = rho1
-   dictionary_SI['rho_2'] = rho2
-   dictionary_SI['x_theta'] = x_theta
-   dictionary_SI['y_theta'] = y_theta
-   dictionary_SI['z_theta'] = z_theta
 
 
 def residuals(param,exp_data,mask=1,random_seed=2015):
@@ -588,17 +573,14 @@ def residuals(param,exp_data,mask=1,random_seed=2015):
    global parameters
    parameters.set_param(param)
    parameters.sync_dict()
-   #sync_dict(param)
-   print(param)
+   print(param)     #Temporary
    err = np.zeros(np.product(exp_data.shape)).reshape(exp_data.shape)
-   load_functions()    #DO I NEED?  #Reintilizes functions with the new parameters.
+   #load_functions()    #DO I NEED?  #Reintilizes functions with the new parameters.
    #calc_intensity = Average_Intensity() #might just take longer or might be necessary to accomodate randomness in Points_For_Calculation
-   calc_intensity = Detector_Intensity(Points_For_Calculation(seed=random_seed))  #like Average_Intensity() but just runs once and without time printouts
-   normalize = 1.0/np.sum(calc_intensity) #This line shouldn't do anything since already normalized.
+   calc_intensity = Detector_Intensity(Points_For_Calculation(seed=random_seed))  #like Average_Intensity() but just runs once and without time printouts and with same random_seed
    for i in range(exp_data.shape[0]):
       for j in range(exp_data.shape[1]):
-         err[i,j] = exp_data[i,j]-calc_intensity[i,j]*normalize
-   #return np.ravel(mask*err)  #flattens err since leastsq only takes a 1D array
+         err[i,j] = exp_data[i,j]-calc_intensity[i,j]
    to_return = np.ravel(mask*err)   #flattens err since leastsq only takes a 1D array
    print('{1}: Total error = {0}'.format(np.abs(to_return).sum(),time.strftime("%X")))
    return to_return
@@ -607,12 +589,10 @@ def residuals(param,exp_data,mask=1,random_seed=2015):
 def fit_step(exp_data,update_freq=20):
    '''Runs a small number of iterations of fitting exp_data.'''
    global dictionary_SI,parameters
-   #guess=[dictionary_SI['radius_1'],dictionary_SI['radius_2'],dictionary_SI['z_dim'],dictionary_SI['rho_1'],dictionary_SI['rho_2'],dictionary['z_theta']]
    guess = parameters.get_param()
    fit_param = leastsq(residuals,guess,args=(exp_data),full_output=1,maxfev=update_freq)
-   parameters.set_param(fit_param[0])   #These two lines shouldn't really be needed.
-   parameters.sync_dict()
-   #sync_dict(fit_param[0])    #Save Final Fit Parameters
+   #parameters.set_param(fit_param[0])   #These two lines shouldn't really be needed.
+   #parameters.sync_dict()
    return fit_param
 
 def perform_fit():  #Gets run when you press the Button.
@@ -627,28 +607,27 @@ def perform_fit():  #Gets run when you press the Button.
    if update_freq == 0:
       update_freq = max_iter
    exp_data,mask=load_exp_image()
-   print('{0}: Starting fit...'.format(time.strftime("%X")))
    parameters=Fit_Parameters()  #Creates class of parameters with values and names.
+   print('{0}: Starting fit...'.format(time.strftime("%X")))
    total_steps = 0
-   while total_steps < max_iter or max_iter == 0: #have to make sure it runs even if max_iter=0
+   while total_steps < max_iter or max_iter == 0:
       fit_param = fit_step(exp_data,update_freq)
       total_steps+=fit_param[2]['nfev']
-      if fit_param[2]['nfev'] < update_freq:      #Better parameter to see if fit is completed?
+      if fit_param[2]['nfev'] < update_freq:      #Checks if fit is completed.
          print('{0}: Converged after {1} function calls.'.format(time.strftime("%X"),total_steps))
          parameters.print_param()
-         #print_parameters()
          break
-      else: #This line not necessary, but I think it improves readability.
+      else:
          print('{0}: On function call {1}...'.format(time.strftime("%X"),total_steps))
-         print(fit_param[0])
-         #view_fit(exp_data,fit,diff)
+         print('Current parameter values are:')
+         parameters.print_param()
+         #print(fit_param[0])
+         Intensity_plot(fit_param[2]['fvec'].reshape(exp_data.shape),"residuals",'Difference Plot',1)
    if total_steps >= max_iter:
       print('{0}: Fit did not converge in {1} steps.'.format(time.strftime("%X"),total_steps))
       parameters.print_param()
-      #print_parameters()
    fit_results=Average_Intensity()
    save(fit_results,"_fit")
-   #diff=residuals(fit_param[0],exp_data).reshape(exp_data.shape)
    diff=fit_param[2]['fvec'].reshape(exp_data.shape)
    #need to refresh dictionary_SI?
    save(diff,"_fit_residuals")
@@ -666,16 +645,17 @@ def view_fit(exp_data,fit_results,fit_residuals):
       threshold=np.median(exp_data)/10
       zero_value=threshold
       exp_data[exp_data<threshold]=zero_value
-      Intensity_plot(exp_data,"exp_data",dictionary_SI['Experimental Data'],1)
-      Intensity_plot(fit_results,"fit",dictionary_SI['Calculated Data'],1)
+      Intensity_plot(exp_data,"exp_data",'Experimental Data',1)
+      Intensity_plot(fit_results,"fit",'Calculated Data',1)
    if plot_residuals:
       print('Plotting difference.')
-      Intensity_plot(fit_residuals,"residuals",dictionary_SI['Difference Plot'],1)
+      Intensity_plot(fit_residuals,"residuals",'Difference Plot',1)
    clear_mem()
    print("Program Finished.")
 
 
 def convert_from_SI():
+    '''Copies parameters from SI dictionary back to regular dictionary.'''
     global dictionary,dictionary_SI
     dictionary["radius_1"] = dictionary_SI["radius_1"]*10**9
     dictionary["radius_2"] = dictionary_SI["radius_2"]*10**9
@@ -684,8 +664,11 @@ def convert_from_SI():
        dictionary["x_theta"] = dictionary_SI["x_theta"]*180/np.pi
        dictionary["y_theta"] = dictionary_SI["y_theta"]*180/np.pi
        dictionary["z_theta"] = dictionary_SI["z_theta"]*180/np.pi
+    dictionary["rho_1"] = dictionary_SI["rho_1"]
+    dictionary["rho_2"] = dictionary_SI["rho_2"]
 
-def plot_residuals():
+def plot_residuals(plot_all=True):
+   '''Loads exp data, calculates intensity, and plots the difference [as well as 2 original plots].'''
    #global dictionary,dictionary_SI,parameters
    get_numbers_from_gui()
    load_functions()
@@ -694,15 +677,18 @@ def plot_residuals():
    exp_data,mask=load_exp_image()
    calc_intensity=Average_Intensity()
    save(calc_intensity,"_calc")     #wrong suffix!!
-   normalize = 1.0/np.sum(calc_intensity) #This line shouldn't do anything since already normalized in fortran.
    err = np.zeros(np.product(exp_data.shape)).reshape(exp_data.shape)
    for i in range(exp_data.shape[0]):
       for j in range(exp_data.shape[1]):
-         err[i,j] = exp_data[i,j]-calc_intensity[i,j]*normalize
+         err[i,j] = exp_data[i,j]-calc_intensity[i,j]
    guess_residuals = mask*err
    save(guess_residuals,"_guess_residuals")
    print('{1}: Total error = {0}'.format(np.abs(guess_residuals).sum(),time.strftime("%X")))
-   view_fit(exp_data*mask,calc_intensity,guess_residuals)
+   if plot_all:
+      view_fit(exp_data*mask,calc_intensity,guess_residuals)
+   else:
+      print('Plotting difference.')
+      Intensity_plot(guess_residuals,"residuals",'Difference Plot',1)
 
 
 
