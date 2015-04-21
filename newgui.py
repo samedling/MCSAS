@@ -27,16 +27,18 @@ except ImportError:
    accelerated = False
    print "Could not accelerate using f2py; if speedup is desired, run `make`."
 
+quiet = False
+verbose = False
 
 #These are the default settings
-dictionary = {'advanced':1, 'altitude':45, 'analytic': 2, 'ave_dist': 0.6, 'azimuth':45, 'bound': 0, 'circ_delta':5, 'comments':'',
-              'degrees': 1, 'energy_wavelength': 12, 'energy_wavelength_box': 0, 'gauss':0, 'log_scale': 1, 'maximum': 0.01, 'minimum': 0,
+dictionary = {'advanced':1, 'altitude':45, 'analytic': 2, 'ave_dist': 0.6, 'azimuth':45, 'bound': 1, 'circ_delta':5, 'comments':'',
+              'degrees': 1, 'energy_wavelength': 12, 'energy_wavelength_box': 0, 'gauss':0, 'log_scale': 1, 'maximum': 0.01, 'minimum': 1e-8,
               'num_plots': 1, 'pixels': 100, 'proportional_radius':0.5, 'QSize': 6,'Qz': 0, 'radius_1': 5, 'radius_2': 2.5, 'rho_1': 1, 'rho_2': -0.5,
               'save_img':1, 'save_name': 'save_name', 'scale': 1,'SD':1, 'seq_hide':0, 'shape': 2, 's_start': 0, 's_step': 2,
               's_stop': 1, 'subfolder':'subfolder', 's_var': 'x_theta', 'symmetric': 0,
               'theta_delta':20, 'ThreeD': 0, 'title': 'title', 'x_theta': 0,'y_theta': 0,'z_theta': 0,'z_dim': 10,'z_scale':1,#}
-              'fit_file': 'fit_file', 'center': (0,0), 'border': 0, 'max_iter': 0, 'update_freq': 0, 'plot_fit_tick': 1, 'plot_residuals_tick': 1, 'mask_threshold': 100,
-              'fit_radius_1': 1, 'fit_radius_2': 0, 'fit_rho_1': 1, 'fit_rho_2': 0, 'fit_z_dim': 1, 'fit_x_theta': 1, 'fit_y_theta': 1, 'fit_z_theta': 1}
+              'fit_file': 'fit_file', 'center': (0,0), 'border': 0, 'max_iter': 0, 'update_freq': 0, 'plot_fit_tick': 1, 'plot_residuals_tick': 1, 'mask_threshold': 10, 'background': 1e-4, 'scaling': 1,
+              'fit_radius_1': 1, 'fit_radius_2': 0, 'fit_rho_1': 1, 'fit_rho_2': 0, 'fit_z_dim': 1, 'fit_x_theta': 1, 'fit_y_theta': 1, 'fit_z_theta': 1, 'fit_background': 1, 'fit_scaling': 0}
 length_dictionary = len(dictionary)
 
 #####            Importing data or using defaults              #############
@@ -436,7 +438,7 @@ class Fit_Parameters():
    def __init__(self):
       global dictionary,dictionary_SI
       shape=dictionary['shape']
-      always=('x_theta','y_theta','z_theta')
+      always=('x_theta','y_theta','z_theta','background')
       self.names=[]
       if shape in (1,2,6):    #Sphere, Cylinder, or Hex Prism
          self.density_params=('radius_1','rho_1')
@@ -509,7 +511,11 @@ def load_exp_image(preview=False,enlarge_mask=1):
    mask_threshold=dictionary['mask_threshold']
    filename=dictionary['fit_file']
    if preview:
-      exp_data=np.array(Image.open(filename))
+      try:
+         exp_data=np.array(Image.open(filename))
+      except IOError:
+         print('File {0} does not exist.'.format(filename))
+         return
       normalize = 1.0/np.sum(exp_data)
       exp_data=exp_data*normalize
       #exp_data=ndimage.gaussian_filter(exp_data,sigma=3)
@@ -528,7 +534,8 @@ def load_exp_image(preview=False,enlarge_mask=1):
          print("Cropped to {0}.".format(cropped.size))
       else:
          cropped=Image.open(filename)
-      downsampled=cropped.resize(downsample,Image.BICUBIC)      #NEAREST,BILINEAR,BICUBIC,ANTIALIAS (worst to best; fastest to slowest)
+      downsampled=cropped.resize(downsample,Image.BICUBIC)      #NEAREST,BILINEAR,BICUBIC,ANTIALIAS (worst to best; fastest to slowest; except ANTIALIAS does weird things sometimes)
+      print("Resized to {0}.".format(downsample))
       exp_data=np.array(downsampled)
       padded=np.lib.pad(exp_data,((1,1),(1,1)),'edge')   #pads the array for enlarging mask
       mask=np.ones(np.product(exp_data.shape)).reshape(exp_data.shape)
@@ -544,6 +551,7 @@ def load_exp_image(preview=False,enlarge_mask=1):
       return exp_data,mask
 
 def plot_exp_data():#threshold=1e-7,zero_value=1e-7):
+    '''Plots experimental data, using center and crop parameters if nonzero.'''
     global dictionary,dictionary_SI
     get_numbers_from_gui()
     load_functions()    #Needed for plotting routines.
@@ -569,18 +577,20 @@ def plot_exp_data():#threshold=1e-7,zero_value=1e-7):
 
 def residuals(param,exp_data,mask=1,random_seed=2015):
    '''Returns residual array of difference between experimental data and data calculated from passed parameters.'''
-   #global dictionary_SI
+   global dictionary_SI
    global parameters
    parameters.set_param(param)
    parameters.sync_dict()
-   print(param)     #Temporary
+   #print(param)     #Temporary
    err = np.zeros(np.product(exp_data.shape)).reshape(exp_data.shape)
    #load_functions()    #DO I NEED?  #Reintilizes functions with the new parameters.
    #calc_intensity = Average_Intensity() #might just take longer or might be necessary to accomodate randomness in Points_For_Calculation
    calc_intensity = Detector_Intensity(Points_For_Calculation(seed=random_seed))  #like Average_Intensity() but just runs once and without time printouts and with same random_seed
    for i in range(exp_data.shape[0]):
       for j in range(exp_data.shape[1]):
-         err[i,j] = exp_data[i,j]-calc_intensity[i,j]
+         #err[i,j] = exp_data[i,j]-calc_intensity[i,j]
+         err[i,j] = exp_data[i,j]-(calc_intensity[i,j]+dictionary_SI['background'])
+         #err[i,j] = exp_data[i,j]-max(calc_intensity[i,j],dictionary_SI['background'])
    to_return = np.ravel(mask*err)   #flattens err since leastsq only takes a 1D array
    print('{1}: Total error = {0}'.format(np.abs(to_return).sum(),time.strftime("%X")))
    return to_return
@@ -597,12 +607,16 @@ def fit_step(exp_data,update_freq=20):
 
 def perform_fit():  #Gets run when you press the Button.
    '''Loads experimental data from filename, fits the data using current dictionary as initial guesses, leaves final parameters in dictionary.'''
-   global dictionary,dictionary_SI,parameters
+   global dictionary,dictionary_SI,parameters,quiet
    get_numbers_from_gui()
    load_functions()
    filename = dictionary['fit_file']
    max_iter = dictionary['max_iter']
    update_freq = dictionary['update_freq']
+   plot_fit=dictionary['plot_fit_tick']
+   plot_diff=dictionary['plot_residuals_tick']
+   initial_quiet=quiet
+   quiet = True
    total_steps = 0
    if update_freq == 0:
       update_freq = max_iter
@@ -615,24 +629,78 @@ def perform_fit():  #Gets run when you press the Button.
       total_steps+=fit_param[2]['nfev']
       if fit_param[2]['nfev'] < update_freq:      #Checks if fit is completed.
          print('{0}: Converged after {1} function calls.'.format(time.strftime("%X"),total_steps))
+         print('Final parameter values are:')
          parameters.print_param()
          break
-      else:
+      elif total_steps < max_iter:
          print('{0}: On function call {1}...'.format(time.strftime("%X"),total_steps))
          print('Current parameter values are:')
          parameters.print_param()
-         #print(fit_param[0])
-         Intensity_plot(fit_param[2]['fvec'].reshape(exp_data.shape),"residuals",'Difference Plot',1)
-   if total_steps >= max_iter:
-      print('{0}: Fit did not converge in {1} steps.'.format(time.strftime("%X"),total_steps))
-      parameters.print_param()
-   fit_results=Average_Intensity()
-   save(fit_results,"_fit")
+         #Intensity_plot(fit_param[2]['fvec'].reshape(exp_data.shape),"residuals",'Difference Plot',1)
+      else:
+         print('{0}: Fit did not converge in {1} steps.'.format(time.strftime("%X"),total_steps))
+         print('Current parameter values are:')
+         parameters.print_param()
    diff=fit_param[2]['fvec'].reshape(exp_data.shape)
+   quiet=initial_quiet
    #need to refresh dictionary_SI?
    save(diff,"_fit_residuals")
-   view_fit(exp_data,fit_results,diff)
+   if plot_fit and plot_diff:
+      fit_results=Average_Intensity()
+      save(fit_results,"_fit")
+      Fit_plot(exp_data*mask,fit_results,diff)
+   elif plot_fit:
+      fit_results=Average_Intensity()
+      save(fit_results,"_fit")
+      print('Plotting difference.')
+      Intensity_plot(fit_results,"residuals",'Difference Plot',1)
+   elif plot_diff:
+      print('Plotting difference.')
+      Intensity_plot(diff,"residuals",'Difference Plot',1)
 
+
+
+def convert_from_SI():
+    '''Copies parameters from SI dictionary back to regular dictionary.'''
+    global dictionary,dictionary_SI
+    dictionary["radius_1"] = dictionary_SI["radius_1"]*10**9
+    dictionary["radius_2"] = dictionary_SI["radius_2"]*10**9
+    dictionary["z_dim"] = dictionary_SI["z_dim"]*10**9
+    if dictionary["degrees"] == 1: #Converting from radians
+       dictionary["x_theta"] = dictionary_SI["x_theta"]*180/np.pi
+       dictionary["y_theta"] = dictionary_SI["y_theta"]*180/np.pi
+       dictionary["z_theta"] = dictionary_SI["z_theta"]*180/np.pi
+    dictionary["rho_1"] = dictionary_SI["rho_1"]
+    dictionary["rho_2"] = dictionary_SI["rho_2"]
+
+def plot_residuals():
+   '''Loads exp data, calculates intensity, and plots the difference [as well as 2 original plots].'''
+   global dictionary
+   plot_all=dictionary['plot_fit_tick']
+   get_numbers_from_gui()
+   load_functions()
+   filename = dictionary['fit_file']
+   print('{0}: Starting calculation...'.format(time.strftime("%X")))
+   exp_data,mask=load_exp_image()
+   calc_intensity=Average_Intensity()
+   save(calc_intensity,"_calc")     #wrong suffix!!
+   err = np.zeros(np.product(exp_data.shape)).reshape(exp_data.shape)
+   for i in range(exp_data.shape[0]):
+      for j in range(exp_data.shape[1]):
+         #err[i,j] = exp_data[i,j]-calc_intensity[i,j]
+         err[i,j] = exp_data[i,j]-(calc_intensity[i,j]+dictionary['background'])
+   guess_residuals = mask*err
+   save(guess_residuals,"_guess_residuals")
+   plot_residuals=np.abs(guess_residuals)
+   print('{1}: Total error = {0}'.format(plot_residuals.sum(),time.strftime("%X")))
+   if plot_all:
+      #view_fit(exp_data*mask,calc_intensity,plot_residuals)
+      Fit_plot(exp_data*mask,calc_intensity,plot_residuals)
+   else:
+      print('Plotting difference.')
+      Intensity_plot(plot_residuals,"residuals",'Difference Plot',1)
+
+#Unused:
 def view_fit(exp_data,fit_results,fit_residuals):
    '''Copied from view_intensity() with minor changes to plot all relevant fitting plots.'''
    global dictionary,dictionary_SI
@@ -652,45 +720,6 @@ def view_fit(exp_data,fit_results,fit_residuals):
       Intensity_plot(fit_residuals,"residuals",'Difference Plot',1)
    clear_mem()
    print("Program Finished.")
-
-
-def convert_from_SI():
-    '''Copies parameters from SI dictionary back to regular dictionary.'''
-    global dictionary,dictionary_SI
-    dictionary["radius_1"] = dictionary_SI["radius_1"]*10**9
-    dictionary["radius_2"] = dictionary_SI["radius_2"]*10**9
-    dictionary["z_dim"] = dictionary_SI["z_dim"]*10**9
-    if dictionary["degrees"] == 1: #Converting from radians
-       dictionary["x_theta"] = dictionary_SI["x_theta"]*180/np.pi
-       dictionary["y_theta"] = dictionary_SI["y_theta"]*180/np.pi
-       dictionary["z_theta"] = dictionary_SI["z_theta"]*180/np.pi
-    dictionary["rho_1"] = dictionary_SI["rho_1"]
-    dictionary["rho_2"] = dictionary_SI["rho_2"]
-
-def plot_residuals(plot_all=True):
-   '''Loads exp data, calculates intensity, and plots the difference [as well as 2 original plots].'''
-   #global dictionary,dictionary_SI,parameters
-   get_numbers_from_gui()
-   load_functions()
-   filename = dictionary['fit_file']
-   print('{0}: Starting calculation...'.format(time.strftime("%X")))
-   exp_data,mask=load_exp_image()
-   calc_intensity=Average_Intensity()
-   save(calc_intensity,"_calc")     #wrong suffix!!
-   err = np.zeros(np.product(exp_data.shape)).reshape(exp_data.shape)
-   for i in range(exp_data.shape[0]):
-      for j in range(exp_data.shape[1]):
-         err[i,j] = exp_data[i,j]-calc_intensity[i,j]
-   guess_residuals = mask*err
-   save(guess_residuals,"_guess_residuals")
-   print('{1}: Total error = {0}'.format(np.abs(guess_residuals).sum(),time.strftime("%X")))
-   if plot_all:
-      view_fit(exp_data*mask,calc_intensity,guess_residuals)
-   else:
-      print('Plotting difference.')
-      Intensity_plot(guess_residuals,"residuals",'Difference Plot',1)
-
-
 
 
 ### End Fitting Functions ###
@@ -994,19 +1023,15 @@ if __name__ == "__main__":
    Button(master, text='Common Variables', command=show_sequence_variables).grid(row=ROW, column = COL, sticky=W, pady=4)
    
    ROW+=1
-   MODES_gauss = [('Linear Sequesnce', '0'),('Gaussian', '1'),]
+   MODES_gauss = [('Linear Sequence', '0'),('Gaussian', '1'),]
    radio('gauss',MODES_gauss, ROW, COL)
    ROW+=1
-   temp_row = ROW
-   enter_vert_num('s_start', "Sequence Start", ROW, COL)
-   ROW+=2
-   enter_vert_num('s_stop', "Sequence Stop", ROW, COL)
+   enter_num('s_start', "Sequence Start", ROW, COL)
    ROW+=1
-   COL+=1
-   ROW = temp_row
-   enter_vert_num('SD', 'Standard Deviation', ROW, COL)
-   ROW+=4
-   COL -=1
+   enter_num('s_stop', "Sequence Stop", ROW, COL)
+   ROW+=1
+   enter_num('SD', 'Standard Deviation', ROW, COL)
+   ROW+=1
 
 
 
@@ -1027,6 +1052,11 @@ if __name__ == "__main__":
    COL -= 1
    ROW += 1
    Label(master, text="Fit Parameters:").grid(row= ROW, column=COL, columnspan =2, sticky = W)
+   ROW += 1
+   enter_num('scaling', "Scaling Parameter (unused)", ROW, COL)
+   ROW += 1
+   enter_num('background', "Background Noise", ROW, COL)
+
    ROW+=1      # These are checkboxes which, if unchecked, will hold fixed fit parameters.
    tick("fit_radius_1", "Radius 1", ROW,COL)
    COL+=1
@@ -1047,6 +1077,12 @@ if __name__ == "__main__":
    COL+=1
    tick("fit_z_theta", "z rotation", ROW,COL)
    COL-=1
+   ROW+=1
+   tick("fit_background", "background", ROW,COL)
+   COL+=1
+   tick("fit_scaling", "scaling parameter", ROW,COL)
+   COL-=1
+   ROW += 1
    ROW += 1
    enter_num('max_iter', "Maximum Iterations (0=default)", ROW, COL)
    ROW += 1

@@ -7,7 +7,7 @@ global accelerated
 ######################          Finding the Point used in the Calculation         ##################
 
 def Points_For_Calculation(seed=0):
-    global dictionary_SI
+    global dictionary_SI,quiet
 
     if seed:
        np.random.seed([seed])
@@ -31,7 +31,8 @@ def Points_For_Calculation(seed=0):
     #To use less RAM, i am clearing this variable now.
     RandomPoints = None
 
-    print str(len(points_inside)) + " points will be used for the calculation."
+    if not quiet:
+        print("{0} points will be used for the calculation.".format(len(points_inside)))
     sim_info = open(dictionary_SI['path_to_subfolder']+"simulation_infomation.txt","a")
     sim_info.write("\n"+str(len(points_inside)) + " points were used for the calculation.")
     sim_info.close()

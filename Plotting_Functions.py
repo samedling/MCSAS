@@ -132,10 +132,76 @@ def Intensity_plot(Intensity, name, title, show):
 
 
     ax.set_title(title)
-    plt.savefig(dictionary_SI['path_to_subfolder']+name+".png")
+    plt.savefig(dictionary_SI['path_to_subfolder']+name+".png")   #should name be save_name?
     if show:
         plt.show()
 
+
+def Fit_plot(experimental,fit,residuals,orientation='Vertical'):
+    '''Shows a multiplot containing residuals, experimental data, and fit results.'''
+    global dictionary_SI
+    maximum = dictionary_SI['maximum']
+    minimum = dictionary_SI['minimum']
+    log_scale = dictionary_SI['log_scale']
+    bound = dictionary_SI['bound']
+    QSize = dictionary_SI['QSize']
+    save_name = dictionary['save_name']
+   #getting the dimentions of the Intensity array
+    pixels_row, pixels_col = np.array(residuals).shape
+
+    #This creates new arrays which are bounded.
+    if bound:
+        #def limit(x):
+        #    return max(min(x,maximum), minimum)
+        #limit = np.vectorize(limit)
+        limit = np.vectorize(lambda x: max(min(x,maximum), minimum))
+        exp_plot = limit(experimental)
+        fit_plot = limit(fit)
+        limit = np.vectorize(lambda x: max(min(x,maximum), minimum/10)) #Using smaller minimum for residuals.
+        res_plot = limit(residuals)
+    else:
+        exp_plot = experimental
+        fit_plot = fit
+        res_plot = residuals
+
+    if orientation[0] in ('V','v'):    #If vertical
+       fig,axes = plt.subplots(nrows=3,ncols=1,figsize=(5,10))
+    else:
+       fig,axes = plt.subplots(nrows=1,ncols=3,figsize=(12,3))
+
+    #Pictures of the colour map are at: http://matplotlib.org/users/colormaps.html
+    #put _r at the end to reverse the direction of the colour.
+    #cmap = cm.get_cmap('gist_gray_r')
+    #cmap = cm.get_cmap('seismic_r')
+    cmap = cm.get_cmap('hot_r')
+
+    if log_scale == 1:
+       im = axes[0].imshow(np.log10(exp_plot),cmap=cmap)
+       im = axes[1].imshow(np.log10(fit_plot),cmap=cmap)
+       im = axes[2].imshow(np.log10(res_plot),cmap=cmap)
+    else:
+       im = axes[0].imshow(exp_plot,cmap=cmap)
+       im = axes[1].imshow(fit_plot,cmap=cmap)
+       im = axes[2].imshow(res_plot,cmap=cmap)
+
+    axes[0].set_title('Exp Data')
+    axes[1].set_title('Fit Results')
+    axes[2].set_title('Difference')
+
+    for i in range(3):
+        axes[i].set_xticklabels([])
+        axes[i].set_yticklabels([])
+
+    if orientation[0] in ('V','v'):    #If vertical
+       fig.subplots_adjust(right=0.85)  #Moves subplots to make room for color bar.
+       cbar_ax = fig.add_axes([0.80,0.15,0.05,0.7])
+    else:
+       fig.subplots_adjust(right=0.92)  #Moves subplots to make room for color bar.
+       cbar_ax = fig.add_axes([0.95,0.15,0.02,0.7])
+    fig.colorbar(im, cax=cbar_ax)        
+
+    #plt.savefig(dictionary_SI['path_to_subfolder']+save_name+".png")
+    plt.show()
 
 
 
