@@ -599,11 +599,11 @@ def residuals(param,exp_data,mask=1,random_seed=2015):
    return to_return
       
 
-def fit_step(exp_data,update_freq=50):
+def fit_step(exp_data,mask=1,update_freq=50):
    '''Runs a small number of iterations of fitting exp_data.'''
    global dictionary_SI,parameters
    guess = parameters.get_param()
-   fit_param = leastsq(residuals,guess,args=(exp_data),full_output=1,maxfev=update_freq)
+   fit_param = leastsq(residuals,guess,args=(exp_data,mask),full_output=1,maxfev=update_freq)
    #parameters.set_param(fit_param[0])   #These two lines shouldn't really be needed.
    #parameters.sync_dict()
    return fit_param
@@ -628,7 +628,7 @@ def perform_fit():  #Gets run when you press the Button.
    print('{0}: Starting fit...'.format(time.strftime("%X")))
    total_steps = 0
    while total_steps < max_iter or max_iter == 0:
-      fit_param = fit_step(exp_data,update_freq)
+      fit_param = fit_step(exp_data,mask,update_freq)
       total_steps+=fit_param[2]['nfev']
       if fit_param[2]['nfev'] < update_freq:      #Checks if fit is completed.
          print('{0}: Converged after {1} function calls.'.format(time.strftime("%X"),total_steps))
@@ -648,6 +648,10 @@ def perform_fit():  #Gets run when you press the Button.
    quiet=initial_quiet
    #need to refresh dictionary_SI?
    save(diff,"_fit_residuals")
+   with open(root_folder+"/default.txt", 'wb') as f:
+      pickle.dump(dictionary, f)#Saving the infomation from dictionary so it can be loaded later
+   with open(dictionary_SI['path_to_subfolder']+"default.txt", 'wb') as f:
+      pickle.dump(dictionary, f) #saving a copy in the subfolder for reference.
    if plot_fit and plot_diff:
       fit_results=Average_Intensity()
       save(fit_results,"_fit")
