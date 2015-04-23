@@ -438,7 +438,7 @@ class Fit_Parameters():
    def __init__(self):
       global dictionary,dictionary_SI
       shape=dictionary['shape']
-      always=('x_theta','y_theta','z_theta','background')
+      always=('x_theta','y_theta','z_theta','background','z_dim')
       self.names=[]
       if shape in (1,2,6):    #Sphere, Cylinder, or Hex Prism
          self.density_params=('radius_1','rho_1')
@@ -447,18 +447,18 @@ class Fit_Parameters():
       elif shape == 4:        #Gaussian
          self.density_params=('radius_1','radius_2')     #radius_1 only for scaling.
       elif shape in (5,14):   #Chopped Cone, Double Done
-         self.density_params=('radius_1','radius_2','rho_1','z_dim')
+         self.density_params=('radius_1','radius_2','rho_1') #z_dim intrinsic too
       elif shape == 7:        #Rect. Prism
          self.density_params=('radius_1','radius_2','rho_1')   #radius_1 only for scaling.
       elif shape in (8,11):   #Bubbles, Double Slit
          self.density_params=('radius_1','radius_2','rho_1')
       elif shape in (9,12,13):#Chopped Cylinder, N-Shaped Chopped Cone, Sine
-         self.density_params=('radius_1','radius_2','rho_1','rho_2','z_dim')
+         self.density_params=('radius_1','radius_2','rho_1','rho_2')  #z_dim intrinsic too
       elif shape == 10:
          print('Model not supported.')
       else:
          print('Unknown model. Assuming model uses all parameters.')
-         self.density_params=('radius_1','radius_2','rho_1','rho_2','z_dim')
+         self.density_params=('radius_1','radius_2','rho_1','rho_2')  #z_dim intrinsic too
       for name in (self.density_params+always):
          if dictionary['fit_'+name]:   #Looks for checkbox values.
             self.names.append(name)
@@ -491,7 +491,7 @@ class Fit_Parameters():
       global dictionary
       convert_from_SI()
       for i in range(self.length):
-         print('{0} is {1}{2}.'.format(self.names[i],dictionary[self.names[i]],self.units[i]))
+         print('{0} is {1:.4}{2}.'.format(self.names[i],dictionary[self.names[i]],self.units[i]))
          #print('{0} is {1}{2}.'.format(self.names[i],self.values[i],self.units[i])) #Units always wrong?
 
    def get_param(self):
@@ -571,6 +571,9 @@ def plot_exp_data():#threshold=1e-7,zero_value=1e-7):
         #zero_value=threshold
         masked=cropped[0]*cropped[1]
         #masked[masked<threshold]=zero_value
+        #for i in (2,5,10,20,50,80,90,95,98,99):
+            #print('{0}th percentile value is {1:0.4}.'.format(i,np.percentile(masked,i)))
+        print('Recommended value for background noise parameter is {0:0.4}.'.format(np.percentile(masked,25)))
         Intensity_plot(masked,"exp_data2",'After Cropping and Downsampling',1)
     return
 
@@ -596,7 +599,7 @@ def residuals(param,exp_data,mask=1,random_seed=2015):
    return to_return
       
 
-def fit_step(exp_data,update_freq=20):
+def fit_step(exp_data,update_freq=50):
    '''Runs a small number of iterations of fitting exp_data.'''
    global dictionary_SI,parameters
    guess = parameters.get_param()

@@ -186,7 +186,7 @@ def Fit_plot(experimental,fit,residuals,orientation='Vertical'):
 
     axes[0].set_title('Exp Data')
     axes[1].set_title('Fit Results')
-    axes[2].set_title('Difference')
+    axes[2].set_title('|Difference|')
 
     for i in range(3):
         axes[i].set_xticklabels([])
