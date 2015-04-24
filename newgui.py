@@ -37,8 +37,9 @@ dictionary = {'advanced':1, 'altitude':45, 'analytic': 2, 'ave_dist': 0.6, 'azim
               'save_img':1, 'save_name': 'save_name', 'scale': 1,'SD':1, 'seq_hide':0, 'shape': 2, 's_start': 0, 's_step': 2,
               's_stop': 1, 'subfolder':'subfolder', 's_var': 'x_theta', 'symmetric': 0,
               'theta_delta':20, 'ThreeD': 0, 'title': 'title', 'x_theta': 0,'y_theta': 0,'z_theta': 0,'z_dim': 10,'z_scale':1,#}
-              'fit_file': 'fit_file', 'center': (0,0), 'border': 0, 'max_iter': 0, 'update_freq': 0, 'plot_fit_tick': 1, 'plot_residuals_tick': 1, 'mask_threshold': 10, 'background': 1e-4, 'scaling': 1,
-              'fit_radius_1': 1, 'fit_radius_2': 0, 'fit_rho_1': 1, 'fit_rho_2': 0, 'fit_z_dim': 1, 'fit_x_theta': 1, 'fit_y_theta': 1, 'fit_z_theta': 1, 'fit_background': 1, 'fit_scaling': 0}
+              'fit_file': 'fit_file', 'center': (0,0), 'border': 0, 'max_iter': 0, 'update_freq': 50, 'plot_fit_tick': 1, 'plot_residuals_tick': 1, 'mask_threshold': 10, 'background': 1e-4, 'scaling': 1,
+              'fit_radius_1': 1, 'fit_radius_2': 0, 'fit_rho_1': 1, 'fit_rho_2': 0, 'fit_z_dim': 1, 'fit_x_theta': 1, 'fit_y_theta': 1, 'fit_z_theta': 1, 'fit_background': 1, 'fit_scaling': 0
+              }
 length_dictionary = len(dictionary)
 
 #####            Importing data or using defaults              #############
@@ -477,8 +478,6 @@ class Fit_Parameters():
             self.units.append(' nm')
          else:
             self.units.append('')
-      print('Starting values:')
-      self.print_param()
 
    def sync_dict(self):
       '''Copies parameters to dictionary_SI.'''
@@ -486,12 +485,12 @@ class Fit_Parameters():
       for i in range(self.length):
          dictionary_SI[self.names[i]] = self.values[i]
 
-   def print_param(self):
+   def print_param(self,logfile=0):
       '''Prints parameters to the screen in a user-friendly format.'''
       global dictionary
       convert_from_SI()
       for i in range(self.length):
-         print('{0} is {1:.4}{2}.'.format(self.names[i],dictionary[self.names[i]],self.units[i]))
+         lprint('{0} is {1:.4}{2}.'.format(self.names[i],dictionary[self.names[i]],self.units[i]),logfile)
          #print('{0} is {1}{2}.'.format(self.names[i],self.values[i],self.units[i])) #Units always wrong?
 
    def get_param(self):
@@ -597,15 +596,28 @@ def residuals(param,exp_data,mask=1,random_seed=2015):
    to_return = np.ravel(mask*err)   #flattens err since leastsq only takes a 1D array
    print('{1}: Total error = {0}'.format(np.abs(to_return).sum(),time.strftime("%X")))
    return to_return
-      
+     
+
+
+def lprint(text,filename=0):
+   '''Simple routine for logging text printed to the screen.'''
+   print(text)
+   if filename:
+      with open(filename,'a') as log:
+         log.write(text+"\n")
+
 
 def fit_step(exp_data,mask=1,update_freq=50):
    '''Runs a small number of iterations of fitting exp_data.'''
    global dictionary_SI,parameters
    guess = parameters.get_param()
-   fit_param = leastsq(residuals,guess,args=(exp_data,mask),full_output=1,maxfev=update_freq)
+   fit_param = leastsq(residuals,guess,args=(exp_data,mask,int(time.time())),full_output=1,maxfev=update_freq)
    #parameters.set_param(fit_param[0])   #These two lines shouldn't really be needed.
    #parameters.sync_dict()
+   with open(root_folder+"/default.txt", 'wb') as f:
+      pickle.dump(dictionary, f)#Saving the infomation from dictionary so it can be loaded later
+   with open(dictionary_SI['path_to_subfolder']+"default.txt", 'wb') as f:
+      pickle.dump(dictionary, f) #saving a copy in the subfolder for reference.
    return fit_param
 
 def perform_fit():  #Gets run when you press the Button.
@@ -618,6 +630,7 @@ def perform_fit():  #Gets run when you press the Button.
    update_freq = dictionary['update_freq']
    plot_fit=dictionary['plot_fit_tick']
    plot_diff=dictionary['plot_residuals_tick']
+   logfile=dictionary_SI['path_to_subfolder']+'fitlog.txt'   #dictionary['fitlog']
    initial_quiet=quiet
    quiet = True
    total_steps = 0
@@ -625,33 +638,35 @@ def perform_fit():  #Gets run when you press the Button.
       update_freq = max_iter
    exp_data,mask=load_exp_image()
    parameters=Fit_Parameters()  #Creates class of parameters with values and names.
-   print('{0}: Starting fit...'.format(time.strftime("%X")))
+   lprint('Starting values:',logfile)
+   parameters.print_param(logfile)
+   lprint('{0}: Starting fit...'.format(time.strftime("%X")),logfile)
    total_steps = 0
    while total_steps < max_iter or max_iter == 0:
       fit_param = fit_step(exp_data,mask,update_freq)
       total_steps+=fit_param[2]['nfev']
       if fit_param[2]['nfev'] < update_freq:      #Checks if fit is completed.
-         print('{0}: Converged after {1} function calls.'.format(time.strftime("%X"),total_steps))
-         print('Final parameter values are:')
-         parameters.print_param()
+         lprint('{0}: Converged after {1} function calls.'.format(time.strftime("%X"),total_steps),logfile)
+         lprint('Final parameter values are:',logfile)
+         parameters.print_param(logfile)
          break
       elif total_steps < max_iter:
-         print('{0}: On function call {1}...'.format(time.strftime("%X"),total_steps))
-         print('Current parameter values are:')
-         parameters.print_param()
+         lprint('{0}: On function call {1}...'.format(time.strftime("%X"),total_steps),logfile)
+         lprint('Current parameter values are:',logfile)
+         parameters.print_param(logfile)
          #Intensity_plot(fit_param[2]['fvec'].reshape(exp_data.shape),"residuals",'Difference Plot',1)
       else:
-         print('{0}: Fit did not converge in {1} steps.'.format(time.strftime("%X"),total_steps))
-         print('Current parameter values are:')
-         parameters.print_param()
+         lprint('{0}: Fit did not converge in {1} steps.'.format(time.strftime("%X"),total_steps),logfile)
+         lprint('Current parameter values are:',logfile)
+         parameters.print_param(logfile)
    diff=fit_param[2]['fvec'].reshape(exp_data.shape)
    quiet=initial_quiet
    #need to refresh dictionary_SI?
    save(diff,"_fit_residuals")
-   with open(root_folder+"/default.txt", 'wb') as f:
-      pickle.dump(dictionary, f)#Saving the infomation from dictionary so it can be loaded later
-   with open(dictionary_SI['path_to_subfolder']+"default.txt", 'wb') as f:
-      pickle.dump(dictionary, f) #saving a copy in the subfolder for reference.
+   #with open(root_folder+"/default.txt", 'wb') as f:
+   #   pickle.dump(dictionary, f)#Saving the infomation from dictionary so it can be loaded later
+   #with open(dictionary_SI['path_to_subfolder']+"default.txt", 'wb') as f:
+   #   pickle.dump(dictionary, f) #saving a copy in the subfolder for reference.
    if plot_fit and plot_diff:
       fit_results=Average_Intensity()
       save(fit_results,"_fit")
