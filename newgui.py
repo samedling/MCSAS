@@ -594,7 +594,7 @@ def residuals(param,exp_data,mask=1,random_seed=2015):
          err[i,j] = exp_data[i,j]-(calc_intensity[i,j]+dictionary_SI['background'])
          #err[i,j] = exp_data[i,j]-max(calc_intensity[i,j],dictionary_SI['background'])
    to_return = np.ravel(mask*err)   #flattens err since leastsq only takes a 1D array
-   print('{1}: Total error = {0}'.format(np.abs(to_return).sum(),time.strftime("%X")))
+   print('{0}: Total error = {1:.4}; sum of squares = {2:.4}'.format(time.strftime("%X")),np.abs(to_return).sum(),np.square(to_return).sum())
    return to_return
      
 
@@ -714,7 +714,7 @@ def plot_residuals():
    guess_residuals = mask*err
    save(guess_residuals,"_guess_residuals")
    plot_residuals=np.abs(guess_residuals)
-   print('{1}: Total error = {0}'.format(plot_residuals.sum(),time.strftime("%X")))
+   print('{0}: Total error = {1:.4}; sum of squares = {2:.4}'.format(time.strftime("%X")),np.abs(to_return).sum(),np.square(to_return).sum())
    if plot_all:
       #view_fit(exp_data*mask,calc_intensity,plot_residuals)
       Fit_plot(exp_data*mask,calc_intensity,plot_residuals)

@@ -44,7 +44,17 @@ def Points_For_Calculation(seed=0):
 
     #Multiplying the matrix by each column. The transpose is to make the multiplication work properely.
     #I am multiplying the rotation matricies together, then multiplying it by the coordinates for each point
-    return np.asarray(points_inside.dot(np.transpose(rotz.dot(roty).dot(rotx))))
+    try:
+       return np.asarray(points_inside.dot(np.transpose(rotz.dot(roty).dot(rotx))))
+    except ValueError:
+       print rotx.shape, roty.shape, rotz.shape
+       print rotz.dot(roty).dot(rotx).shape
+       print points_inside.shape
+       print np.transpose(rotz.dot(roty).dot(rotx)).shape
+       print points_inside.dot(np.transpose(rotz.dot(roty).dot(rotx))).shape
+       return np.asarray(points_inside.dot(np.transpose(rotz.dot(roty).dot(rotx))))
+
+    #return np.asarray(points_inside.dot(np.transpose(rotz.dot(roty).dot(rotx))))
 
 
 
