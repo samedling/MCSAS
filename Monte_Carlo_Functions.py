@@ -70,13 +70,15 @@ Qz = dictionary_SI['Qz']
 #for asymmetric objects, no small angle approximation
 if symmetric == 0 and Qz == 0:
     #print "No symmetry; no small angle approximation."
-    def Detector_Intensity(Points):
+    def Detector_Intensity(Points,mask=[]):
         global dictionary_SI
         QSize = dictionary_SI['QSize']
         pixels = dictionary_SI['pixels']
         EHC = dictionary_SI['EHC']
         if accelerated:
-            return fastmath.fastmath.sumintensity00(QSize,pixels,EHC,Points)
+            if not len(mask):
+                mask = np.ones((pixels,pixels))
+            return fastmath.fastmath.sumintensity00(QSize,EHC,mask,Points)
         else:
             #print "FYI: Could not accelerate using f2py."
             Intensity = np.array([[np.sum(np.cos(np.sum(
@@ -91,13 +93,15 @@ if symmetric == 0 and Qz == 0:
 #for asymmetric objects, small angle approximation
 if symmetric == 0 and Qz == 1:
     #print "No symmetry; small angle approximation."
-    def Detector_Intensity(Points):
+    def Detector_Intensity(Points,mask=[]):
         global dictionary_SI
         QSize = dictionary_SI['QSize']
         pixels = dictionary_SI['pixels']
         EHC = dictionary_SI['EHC']
         if accelerated:
-            return fastmath.fastmath.sumintensity01(QSize,pixels,EHC,Points)
+            if not len(mask):
+                mask = np.ones((pixels,pixels))
+            return fastmath.fastmath.sumintensity01(QSize,EHC,mask,Points)
         else:
             #print "FYI: Could not accelerate using f2py."
             Intensity = np.array([[np.sum(np.cos(np.sum(
@@ -112,13 +116,15 @@ if symmetric == 0 and Qz == 1:
 #for symmetric objects, no small angle approximation
 if symmetric == 1 and Qz == 0:
     #print "Symmetry; no small angle approximation."
-    def Detector_Intensity(Points):
+    def Detector_Intensity(Points,mask=[]):
         global dictionary_SI
         QSize = dictionary_SI['QSize']
         pixels = dictionary_SI['pixels']
         EHC = dictionary_SI['EHC']
         if accelerated:
-            return fastmath.fastmath.sumintensity10(QSize,pixels,EHC,Points)
+            if not len(mask):
+                mask = np.ones((pixels,pixels))
+            return fastmath.fastmath.sumintensity10(QSize,EHC,mask,Points)
         else:
             #print "FYI: Could not accelerate using f2py."
             Intensity = np.array([[np.sum(np.cos(np.sum(
@@ -130,13 +136,15 @@ if symmetric == 1 and Qz == 0:
 #for symmetric objects, small angle approximation
 if symmetric == 1 and Qz == 1:
     #print "Symmetry; small angle approximation."
-    def Detector_Intensity(Points):
+    def Detector_Intensity(Points,mask=[]):
         global dictionary_SI
         QSize = dictionary_SI['QSize']
         pixels = dictionary_SI['pixels']
         EHC = dictionary_SI['EHC']
         if accelerated:
-            return fastmath.fastmath.sumintensity11(QSize,pixels,Points)
+            if not len(mask):
+                mask = np.ones((pixels,pixels))
+            return fastmath.fastmath.sumintensity11(QSize,mask,Points)
         else:
             #print "FYI: Could not accelerate using f2py."
             Intensity = np.array([[np.sum(np.cos(np.sum(

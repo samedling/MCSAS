@@ -33,12 +33,12 @@ verbose = False
 #These are the default settings
 dictionary = {'advanced':1, 'altitude':45, 'analytic': 2, 'ave_dist': 0.6, 'azimuth':45, 'bound': 1, 'circ_delta':5, 'comments':'',
               'degrees': 1, 'energy_wavelength': 12, 'energy_wavelength_box': 0, 'gauss':0, 'log_scale': 1, 'maximum': 0.01, 'minimum': 1e-8,
-              'num_plots': 1, 'pixels': 100, 'proportional_radius':0.5, 'QSize': 6,'Qz': 0, 'radius_1': 5, 'radius_2': 2.5, 'rho_1': 1, 'rho_2': -0.5,
+              'num_plots': 1, 'pixels': 200, 'proportional_radius':0.5, 'QSize': 6,'Qz': 0, 'radius_1': 5, 'radius_2': 2.5, 'rho_1': 1, 'rho_2': -0.5,
               'save_img':1, 'save_name': 'save_name', 'scale': 1,'SD':1, 'seq_hide':0, 'shape': 2, 's_start': 0, 's_step': 2,
               's_stop': 1, 'subfolder':'subfolder', 's_var': 'x_theta', 'symmetric': 0,
-              'theta_delta':20, 'ThreeD': 0, 'title': 'title', 'x_theta': 0,'y_theta': 0,'z_theta': 0,'z_dim': 10,'z_scale':1,#}
-              'fit_file': 'fit_file', 'center': (0,0), 'border': 0, 'max_iter': 0, 'update_freq': 50, 'plot_fit_tick': 1, 'plot_residuals_tick': 1, 'mask_threshold': 10, 'background': 1e-4, 'scaling': 1,
-              'fit_radius_1': 1, 'fit_radius_2': 0, 'fit_rho_1': 1, 'fit_rho_2': 0, 'fit_z_dim': 1, 'fit_x_theta': 1, 'fit_y_theta': 1, 'fit_z_theta': 1, 'fit_background': 1, 'fit_scaling': 0
+              'theta_delta':20, 'ThreeD': 0, 'title': 'title', 'x_theta': 0,'y_theta': 0,'z_theta': 0,'z_dim': 100,'z_scale':1,#}
+              'fit_file': 'fit_file', 'center': (0,0), 'border': 0, 'max_iter': 1000, 'update_freq': 0, 'plot_fit_tick': 1, 'plot_residuals_tick': 1, 'mask_threshold': 10, 'background': 2e-5, 'grid_compression': 5,
+              'fit_radius_1': 1, 'fit_radius_2': 0, 'fit_rho_1': 1, 'fit_rho_2': 0, 'fit_z_dim': 1, 'fit_x_theta': 1, 'fit_y_theta': 1, 'fit_z_theta': 1, 'fit_background': 1, 'fit_other': 0
               }
 length_dictionary = len(dictionary)
 
@@ -503,6 +503,7 @@ class Fit_Parameters():
 
 def load_exp_image(preview=False,enlarge_mask=1):
    '''Loads experimental data from file, cropping it and downsampling it if neccessary, and normalizes.  Also outputs the mask corresponding to the beamstop.'''
+   #and 2D array containing a list of x,y points for the grid.'''
    global dictionary
    downsample=(dictionary['pixels'],dictionary['pixels'])
    center=[int(i) for i in dictionary['center'].split()]
@@ -577,25 +578,29 @@ def plot_exp_data():#threshold=1e-7,zero_value=1e-7):
     return
 
 
-def residuals(param,exp_data,mask=1,random_seed=2015):
+
+def residuals(param,exp_data,mask=[],random_seed=2015):
    '''Returns residual array of difference between experimental data and data calculated from passed parameters.'''
    global dictionary_SI
    global parameters
    parameters.set_param(param)
    parameters.sync_dict()
-   #print(param)     #Temporary
+   x=range(exp_data.shape[0])
+   y=range(exp_data.shape[1])
+   if not len(mask):
+      mask = np.ones(exp_data.shape)
    err = np.zeros(np.product(exp_data.shape)).reshape(exp_data.shape)
    #load_functions()    #DO I NEED?  #Reintilizes functions with the new parameters.
    #calc_intensity = Average_Intensity() #might just take longer or might be necessary to accomodate randomness in Points_For_Calculation
-   calc_intensity = Detector_Intensity(Points_For_Calculation(seed=random_seed))  #like Average_Intensity() but just runs once and without time printouts and with same random_seed
-   for i in range(exp_data.shape[0]):
-      for j in range(exp_data.shape[1]):
+   calc_intensity = Detector_Intensity(Points_For_Calculation(seed=random_seed),mask)  #like Average_Intensity() but just runs once and without time printouts and with same random_seed
+   for i in x:
+      for j in y:
          #err[i,j] = exp_data[i,j]-calc_intensity[i,j]
-         err[i,j] = exp_data[i,j]-(calc_intensity[i,j]+dictionary_SI['background'])
+         if mask[i,j]:
+            err[i,j] = mask[i,j]*(exp_data[i,j]-(calc_intensity[i,j]+dictionary_SI['background']))
          #err[i,j] = exp_data[i,j]-max(calc_intensity[i,j],dictionary_SI['background'])
-   to_return = np.ravel(mask*err)   #flattens err since leastsq only takes a 1D array
-   print('{0}: Total error = {1:.4}; sum of squares = {2:.4}'.format(time.strftime("%X")),np.abs(to_return).sum(),np.square(to_return).sum())
-   return to_return
+   print('{0}: Total error = {1:.4}; sum of squares = {2:.4}'.format(time.strftime("%X"),np.abs(err).sum(),np.square(err).sum()))
+   return np.ravel(err)     #flattens err since leastsq only takes 1D array
      
 
 
@@ -607,7 +612,7 @@ def lprint(text,filename=0):
          log.write(text+"\n")
 
 
-def fit_step(exp_data,mask=1,update_freq=50):
+def fit_step(exp_data,mask=[],update_freq=50):
    '''Runs a small number of iterations of fitting exp_data.'''
    global dictionary_SI,parameters
    guess = parameters.get_param()
@@ -632,6 +637,7 @@ def perform_fit():  #Gets run when you press the Button.
    plot_diff=dictionary['plot_residuals_tick']
    logfile=dictionary_SI['path_to_subfolder']+'fitlog.txt'   #dictionary['fitlog']
    initial_quiet=quiet
+   grid_compression=dictionary['grid_compression']
    quiet = True
    total_steps = 0
    if update_freq == 0:
@@ -641,6 +647,8 @@ def perform_fit():  #Gets run when you press the Button.
    lprint('Starting values:',logfile)
    parameters.print_param(logfile)
    lprint('{0}: Starting fit...'.format(time.strftime("%X")),logfile)
+   if grid_compression:
+      mask = fast_mask(exp_data,mask,grid_compression)
    total_steps = 0
    while total_steps < max_iter or max_iter == 0:
       fit_param = fit_step(exp_data,mask,update_freq)
@@ -681,6 +689,44 @@ def perform_fit():  #Gets run when you press the Button.
       Intensity_plot(diff,"residuals",'Difference Plot',1)
 
 
+def fast_mask(exp_data,mask,speedup=5):
+   '''Speeds calculation by adding points to mask.  Speedup can be (2,5,10).'''
+   if speedup == 2:
+      mod=2
+      percentile=80
+      pad=1
+   elif speedup == 5:
+      mod=3
+      percentile=94
+      pad=1
+   elif speedup == 10:
+      mod=5
+      percentile=95
+      pad=1
+   else:
+      percentile=min(99,max(50,100-50./speedup))
+      mod=speedup
+      pad=1
+   threshold=np.percentile(exp_data,percentile)
+   total=np.product(mask.shape)
+   starting=total-mask.sum()
+   if pad:
+      padded=np.lib.pad(exp_data,((1,1),(1,1)),'edge')   #pads the array
+      for i in range(exp_data.shape[0]):
+         for j in range(exp_data.shape[1]):
+            if padded[i:i+3,j:j+3].max() < threshold:
+               if not (i%mod==mod/2 and j%mod==mod/2):
+                  mask[i,j] = 0
+   else:
+      for i in range(exp_data.shape[0]):
+         for j in range(exp_data.shape[1]):
+            if exp_data[i,j] < threshold:
+               if not (i%mod==mod/2 and j%mod==mod/2):
+                  mask[i,j] = 0
+   final=total-mask.sum()
+   print('Of {0} pixels, {1} are masked by beamstop and {2} are being skipped for speed.'.format(total,int(starting),int(final-starting)))
+   print('Estimated speedup: {0:.3}x.'.format(total/(total-final)))
+   return mask
 
 def convert_from_SI():
     '''Copies parameters from SI dictionary back to regular dictionary.'''
@@ -706,15 +752,16 @@ def plot_residuals():
    exp_data,mask=load_exp_image()
    calc_intensity=Average_Intensity()
    save(calc_intensity,"_calc")     #wrong suffix!!
-   err = np.zeros(np.product(exp_data.shape)).reshape(exp_data.shape)
+   #err = np.zeros(np.product(exp_data.shape)).reshape(exp_data.shape)
+   err = np.zeros(exp_data.shape)
    for i in range(exp_data.shape[0]):
       for j in range(exp_data.shape[1]):
          #err[i,j] = exp_data[i,j]-calc_intensity[i,j]
-         err[i,j] = exp_data[i,j]-(calc_intensity[i,j]+dictionary['background'])
-   guess_residuals = mask*err
-   save(guess_residuals,"_guess_residuals")
-   plot_residuals=np.abs(guess_residuals)
-   print('{0}: Total error = {1:.4}; sum of squares = {2:.4}'.format(time.strftime("%X")),np.abs(to_return).sum(),np.square(to_return).sum())
+         if mask[i,j]:
+            err[i,j] = mask[i,j]*(exp_data[i,j]-(calc_intensity[i,j]+dictionary['background']))
+   save(err,"_guess_residuals")
+   plot_residuals=np.abs(err)
+   print('{0}: Total error = {1:.4}; sum of squares = {2:.4}'.format(time.strftime("%X"),plot_residuals.sum(),np.square(err).sum()))
    if plot_all:
       #view_fit(exp_data*mask,calc_intensity,plot_residuals)
       Fit_plot(exp_data*mask,calc_intensity,plot_residuals)
@@ -744,6 +791,52 @@ def view_fit(exp_data,fit_results,fit_residuals):
    print("Program Finished.")
 
 
+
+
+def xy_grid(exp_data,percentile=95,mode=2,pad=1):
+   '''Returns xy grid of points which are either above a threshold or every mode^2 datapoint.  Available modes are (2,3,5,10), corresponding to a decrease of (4,9,25,100) of points below threshold percentile.'''
+   all_x=range(exp_data.shape[0])
+   all_y=range(exp_data.shape[1])
+   threshold=np.percentile(exp_data,percentile)
+   x,y=[],[]
+   if pad:
+      padded=np.lib.pad(exp_data,((1,1),(1,1)),'edge')   #pads the array
+      for i in all_x:
+         for j in all_y:
+            if padded[i:i+3,j:j+3].min() > threshold:
+               x.append(i)
+               y.append(j)
+            elif mode == 10 and i%10==5 and j%10==5:  #factor <100
+               x.append(i)
+               y.append(j)
+            elif mode == 5 and i%5==2 and j%5==2:     #factor <25
+               x.append(i)
+               y.append(j)
+            elif mode == 3 and i%3==1 and j%3==1:     #factor <9
+               x.append(i)
+               y.append(j)
+            elif mode == 2 and i%2==0 and j%2==0:     #factor <4
+               x.append(i)
+               y.append(j)
+   else:
+      for i in all_x:
+         for j in all_y:
+            if exp_data[i,j] > threshold:
+               x.append(i)
+               y.append(j)
+            elif mode == 10 and i%10==5 and j%10==5:  #factor <100
+               x.append(i)
+               y.append(j)
+            elif mode == 5 and i%5==2 and j%5==2:     #factor <25
+               x.append(i)
+               y.append(j)
+            elif mode == 3 and i%3==1 and j%3==1:     #factor <9
+               x.append(i)
+               y.append(j)
+            elif mode == 2 and i%2==0 and j%2==0:     #factor <4
+               x.append(i)
+               y.append(j)
+   return x,y
 ### End Fitting Functions ###
 
 
@@ -1075,8 +1168,6 @@ if __name__ == "__main__":
    ROW += 1
    Label(master, text="Fit Parameters:").grid(row= ROW, column=COL, columnspan =2, sticky = W)
    ROW += 1
-   enter_num('scaling', "Scaling Parameter (unused)", ROW, COL)
-   ROW += 1
    enter_num('background', "Background Noise", ROW, COL)
 
    ROW+=1      # These are checkboxes which, if unchecked, will hold fixed fit parameters.
@@ -1102,13 +1193,15 @@ if __name__ == "__main__":
    ROW+=1
    tick("fit_background", "background", ROW,COL)
    COL+=1
-   tick("fit_scaling", "scaling parameter", ROW,COL)
+   tick("fit_other", "unused", ROW,COL)
    COL-=1
    ROW += 1
    ROW += 1
    enter_num('max_iter', "Maximum Iterations (0=default)", ROW, COL)
    ROW += 1
    enter_num('update_freq', "Update Interval", ROW, COL)
+   ROW += 1
+   enter_num('grid_compression', "Grid Compression (2, 5, or 10)", ROW, COL)
    ROW += 1
    tick('plot_fit_tick',"Plot Fit Results", ROW, COL)
    COL += 1
