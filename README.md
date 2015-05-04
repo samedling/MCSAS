@@ -64,7 +64,7 @@ The Radial Symmetry and Small Angle Approx. checkboxes speed the program, so che
 
 Some comments:
 * Grid compression only works with fortran.
-* If the fit steps are each taking less than 10 seconds, there would probbaly be very little additional time taken by increasind pixels by 40% or halving the grid compression.
+* If the fit steps are each taking less than 10 seconds, there would probaly be very little additional time taken by increasind pixels by 40% or halving the grid compression.
 
 
 
