@@ -30,6 +30,8 @@ Tested on OS X 10.10 "Yosemite".
 
 ### Some Troubleshooting ###
 
+If things ran fine before, but after updating returns KeyError, remove the file called default.txt.
+
 OS X (and Windows?): You need to close all the old plots before you can run things again.  Otherwise, it's otherwise unresponsive for some reason.
 
 OS X/EPD/Tkinter: Make sure you have Canopy.  EPD might tell you it's updated everything, but it's still not the same as Canopy.
@@ -37,6 +39,7 @@ OS X/EPD/Tkinter: Make sure you have Canopy.  EPD might tell you it's updated ev
 PIL: On older systems you may need to manually remove PIL and install Pillow (`sudo pip uninstall PIL` and `sudo pip install Pillow`); newer systems should simply come with Pillow.  Otherwise Image won't be able to read the funny SAXS TIF files.
 
 Scientific Linux/F2PY: Make sure you are using the version of F2PY which matches your version of Python (2.7+), otherwise just loading the Fortran module causes a Segmentation Fault.
+
 
 
 ## Running the Program ##
@@ -51,11 +54,17 @@ To activate/inactivate the advanced options, toggle the Simple Options/Advanced 
 
 The Radial Symmetry and Small Angle Approx. checkboxes speed the program, so check them if appropriate.
 
+
 ### Performing Fits ###
 
 1. Input the name of the experimental data file to fit and click "Plot Exp Data".  If "Center of Beamstop" is left blank ("0 0") then it will plot the original experimental data (which takes a minute).  The lower bounds option in the center column is quite useful here.  Try a value in the range 1e-8 to 1e-6.  Then, move the mouse over the center of the beamstop and read the x,y-coordinates from the plot screen.  Use these values and replot the experimental data.  It will crop a sqaure around the center and downsample it so the side length is equal to the Pixels parameter.
 2. Input known values, uncheck relevant parameter boxes, make a good guess of unknown parameters.  To see how good your guess is, press "Plot Residuals".
 3. When you have a satisfactory guess, click "Fit Exp Data".  Make sure that the update interval isn't too small, or it will actually take longer and/or make no progress.  Each iteration, it prints out the time and the sum of the residuals; be aware that it is normal for the sum of the residuals to go several iterations without changing significantly.
+4. Read the fit results from the terminal.  If you had a grid compression >1 and now you want more printable results, copy the fit results back into the GUI and Plot Residuals.
+
+Some comments:
+* Grid compression only works with fortran.
+* If the fit steps are each taking less than 10 seconds, there would probbaly be very little additional time taken by increasind pixels by 40% or halving the grid compression.
 
 
 
@@ -87,7 +96,6 @@ First, make sure you have the most recent version.
    Save and close the file.
 
 Finally (after some testing), use git to add/commit/push (see below for details) or e-mail a collaborator to do it for you.
-
 
 
 
@@ -136,7 +144,7 @@ After editing a file, or number of files
 ### Advanced Git Use ###
 If there's a collision/conflict/whatever (usually at the push stage) because you and someone both editing the same part of the same file, you'll need to manually fix it, which sometimes sucks.  You may need to separately run
 
-    git fetch
+    git fetch origin master
     git merge
 
 If you want to go back just to look, make sure you've committed any changes and then run
@@ -148,3 +156,7 @@ To create a new branch so you can make commits based on an older version (again,
     git checkout -b <branch_name> <hex_number>
 
 
+
+## Copyright ##
+
+Copyright 2015 Max Proft and Scott Medling, Australian National University.  All rights reserved.

@@ -33,7 +33,7 @@ verbose = False
 #These are the default settings
 dictionary = {'advanced':1, 'altitude':45, 'analytic': 2, 'ave_dist': 0.6, 'azimuth':45, 'bound': 1, 'circ_delta':5, 'comments':'',
               'degrees': 1, 'energy_wavelength': 12, 'energy_wavelength_box': 0, 'gauss':0, 'log_scale': 1, 'maximum': 0.01, 'minimum': 1e-8,
-              'num_plots': 1, 'pixels': 200, 'proportional_radius':0.5, 'QSize': 6,'Qz': 0, 'radius_1': 5, 'radius_2': 2.5, 'rho_1': 1, 'rho_2': -0.5,
+              'num_plots': 1, 'pixels': 200, 'proportional_radius':0.5, 'QSize': 6,'Qz': 0, 'radius_1': 5.0, 'radius_2': 2.5, 'rho_1': 1.0, 'rho_2': -0.5,
               'save_img':1, 'save_name': 'save_name', 'scale': 1,'SD':1, 'seq_hide':0, 'shape': 2, 's_start': 0, 's_step': 2,
               's_stop': 1, 'subfolder':'subfolder', 's_var': 'x_theta', 'symmetric': 0,
               'theta_delta':20, 'ThreeD': 0, 'title': 'title', 'x_theta': 0,'y_theta': 0,'z_theta': 0,'z_dim': 100,'z_scale':1,#}
@@ -490,7 +490,7 @@ class Fit_Parameters():
       global dictionary
       convert_from_SI()
       for i in range(self.length):
-         lprint('{0} is {1:.4}{2}.'.format(self.names[i],dictionary[self.names[i]],self.units[i]),logfile)
+         lprint('{0} is {1:.4}{2}.'.format(self.names[i],float(dictionary[self.names[i]]),self.units[i]),logfile)
          #print('{0} is {1}{2}.'.format(self.names[i],self.values[i],self.units[i])) #Units always wrong?
 
    def get_param(self):
@@ -636,8 +636,13 @@ def perform_fit():  #Gets run when you press the Button.
    plot_fit=dictionary['plot_fit_tick']
    plot_diff=dictionary['plot_residuals_tick']
    logfile=dictionary_SI['path_to_subfolder']+'fitlog.txt'   #dictionary['fitlog']
-   initial_quiet=quiet
    grid_compression=dictionary['grid_compression']
+   if not accelerated:
+      print('Fortran acceleration is NOT enabled!')
+      if grid_compression > 1:
+         print('Grid compression does not work without Fortran.')
+      print('This will probably take a REALLY LONG time.')
+   initial_quiet=quiet
    quiet = True
    total_steps = 0
    if update_freq == 0:
@@ -691,7 +696,9 @@ def perform_fit():  #Gets run when you press the Button.
 
 def fast_mask(exp_data,mask,speedup=5):
    '''Speeds calculation by adding points to mask.  Speedup can be (2,5,10).'''
-   if speedup == 2:
+   if speedup < 2:
+      return mask
+   elif speedup == 2:
       mod=2
       percentile=80
       pad=1
@@ -748,6 +755,8 @@ def plot_residuals():
    get_numbers_from_gui()
    load_functions()
    filename = dictionary['fit_file']
+   if not accelerated:
+      print('Fortran acceleration is NOT enabled!')
    print('{0}: Starting calculation...'.format(time.strftime("%X")))
    exp_data,mask=load_exp_image()
    calc_intensity=Average_Intensity()
@@ -957,7 +966,7 @@ def radio(variable_name, MODES, ROW, COL): #Radiobutton
 
 if __name__ == "__main__":
    master = Tk()
-   master.title("Monte Carlo Small Angle Scattering, By Max Proft")
+   master.title("Monte Carlo Small Angle Scattering (v 0.2.0), By Max Proft")
 
    ### Model Type ###
 
