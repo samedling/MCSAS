@@ -642,7 +642,10 @@ def perform_fit():  #Gets run when you press the Button.
       if grid_compression > 1:
          print('Grid compression does not work without Fortran.')
       print('This will probably take a REALLY LONG time.')
-   initial_quiet=quiet
+   if quiet:
+      initial_quiet=True
+   else:
+      initial_quiet=False
    quiet = True
    total_steps = 0
    if update_freq == 0:
