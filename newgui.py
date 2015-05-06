@@ -1,5 +1,6 @@
-#!/Users/scott/Library/Enthought/Canopy_64bit/User/bin/python
 #!/usr/bin/python
+version = '0.2.0'
+
 
 try:
    from Tkinter import *
@@ -29,6 +30,12 @@ except ImportError:
 
 quiet = False
 verbose = False
+debug = False
+
+if debug:
+   np.random.seed([2015])     #Locks random seed to allow for speedtesting.
+   verbose = True
+
 
 #These are the default settings
 dictionary = {'advanced':1, 'altitude':45, 'analytic': 2, 'ave_dist': 0.6, 'azimuth':45, 'bound': 1, 'circ_delta':5, 'comments':'',
@@ -969,7 +976,7 @@ def radio(variable_name, MODES, ROW, COL): #Radiobutton
 
 if __name__ == "__main__":
    master = Tk()
-   master.title("Monte Carlo Small Angle Scattering (v 0.2.0), By Max Proft")
+   master.title("Monte Carlo Small Angle Scattering ({0}), By Max Proft".format(version))
 
    ### Model Type ###
 
