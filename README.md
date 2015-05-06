@@ -155,6 +155,17 @@ To create a new branch so you can make commits based on an older version (again,
 
     git checkout -b <branch_name> <hex_number>
 
+For potentially unstable changes, use the develop branch:
+
+    git checkout -b <branch_name>   #Creates branch from current commit.
+    git checkout develop        #Switch branches.
+    
+Make your changes, commits, etc.  Then merge:
+
+    git checkout master         #Switch back to master.
+    git merge develop --no-ff   #Merge while preserving commit history.
+    git push
+    
 
 
 ## Copyright ##
