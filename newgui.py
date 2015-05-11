@@ -17,7 +17,7 @@ from matplotlib import cm
 from PIL import Image
 from scipy.optimize import leastsq
 #from scipy import misc     #alternative to PIL
-#from scipy import ndimage  #possible smoothing of exp_data fore viewing
+#from scipy import ndimage  #possible smoothing of exp_data before viewing
 
 #Looks for fastmath.so to speed up intensity calculation.
 try:
@@ -30,7 +30,7 @@ except ImportError:
 
 quiet = False
 verbose = False
-debug = False
+debug = True
 
 if debug:
    np.random.seed([2015])     #Locks random seed to allow for speedtesting.

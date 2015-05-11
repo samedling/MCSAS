@@ -78,7 +78,8 @@ if symmetric == 0 and Qz == 0:
         if accelerated:
             if not len(mask):
                 mask = np.ones((pixels,pixels))
-            return fastmath.fastmath.sumintensity00(QSize,EHC,mask,Points)
+            #return fastmath.fastmath.sumintensity00(QSize,EHC,mask,Points)
+            return fastmath.fastmath.sumintensity00(QSize,EHC,mask,Points.T)
         else:
             #print "FYI: Could not accelerate using f2py."
             Intensity = np.array([[np.sum(np.cos(np.sum(
@@ -91,7 +92,7 @@ if symmetric == 0 and Qz == 0:
             return Intensity/np.sum(Intensity)
 
 #for asymmetric objects, small angle approximation
-if symmetric == 0 and Qz == 1:
+elif symmetric == 0 and Qz == 1:
     #print "No symmetry; small angle approximation."
     def Detector_Intensity(Points,mask=[]):
         global dictionary_SI
@@ -101,7 +102,8 @@ if symmetric == 0 and Qz == 1:
         if accelerated:
             if not len(mask):
                 mask = np.ones((pixels,pixels))
-            return fastmath.fastmath.sumintensity01(QSize,EHC,mask,Points)
+            #return fastmath.fastmath.sumintensity00(QSize,EHC,mask,Points)    #Not a typo; sumint01 is (slightly) slower and thus pointless.
+            return fastmath.fastmath.sumintensity00(QSize,EHC,mask,Points.T)  #Not a typo; sumint 01 is (slightly) slower and thus pointless.
         else:
             #print "FYI: Could not accelerate using f2py."
             Intensity = np.array([[np.sum(np.cos(np.sum(
@@ -114,7 +116,7 @@ if symmetric == 0 and Qz == 1:
             return Intensity/np.sum(Intensity)
 
 #for symmetric objects, no small angle approximation
-if symmetric == 1 and Qz == 0:
+elif symmetric == 1 and Qz == 0:
     #print "Symmetry; no small angle approximation."
     def Detector_Intensity(Points,mask=[]):
         global dictionary_SI
@@ -124,7 +126,8 @@ if symmetric == 1 and Qz == 0:
         if accelerated:
             if not len(mask):
                 mask = np.ones((pixels,pixels))
-            return fastmath.fastmath.sumintensity10(QSize,EHC,mask,Points)
+            #return fastmath.fastmath.sumintensity10(QSize,EHC,mask,Points)
+            return fastmath.fastmath.sumintensity10(QSize,EHC,mask,Points.T)
         else:
             #print "FYI: Could not accelerate using f2py."
             Intensity = np.array([[np.sum(np.cos(np.sum(
@@ -134,7 +137,7 @@ if symmetric == 1 and Qz == 0:
             return Intensity/np.sum(Intensity)
 
 #for symmetric objects, small angle approximation
-if symmetric == 1 and Qz == 1:
+elif symmetric == 1 and Qz == 1:
     #print "Symmetry; small angle approximation."
     def Detector_Intensity(Points,mask=[]):
         global dictionary_SI
@@ -144,7 +147,8 @@ if symmetric == 1 and Qz == 1:
         if accelerated:
             if not len(mask):
                 mask = np.ones((pixels,pixels))
-            return fastmath.fastmath.sumintensity11(QSize,mask,Points)
+            #return fastmath.fastmath.sumintensity11(QSize,mask,Points)
+            return fastmath.fastmath.sumintensity11(QSize,mask,Points.T)
         else:
             #print "FYI: Could not accelerate using f2py."
             Intensity = np.array([[np.sum(np.cos(np.sum(
@@ -159,7 +163,7 @@ if symmetric == 1 and Qz == 1:
 ###########          Average Intensity         #############
 
 def Average_Intensity():
-    global dictionary_SI
+    global dictionary_SI,debug
     num_plots = dictionary_SI['num_plots']
     print "START TIME: "+time.strftime("%X")
     sim_info = open(dictionary_SI['path_to_subfolder']+"simulation_infomation.txt","a")
@@ -178,6 +182,8 @@ def Average_Intensity():
             ##Intensity = Detector_Intensity(Points_For_Calculation())  #Commented and separated so I can time these separately.
             Points = Points_For_Calculation()
             Intensity = Detector_Intensity(Points)
+            if debug:
+               print("FINISHED CALCULATION {0}: {1}".format(plot_number+1,time.strftime("%X")))
         except KeyError:
             Points = Points_For_Calculation()
             try:
@@ -190,7 +196,10 @@ def Average_Intensity():
             #print "Estimated time to finish all calculations: " + str(int(hours)) + " hours, " + str(int(mins)) + " minutes and " + str(int(secs)) + " seconds."
             dictionary_SI['TEMP_VAR'] = 0
             Intensity = Detector_Intensity(Points)
-            print "FINISHED FIRST CALCULATION: "+time.strftime("%X")
+            if debug:
+               print("FINISHED CALCULATION {0}: {1}".format(plot_number+1,time.strftime("%X")))
+            else:
+               print "FINISHED FIRST CALCULATION: "+time.strftime("%X")
 
         
         try:
