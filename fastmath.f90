@@ -16,6 +16,7 @@
 !!$OMP PARALLEL DO ... COLLAPSE(2) !tells it to collapse the double do loop
 !sumintensity10 and 11 might be faster if innermost do loop is replaced with matrix multiplication (MATMUL) and SUM
 !If running with more than 100,000 points (>3MB) and grid no larger than 100x100, it may be faster to move the points loop from innermost to outermost.  Note, this will require storing a temporary Q(3,x,y) array in order to still avoid calculating Q 100,000 times.
+!Divide up points into smaller chuncks, make temp_intensity into arrays so can sqaure at end.
 
 
 module fastmath
@@ -62,6 +63,8 @@ subroutine sumintensity00(qsize,ehc,mask,x_pixels,y_pixels,points,npts,intensity
    return
 end subroutine sumintensity00
 
+
+!Computationally, there is no reason to ever use this; it takes (slightly) longer than sumint00.
 subroutine sumintensity01(qsize,ehc,mask,x_pixels,y_pixels,points,npts,intensity)
    real*8, intent(in) :: qsize
    integer*4, intent(in) :: x_pixels,y_pixels
@@ -80,7 +83,7 @@ subroutine sumintensity01(qsize,ehc,mask,x_pixels,y_pixels,points,npts,intensity
       do i=1,x_pixels
          if (mask(i,j) > 0) then
             Q = (/ i*qsize/x_pixels-0.5*qsize, j*qsize/y_pixels-0.5*qsize, 0.0d0 /)
-            QP = (/ i*qsize/x_pixels-0.5*qsize, j*qsize/y_pixels-0.5*qsize, &
+            QP = (/ Q(1), Q(2), &
                  2*ehc*sin(sqrt((i-0.5*x_pixels)**2+(j-0.5*y_pixels)**2)*qsize/(x_pixels*2*ehc))**2 /)
                 !!POSSIBLE FORMULA ERROR, CHECK X_PIXELS IN DENOMINATOR!!
             !intensity(i,j)= SUM(density(p)*COS(DOT_PRODUCT(Q,R(p))))**2 + SUM(density(p)*SIN(DOT_PRODUCT(QP,R(p))))**2
@@ -147,7 +150,7 @@ subroutine sumintensity11(qsize,mask,x_pixels,y_pixels,points,npts,intensity)
    real*4, dimension(x_pixels,y_pixels), intent(in) :: mask
    real*8, dimension(x_pixels,y_pixels), intent(out) :: intensity
    real*8 :: temp_intensity,total_intensity
-   real*8, dimension(3) :: Q
+   real*8, dimension(2) :: Q
    integer*4 :: p
    !'symmetry'; small angle approximation
    total_intensity = 0
@@ -155,11 +158,11 @@ subroutine sumintensity11(qsize,mask,x_pixels,y_pixels,points,npts,intensity)
    do j=1,y_pixels
       do i=1,x_pixels
          if (mask(i,j) > 0) then
-            Q = (/ i*qsize/x_pixels-0.5*qsize, j*qsize/y_pixels-0.5*qsize, 0.0d0 /)
+            Q = (/ i*qsize/x_pixels-0.5*qsize, j*qsize/y_pixels-0.5*qsize /)
             temp_intensity = 0   !or 0.0d0?
             do p=1,npts
                !temp_intensity = temp_intensity + (density(p)*COS(DOT_PRODUCT(Q,R)))
-               temp_intensity = temp_intensity + (points(4,p)*COS(DOT_PRODUCT(Q,points(1:3,p))))
+               temp_intensity = temp_intensity + (points(4,p)*COS(DOT_PRODUCT(Q,points(1:2,p))))
             end do
             intensity(i,j) = temp_intensity**2
             total_intensity = total_intensity + temp_intensity**2
