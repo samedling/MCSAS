@@ -70,10 +70,12 @@ Qz = dictionary_SI['Qz']
 
 #for asymmetric objects, no small angle approximation
 if opencl_enabled:
-   qsize=dictionary_SI['qsize']
-   ehc=dictionary_SI['ehc']
-   pixels=dictionary_SI['pixels']
-   return opencl_instance.sumint(qsize,ehc,pixels,Points,symmetric,Qz)
+   def Detector_Intensity(Points,mask=[]):
+      global dictionary_SI
+      qsize=dictionary_SI['qsize']
+      ehc=dictionary_SI['ehc']
+      pixels=dictionary_SI['pixels']
+      return opencl_instance.sumint(qsize,ehc,pixels,Points,symmetric,Qz)
 elif symmetric == 0 and Qz == 0:
     #print "No symmetry; no small angle approximation."
     def Detector_Intensity(Points,mask=[]):

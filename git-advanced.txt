@@ -28,7 +28,7 @@ merge code:
 `git checkout master`             #Switch to master branch
 `git branch`                      #Verify on master branch
 `git merge develop --no-ff`       #Merge while preserving commit history
-`git push` 
+`git push --all` 
 
 To create a new branch so you can make commits based on an older version (again, make sure you've committed any changes), run
 
