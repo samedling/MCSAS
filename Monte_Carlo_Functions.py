@@ -2,6 +2,7 @@ import random, os, sys, pylab, time
 import numpy as np
 
 global accelerated
+global opencl_enabled,opencl_instance
 
 
 ######################          Finding the Point used in the Calculation         ##################
@@ -68,7 +69,12 @@ symmetric = dictionary_SI['symmetric']
 Qz = dictionary_SI['Qz']
 
 #for asymmetric objects, no small angle approximation
-if symmetric == 0 and Qz == 0:
+if opencl_enabled:
+   qsize=dictionary_SI['qsize']
+   ehc=dictionary_SI['ehc']
+   pixels=dictionary_SI['pixels']
+   return opencl_instance.sumint(qsize,ehc,pixels,Points,symmetric,Qz)
+elif symmetric == 0 and Qz == 0:
     #print "No symmetry; no small angle approximation."
     def Detector_Intensity(Points,mask=[]):
         global dictionary_SI

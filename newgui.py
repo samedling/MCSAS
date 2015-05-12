@@ -28,6 +28,12 @@ except ImportError:
    accelerated = False
    print "Could not accelerate using f2py; if speedup is desired, run `make`."
 
+opencl_enabled = False
+if opencl_enabled:
+   from sumint import OpenCL
+   opencl_instance = OpenCL()
+   opencl_instance.load_program('sumint.cl')
+
 quiet = False
 verbose = False
 debug = True
