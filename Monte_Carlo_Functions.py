@@ -72,8 +72,8 @@ Qz = dictionary_SI['Qz']
 if opencl_enabled:
    def Detector_Intensity(Points,mask=[]):
       global dictionary_SI
-      qsize=dictionary_SI['qsize']
-      ehc=dictionary_SI['ehc']
+      qsize=dictionary_SI['QSize']
+      ehc=dictionary_SI['EHC']
       pixels=dictionary_SI['pixels']
       return opencl_instance.sumint(qsize,ehc,pixels,Points,symmetric,Qz)
 elif symmetric == 0 and Qz == 0:

@@ -20,19 +20,23 @@ from scipy.optimize import leastsq
 #from scipy import ndimage  #possible smoothing of exp_data before viewing
 
 #Looks for fastmath.so to speed up intensity calculation.
-try:
-   import fastmath
-   accelerated = True
-   print "Accelerating using f2py."
-except ImportError:
-   accelerated = False
-   print "Could not accelerate using f2py; if speedup is desired, run `make`."
-
-opencl_enabled = False
+opencl_enabled = True
 if opencl_enabled:
    from sumint import OpenCL
    opencl_instance = OpenCL()
    opencl_instance.load_program('sumint.cl')
+   print("Accelerating using OpenCL.")
+   print("If you received compiler warnings, it's probably due to your OpenCL device not supporting 64-bit floating point numbers; if everything works, great, and if not, try using a different OpenCL device.")
+else:
+   try:
+      import fastmath
+      accelerated = True
+      print("Accelerating using f2py.")
+   except ImportError:
+      accelerated = False
+      print("Could not accelerate using either OpenCL or f2py.")
+      print("See README for how to install either OpenCL or f2py.")
+      print("In the meantime, fitting is not recommended.")
 
 quiet = False
 verbose = False

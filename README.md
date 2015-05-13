@@ -9,8 +9,12 @@ Make sure you have the latest version.
  * Or a current zipfile may be at https://drive.google.com/open?id=0B8EbmzXGZtaZV3MxUlhSUjczQm8
    
  * Or run `git clone https://github.com/samedling/MCSAS.git` to download the entire repository.
+
+There are two ways of speeding up the code by 2-100x:
+
+ 1. (Recommended:) Install PyOpenCL following the directions at http://wiki.tiker.net/PyOpenCL/Installation
  
-If you have gfortran installed, run `make` to compile the Fortran code to achieve 2-100x speedup (depending on number of cores); if you have ifort installed, edit the makefile before running `make`. Or, if you are running Ubuntu or OS X, try copying the relevant fastmath-<OS>_<CPU>.so file to fastmath.so.
+ 2. Alternatively, if you have gfortran installed, run `make` to compile the Fortran code; if you have ifort installed, edit the makefile before running `make`. Or, if you are running Ubuntu or OS X, try copying the relevant fastmath-<OS>_<CPU>.so file to fastmath.so.
 
 Run `python newgui.py` on the command line or open it in Canopy and click run.  (Note: you may discover running `nice python newgui.py` results in your system being a lot more responsive.)
 
@@ -32,9 +36,11 @@ Tested on OS X 10.10 "Yosemite".
 
 If things ran fine before, but after updating returns KeyError, remove the file called default.txt.
 
-OS X (and Windows?): You need to close all the old plots before you can run things again.  Otherwise, it's otherwise unresponsive for some reason.
+OS X and Windows: You need to close all the old plots before you can run things again.  Otherwise, it's otherwise unresponsive for some reason.
 
 OS X/EPD/Tkinter: Make sure you have Canopy.  EPD might tell you it's updated everything, but it's still not the same as Canopy.
+
+Linux/OpenCL: apt-get on Ubuntu wasn't helpful to me; follow the directions linked above for more success.
 
 PIL: On older systems you may need to manually remove PIL and install Pillow (`sudo pip uninstall PIL` and `sudo pip install Pillow`); newer systems should simply come with Pillow.  Otherwise Image won't be able to read the funny SAXS TIF files.
 
@@ -60,11 +66,11 @@ The Radial Symmetry and Small Angle Approx. checkboxes speed the program, so che
 1. Input the name of the experimental data file to fit and click "Plot Exp Data".  If "Center of Beamstop" is left blank ("0 0") then it will plot the original experimental data (which takes a minute).  The lower bounds option in the center column is quite useful here.  Try a value in the range 1e-8 to 1e-6.  Then, move the mouse over the center of the beamstop and read the x,y-coordinates from the plot screen.  Use these values and replot the experimental data.  It will crop a sqaure around the center and downsample it so the side length is equal to the Pixels parameter.
 2. Input known values, uncheck relevant parameter boxes, make a good guess of unknown parameters.  To see how good your guess is, press "Plot Residuals".
 3. When you have a satisfactory guess, click "Fit Exp Data".  Make sure that the update interval isn't too small, or it will actually take longer and/or make no progress.  Each iteration, it prints out the time and the sum of the residuals; be aware that it is normal for the sum of the residuals to go several iterations without changing significantly.
-4. Read the fit results from the terminal.  If you had a grid compression >1 and now you want more printable results, copy the fit results back into the GUI and Plot Residuals.
+4. Read the fit results from the terminal.  If you had a grid compression >1 (assuming you're using Fortran acceleration) and now you want more printable results, copy the fit results back into the GUI and Plot Residuals.
 
 Some comments:
 * Grid compression only works with fortran.
-* If the fit steps are each taking less than 10 seconds, there would probaly be very little additional time taken by increasind pixels by 40% or halving the grid compression.
+* If the fit steps are each taking less than 10 seconds, there would probaly be very little additional time taken by increasing pixels by 40% or halving the grid compression.
 
 
 
