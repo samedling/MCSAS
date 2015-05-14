@@ -1,7 +1,7 @@
 import random, os, sys, pylab, time
 import numpy as np
 
-global accelerated
+global f2py_enabled,opencl_enabled 
 global opencl_enabled,opencl_instance
 
 
@@ -83,7 +83,7 @@ elif symmetric == 0 and Qz == 0:
         QSize = dictionary_SI['QSize']
         pixels = dictionary_SI['pixels']
         EHC = dictionary_SI['EHC']
-        if accelerated:
+        if f2py_enabled:
             if not len(mask):
                 mask = np.ones((pixels,pixels))
             #return fastmath.fastmath.sumintensity00(QSize,EHC,mask,Points)
@@ -107,7 +107,7 @@ elif symmetric == 0 and Qz == 1:
         QSize = dictionary_SI['QSize']
         pixels = dictionary_SI['pixels']
         EHC = dictionary_SI['EHC']
-        if accelerated:
+        if f2py_enabled:
             if not len(mask):
                 mask = np.ones((pixels,pixels))
             #return fastmath.fastmath.sumintensity00(QSize,EHC,mask,Points)    #Not a typo; sumint01 is (slightly) slower and thus pointless.
@@ -131,7 +131,7 @@ elif symmetric == 1 and Qz == 0:
         QSize = dictionary_SI['QSize']
         pixels = dictionary_SI['pixels']
         EHC = dictionary_SI['EHC']
-        if accelerated:
+        if f2py_enabled:
             if not len(mask):
                 mask = np.ones((pixels,pixels))
             #return fastmath.fastmath.sumintensity10(QSize,EHC,mask,Points)
@@ -152,7 +152,7 @@ elif symmetric == 1 and Qz == 1:
         QSize = dictionary_SI['QSize']
         pixels = dictionary_SI['pixels']
         EHC = dictionary_SI['EHC']
-        if accelerated:
+        if f2py_enabled:
             if not len(mask):
                 mask = np.ones((pixels,pixels))
             #return fastmath.fastmath.sumintensity11(QSize,mask,Points)

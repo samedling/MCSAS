@@ -11,12 +11,12 @@
 !Copyright ANU/Scott Medling, 2015.
 
 !To Do:
-!points isn't listed as either shared but I think this is the default.
-!Tell OpenMP to synchronize access to shared variables (points).
+!Tell OpenMP to synchronize access to shared variables (points) if possible.
 !!$OMP PARALLEL DO ... COLLAPSE(2) !tells it to collapse the double do loop
 !sumintensity10 and 11 might be faster if innermost do loop is replaced with matrix multiplication (MATMUL) and SUM
 !If running with more than 100,000 points (>3MB) and grid no larger than 100x100, it may be faster to move the points loop from innermost to outermost.  Note, this will require storing a temporary Q(3,x,y) array in order to still avoid calculating Q 100,000 times.
 !Divide up points into smaller chuncks, make temp_intensity into arrays so can sqaure at end.
+!Change mask implmentation so x,y coordinates of relevant pixels are passed in so there's no need for an if statement.
 
 
 module fastmath
@@ -35,7 +35,7 @@ subroutine sumintensity00(qsize,ehc,mask,x_pixels,y_pixels,points,npts,intensity
    integer*4 :: p
    !'asymmetry'; no small angle approximation
    total_intensity = 0
-   !$OMP PARALLEL DO PRIVATE(Q,QdotR,temp_intensity,temp_intensity_2) SHARED(mask,intensity) REDUCTION(+:total_intensity)
+   !$OMP PARALLEL DO PRIVATE(Q,QdotR,temp_intensity,temp_intensity_2) SHARED(mask,points,intensity) REDUCTION(+:total_intensity)
    do j=1,y_pixels
       do i=1,x_pixels
          if (mask(i,j) > 0) then
@@ -78,7 +78,7 @@ subroutine sumintensity01(qsize,ehc,mask,x_pixels,y_pixels,points,npts,intensity
    integer*4 :: p
    !'asymmetry'; small angle approximation
    total_intensity = 0
-   !$OMP PARALLEL DO PRIVATE(Q,temp_intensity,temp_intensity_2) SHARED(mask,intensity) REDUCTION(+:total_intensity)
+   !$OMP PARALLEL DO PRIVATE(Q,temp_intensity,temp_intensity_2) SHARED(mask,points,intensity) REDUCTION(+:total_intensity)
    do j=1,y_pixels
       do i=1,x_pixels
          if (mask(i,j) > 0) then
@@ -118,7 +118,7 @@ subroutine sumintensity10(qsize,ehc,mask,x_pixels,y_pixels,points,npts,intensity
    integer*4 :: p
    !'symmetry'; no small angle approximation
    total_intensity = 0
-   !$OMP PARALLEL DO PRIVATE(Q,temp_intensity,temp_intensity_2) SHARED(mask,intensity) REDUCTION(+:total_intensity)
+   !$OMP PARALLEL DO PRIVATE(Q,temp_intensity,temp_intensity_2) SHARED(mask,points,intensity) REDUCTION(+:total_intensity)
    do j=1,y_pixels
       do i=1,x_pixels
          if (mask(i,j) > 0) then
@@ -154,7 +154,7 @@ subroutine sumintensity11(qsize,mask,x_pixels,y_pixels,points,npts,intensity)
    integer*4 :: p
    !'symmetry'; small angle approximation
    total_intensity = 0
-   !$OMP PARALLEL DO PRIVATE(Q,temp_intensity,temp_intensity_2) SHARED(mask,intensity) REDUCTION(+:total_intensity)
+   !$OMP PARALLEL DO PRIVATE(Q,temp_intensity,temp_intensity_2) SHARED(mask,points,intensity) REDUCTION(+:total_intensity)
    do j=1,y_pixels
       do i=1,x_pixels
          if (mask(i,j) > 0) then
