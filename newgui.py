@@ -1,5 +1,5 @@
 #!/usr/bin/python
-version = '0.2.0'
+version = '0.2.1'
 
 
 try:
@@ -44,7 +44,7 @@ else:
 
 quiet = False
 verbose = False
-debug = True
+debug = False
 
 if debug:
    np.random.seed([2015])     #Locks random seed to allow for speedtesting.
