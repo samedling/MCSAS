@@ -20,19 +20,27 @@ from scipy.optimize import leastsq
 #from scipy import ndimage  #possible smoothing of exp_data before viewing
 
 #Looks for fastmath.so to speed up intensity calculation.
+opencl_enabled = True
 try:
-   import fastmath
-   accelerated = True
-   print "Accelerating using f2py."
+   import pyopencl as cl
 except ImportError:
-   accelerated = False
-   print "Could not accelerate using f2py; if speedup is desired, run `make`."
-
-opencl_enabled = False
+   opencl_enabled = False
 if opencl_enabled:
    from sumint import OpenCL
    opencl_instance = OpenCL()
    opencl_instance.load_program('sumint.cl')
+   print("Accelerating using OpenCL.")
+   print("If you received compiler warnings, it's probably due to your OpenCL device not supporting 64-bit floating point numbers; if everything works, great, and if not, try using a different OpenCL device.")
+else:
+   try:
+      import fastmath
+      f2py_enabled = True
+      print("Accelerating using f2py.")
+   except ImportError:
+      f2py_enabled = False
+      print("Could not accelerate using either OpenCL or f2py.")
+      print("See README for how to install either OpenCL or f2py.")
+      print("In the meantime, fitting is not recommended.")
 
 quiet = False
 verbose = False
@@ -57,9 +65,10 @@ length_dictionary = len(dictionary)
 
 #####            Importing data or using defaults              #############
 
-#root_folder = os.path.dirname(sys.argv[0]) #Doesn't work when called from ipython.
-root_folder = os.getcwd()
-#print root_folder
+if os.name == 'nt':  #or sys.platform == 'win32'
+   root_folder = os.path.dirname(sys.argv[0]) #Windows
+else: #os.name == 'posix' or sys.platform == 'linux2'
+   root_folder = os.getcwd()  #Mac/Linux
 #Check for write access?
 
 try:
@@ -650,7 +659,7 @@ def perform_fit():  #Gets run when you press the Button.
    plot_diff=dictionary['plot_residuals_tick']
    logfile=dictionary_SI['path_to_subfolder']+'fitlog.txt'   #dictionary['fitlog']
    grid_compression=dictionary['grid_compression']
-   if not accelerated:
+   if not f2py_enabled:
       print('Fortran acceleration is NOT enabled!')
       if grid_compression > 1:
          print('Grid compression does not work without Fortran.')
@@ -771,8 +780,8 @@ def plot_residuals():
    get_numbers_from_gui()
    load_functions()
    filename = dictionary['fit_file']
-   if not accelerated:
-      print('Fortran acceleration is NOT enabled!')
+   if not f2py_enabled and not opencl_enabled:
+      print('Acceleration is NOT enabled!')
    print('{0}: Starting calculation...'.format(time.strftime("%X")))
    exp_data,mask=load_exp_image()
    calc_intensity=Average_Intensity()
