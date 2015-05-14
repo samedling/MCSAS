@@ -10,9 +10,9 @@ Make sure you have the latest version.
    
  * Or run `git clone https://github.com/samedling/MCSAS.git` to download the entire repository.
 
-There are two ways of speeding up the code by 2-100x:
+There are two ways of speeding up the code by 5-25x on a dual core machine (probably 10-50x or more on a modern quad core machine):
 
- 1. (Recommended:) Install PyOpenCL following the directions at http://wiki.tiker.net/PyOpenCL/Installation
+ 1. (Recommended:) Install PyOpenCL following the directions at http://wiki.tiker.net/PyOpenCL/Installation and then the first time your run it, it will ask you which platform and device you want to use.  Try the GPU first; if it doesn't work, use the CPU.
  
  2. Alternatively, if you have gfortran installed, run `make` to compile the Fortran code; if you have ifort installed, edit the makefile before running `make`. Or, if you are running Ubuntu or OS X, try copying the relevant fastmath-<OS>_<CPU>.so file to fastmath.so.
 
@@ -46,6 +46,7 @@ PIL: On older systems you may need to manually remove PIL and install Pillow (`s
 
 Scientific Linux/F2PY: Make sure you are using the version of F2PY which matches your version of Python (2.7+), otherwise just loading the Fortran module causes a Segmentation Fault.
 
+Fortran/Hyperthreading: If you have a Core i7 processor, (or other CPU with hyperthreading) performance may be slightly improved by adding `export OMP_NUM_THREADS=<n>` to your .bash_profile (where n = the number of physical cores).
 
 
 ## Running the Program ##
