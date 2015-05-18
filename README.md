@@ -40,6 +40,8 @@ OS X and Windows: You need to close all the old plots before you can run things 
 
 OS X/EPD/Tkinter: Make sure you have Canopy.  EPD might tell you it's updated everything, but it's still not the same as Canopy.
 
+If you receive compiler OpenCL compiler warnings when starting the program it's probably due to your OpenCL device not supporting 64-bit floating point numbers; it should be fine, but if you get errors later, try using a different OpenCL device.
+
 Linux/OpenCL: apt-get on Ubuntu wasn't helpful to me; follow the directions linked above for more success.
 
 PIL: On older systems you may need to manually remove PIL and install Pillow (`sudo pip uninstall PIL` and `sudo pip install Pillow`); newer systems should simply come with Pillow.  Otherwise Image won't be able to read the funny SAXS TIF files.

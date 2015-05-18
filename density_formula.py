@@ -8,12 +8,12 @@
 #The function is run once for each point, which is entered as a numpy array, i.e. it is in the form: np.array([x,y,z])
 #Make sure you always use dictionary_SI to get variables.
 
-
-
 import pylab, sys, os, random
 import numpy as np
 
-if dictionary_SI == 0:
+import global_vars as g
+
+if dictionary_SI['shape'] == 0:
     print "Analytic Model Only"
 
 elif dictionary_SI['shape'] == 1:

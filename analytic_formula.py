@@ -4,7 +4,7 @@ import pylab, sys, os
 import numpy as np
 from scipy.special import *
 
-
+import global_vars as g
 
 
 

@@ -4,6 +4,7 @@ from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 from matplotlib import cm
 
+import global_vars as g
 
 ###################               Plotting the points created              ##############################
 def Points_Plot(Points, save_name, show=1):

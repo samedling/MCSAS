@@ -1,14 +1,12 @@
 import random, os, sys, pylab, time
 import numpy as np
 
-global f2py_enabled,opencl_enabled 
-global opencl_enabled,opencl_instance
-
+import global_vars as g
 
 ######################          Finding the Point used in the Calculation         ##################
 
 def Points_For_Calculation(seed=0):
-    global dictionary_SI,quiet
+    global dictionary_SI
 
     if seed:
        np.random.seed([seed])
@@ -22,17 +20,29 @@ def Points_For_Calculation(seed=0):
     ave_dist = dictionary_SI['ave_dist']
     z_scale = dictionary_SI['z_scale']
     #I make a grid, then find a random number from a normal distribution with radius ave_dist. this gets added to the grid coordinates to randomise this.
+    if g.debug:
+       print('{0}: Starting Points Calculation'.format(time.strftime("%X")))
     RandomPoints = np.asarray([((np.random.normal()*dictionary_SI['travel']+x_coord)%dictionary_SI['x_dim'] - dictionary_SI['x_dim']/2, (np.random.normal()*dictionary_SI['travel']+y_coord)%dictionary_SI['y_dim'] - dictionary_SI['y_dim']/2, (np.random.normal()*dictionary_SI['travel']*z_scale+z_coord)%dictionary_SI['z_dim'] - dictionary_SI['z_dim']/2)
                     for z_coord in np.arange(-z_dim/2, z_dim/2, ave_dist*z_scale) for y_coord in np.arange(-y_dim/2, y_dim/2, ave_dist) for x_coord in np.arange(-x_dim/2, x_dim/2, ave_dist)])
 
+    if g.debug:
+       print('{0}: Starting Density Calculation'.format(time.strftime("%X")))
+       print RandomPoints.shape
 
-    points_inside = np.asarray([np.append(coords, [density(coords)])
-                                  for coords in RandomPoints if abs(density(coords))>0.00001])
+    if g.opencl_enabled and RandomPoints.shape[0] > 10000 and dictionary_SI['shape'] in (1,2):
+        if g.debug:
+            print('Using OpenCL for density calculation.')
+        densities = g.opencl_density.density(RandomPoints)
+        points_inside = np.asarray([[RandomPoints[n],densities[n]] for n in range(RandomPoints.shape[0]) if abs(densities[n]) > 0.00001])
+    else:
+        points_inside = np.asarray([np.append(coords, [density(coords)]) for coords in RandomPoints if abs(density(coords))>0.00001])
     
+    if g.debug:
+       print('{0}: Finished Density Calculation'.format(time.strftime("%X")))
     #To use less RAM, i am clearing this variable now.
     RandomPoints = None
 
-    if not quiet:
+    if not g.quiet:
         print("{0} points will be used for the calculation.".format(len(points_inside)))
     sim_info = open(dictionary_SI['path_to_subfolder']+"simulation_infomation.txt","a")
     sim_info.write("\n"+str(len(points_inside)) + " points were used for the calculation.")
@@ -69,13 +79,16 @@ symmetric = dictionary_SI['symmetric']
 Qz = dictionary_SI['Qz']
 
 #for asymmetric objects, no small angle approximation
-if opencl_enabled:
+if g.opencl_enabled:
    def Detector_Intensity(Points,mask=[]):
       global dictionary_SI
       qsize=dictionary_SI['QSize']
       ehc=dictionary_SI['EHC']
       pixels=dictionary_SI['pixels']
-      return opencl_instance.sumint(qsize,ehc,pixels,Points,symmetric,Qz)
+      if not len(mask):
+         return g.opencl_sumint.sumint(qsize,ehc,pixels,Points,symmetric,Qz)
+      else:
+         return g.opencl_sumint.sumint_mask(qsize,ehc,pixels,mask,Points,symmetric,Qz)
 elif symmetric == 0 and Qz == 0:
     #print "No symmetry; no small angle approximation."
     def Detector_Intensity(Points,mask=[]):
@@ -83,7 +96,7 @@ elif symmetric == 0 and Qz == 0:
         QSize = dictionary_SI['QSize']
         pixels = dictionary_SI['pixels']
         EHC = dictionary_SI['EHC']
-        if f2py_enabled:
+        if g.f2py_enabled:
             if not len(mask):
                 mask = np.ones((pixels,pixels))
             #return fastmath.fastmath.sumintensity00(QSize,EHC,mask,Points)
@@ -107,7 +120,7 @@ elif symmetric == 0 and Qz == 1:
         QSize = dictionary_SI['QSize']
         pixels = dictionary_SI['pixels']
         EHC = dictionary_SI['EHC']
-        if f2py_enabled:
+        if g.f2py_enabled:
             if not len(mask):
                 mask = np.ones((pixels,pixels))
             #return fastmath.fastmath.sumintensity00(QSize,EHC,mask,Points)    #Not a typo; sumint01 is (slightly) slower and thus pointless.
@@ -131,7 +144,7 @@ elif symmetric == 1 and Qz == 0:
         QSize = dictionary_SI['QSize']
         pixels = dictionary_SI['pixels']
         EHC = dictionary_SI['EHC']
-        if f2py_enabled:
+        if g.f2py_enabled:
             if not len(mask):
                 mask = np.ones((pixels,pixels))
             #return fastmath.fastmath.sumintensity10(QSize,EHC,mask,Points)
@@ -152,7 +165,7 @@ elif symmetric == 1 and Qz == 1:
         QSize = dictionary_SI['QSize']
         pixels = dictionary_SI['pixels']
         EHC = dictionary_SI['EHC']
-        if f2py_enabled:
+        if g.f2py_enabled:
             if not len(mask):
                 mask = np.ones((pixels,pixels))
             #return fastmath.fastmath.sumintensity11(QSize,mask,Points)
@@ -171,7 +184,7 @@ elif symmetric == 1 and Qz == 1:
 ###########          Average Intensity         #############
 
 def Average_Intensity():
-    global dictionary_SI,debug
+    global dictionary_SI
     num_plots = dictionary_SI['num_plots']
     print "START TIME: "+time.strftime("%X")
     sim_info = open(dictionary_SI['path_to_subfolder']+"simulation_infomation.txt","a")
@@ -190,7 +203,7 @@ def Average_Intensity():
             ##Intensity = Detector_Intensity(Points_For_Calculation())  #Commented and separated so I can time these separately.
             Points = Points_For_Calculation()
             Intensity = Detector_Intensity(Points)
-            if debug:
+            if g.debug:
                print("FINISHED CALCULATION {0}: {1}".format(plot_number+1,time.strftime("%X")))
         except KeyError:
             Points = Points_For_Calculation()
@@ -204,7 +217,7 @@ def Average_Intensity():
             #print "Estimated time to finish all calculations: " + str(int(hours)) + " hours, " + str(int(mins)) + " minutes and " + str(int(secs)) + " seconds."
             dictionary_SI['TEMP_VAR'] = 0
             Intensity = Detector_Intensity(Points)
-            if debug:
+            if g.debug:
                print("FINISHED CALCULATION {0}: {1}".format(plot_number+1,time.strftime("%X")))
             else:
                print "FINISHED FIRST CALCULATION: "+time.strftime("%X")

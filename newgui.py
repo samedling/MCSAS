@@ -19,36 +19,34 @@ from scipy.optimize import leastsq
 #from scipy import misc     #alternative to PIL
 #from scipy import ndimage  #possible smoothing of exp_data before viewing
 
+import global_vars as g
+
 #Looks for fastmath.so to speed up intensity calculation.
-opencl_enabled = True
 try:
    import pyopencl as cl
 except ImportError:
-   opencl_enabled = False
-if opencl_enabled:
+   g.opencl_enabled = False
+if g.opencl_enabled:
    from sumint import OpenCL
-   opencl_instance = OpenCL()
-   opencl_instance.load_program('sumint.cl')
+   g.opencl_density = OpenCL()
+   g.opencl_density.load_program('density.cl')
+   g.opencl_sumint = OpenCL()
+   g.opencl_sumint.load_program('sumint.cl')
    print("Accelerating using OpenCL.")
-   print("If you received compiler warnings, it's probably due to your OpenCL device not supporting 64-bit floating point numbers; if everything works, great, and if not, try using a different OpenCL device.")
 else:
    try:
       import fastmath
-      f2py_enabled = True
+      g.f2py_enabled = True
       print("Accelerating using f2py.")
    except ImportError:
-      f2py_enabled = False
+      g.f2py_enabled = False
       print("Could not accelerate using either OpenCL or f2py.")
       print("See README for how to install either OpenCL or f2py.")
       print("In the meantime, fitting is not recommended.")
 
-quiet = False
-verbose = False
-debug = True
-
-if debug:
+if g.debug:
    np.random.seed([2015])     #Locks random seed to allow for speedtesting.
-   verbose = True
+   g.verbose = True
 
 
 #These are the default settings
@@ -61,7 +59,6 @@ dictionary = {'advanced':1, 'altitude':45, 'analytic': 2, 'ave_dist': 0.6, 'azim
               'fit_file': 'fit_file', 'center': (0,0), 'border': 0, 'max_iter': 1000, 'update_freq': 0, 'plot_fit_tick': 1, 'plot_residuals_tick': 1, 'mask_threshold': 10, 'background': 2e-5, 'grid_compression': 5,
               'fit_radius_1': 1, 'fit_radius_2': 0, 'fit_rho_1': 1, 'fit_rho_2': 0, 'fit_z_dim': 1, 'fit_x_theta': 1, 'fit_y_theta': 1, 'fit_z_theta': 1, 'fit_background': 1, 'fit_other': 0
               }
-length_dictionary = len(dictionary)
 
 #####            Importing data or using defaults              #############
 
@@ -73,7 +70,7 @@ else: #os.name == 'posix' or sys.platform == 'linux2'
 
 try:
     d = pickle.load(open(root_folder+"/default.txt", 'rb'))
-    if length_dictionary != len(d): #I check that it is the same length - This is needed if any new variables are added to dictionary
+    if len(dictionary) != len(d): #I check that it is the same length - This is needed if any new variables are added to dictionary
         a= 1/0
     dictionary = d
 except:
@@ -649,7 +646,7 @@ def fit_step(exp_data,mask=[],update_freq=50):
 
 def perform_fit():  #Gets run when you press the Button.
    '''Loads experimental data from filename, fits the data using current dictionary as initial guesses, leaves final parameters in dictionary.'''
-   global dictionary,dictionary_SI,parameters,quiet
+   global dictionary,dictionary_SI,parameters
    get_numbers_from_gui()
    load_functions()
    filename = dictionary['fit_file']
@@ -659,16 +656,16 @@ def perform_fit():  #Gets run when you press the Button.
    plot_diff=dictionary['plot_residuals_tick']
    logfile=dictionary_SI['path_to_subfolder']+'fitlog.txt'   #dictionary['fitlog']
    grid_compression=dictionary['grid_compression']
-   if not f2py_enabled:
+   if not f2py_enabled and not opencl_enabled:
       print('Fortran acceleration is NOT enabled!')
       if grid_compression > 1:
          print('Grid compression does not work without Fortran.')
       print('This will probably take a REALLY LONG time.')
-   if quiet:
+   if g.quiet:
       initial_quiet=True
    else:
       initial_quiet=False
-   quiet = True
+   g.quiet = True
    total_steps = 0
    if update_freq == 0:
       update_freq = max_iter
@@ -698,7 +695,7 @@ def perform_fit():  #Gets run when you press the Button.
          lprint('Current parameter values are:',logfile)
          parameters.print_param(logfile)
    diff=fit_param[2]['fvec'].reshape(exp_data.shape)
-   quiet=initial_quiet
+   g.quiet=initial_quiet
    #need to refresh dictionary_SI?
    save(diff,"_fit_residuals")
    #with open(root_folder+"/default.txt", 'wb') as f:

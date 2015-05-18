@@ -24,6 +24,9 @@ Other Useful Git Commands:
 Switch back and forth with:
 `git checkout master` or `git checkout develop`
 
+To push the develop:
+`git push origin develop`
+
 merge code:
 `git checkout master`             #Switch to master branch
 `git branch`                      #Verify on master branch
