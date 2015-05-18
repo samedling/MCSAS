@@ -62,7 +62,8 @@ class OpenCL:
    def density(self,random_points):
       '''Returns list of densities.'''
       shape = g.dictionary_SI['shape']
-      buf_points = cl.Buffer(self.context,cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=np.float32(random_points))  #Copy input arrays into memory.
+      #buf_points = cl.Buffer(self.context,cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=np.float32(random_points))  #Copy input arrays into memory.
+      buf_points = cl.Buffer(self.context,cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=np.float32(np.append(random_points,np.zeros([len(random_points),1]),1)))  #Copy input arrays into memory.
       out=np.empty(random_points.shape[0],dtype=np.float32)
       out_buffer = cl.Buffer(self.context,cl.mem_flags.WRITE_ONLY,out.nbytes)   #for the output
       if shape == 1:

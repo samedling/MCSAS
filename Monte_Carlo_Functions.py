@@ -6,45 +6,59 @@ import global_vars as g
 ######################          Finding the Point used in the Calculation         ##################
 
 def Points_For_Calculation(seed=0):
-    global dictionary_SI
-
     if seed:
        np.random.seed([seed])
     
-    x_dim = dictionary_SI['x_dim']
-    y_dim = dictionary_SI['y_dim']
-    z_dim = dictionary_SI['z_dim']
-    x_theta = dictionary_SI['x_theta']
-    y_theta = dictionary_SI['y_theta']
-    z_theta = dictionary_SI['z_theta']
-    ave_dist = dictionary_SI['ave_dist']
-    z_scale = dictionary_SI['z_scale']
+    x_dim = g.dictionary_SI['x_dim']
+    y_dim = g.dictionary_SI['y_dim']
+    z_dim = g.dictionary_SI['z_dim']
+    x_theta = g.dictionary_SI['x_theta']
+    y_theta = g.dictionary_SI['y_theta']
+    z_theta = g.dictionary_SI['z_theta']
+    ave_dist = g.dictionary_SI['ave_dist']
+    z_scale = g.dictionary_SI['z_scale']
     #I make a grid, then find a random number from a normal distribution with radius ave_dist. this gets added to the grid coordinates to randomise this.
-    if g.debug:
-       print('{0}: Starting Points Calculation'.format(time.strftime("%X")))
-    RandomPoints = np.asarray([((np.random.normal()*dictionary_SI['travel']+x_coord)%dictionary_SI['x_dim'] - dictionary_SI['x_dim']/2, (np.random.normal()*dictionary_SI['travel']+y_coord)%dictionary_SI['y_dim'] - dictionary_SI['y_dim']/2, (np.random.normal()*dictionary_SI['travel']*z_scale+z_coord)%dictionary_SI['z_dim'] - dictionary_SI['z_dim']/2)
+    RandomPoints = np.asarray([((np.random.normal()*g.dictionary_SI['travel']+x_coord)%x_dim - x_dim/2, (np.random.normal()*g.dictionary_SI['travel']+y_coord)%y_dim - y_dim/2, (np.random.normal()*g.dictionary_SI['travel']*z_scale+z_coord)%z_dim - z_dim/2)
                     for z_coord in np.arange(-z_dim/2, z_dim/2, ave_dist*z_scale) for y_coord in np.arange(-y_dim/2, y_dim/2, ave_dist) for x_coord in np.arange(-x_dim/2, x_dim/2, ave_dist)])
 
-    if g.debug:
-       print('{0}: Starting Density Calculation'.format(time.strftime("%X")))
-       print RandomPoints.shape
-
-    if g.opencl_enabled and RandomPoints.shape[0] > 10000 and dictionary_SI['shape'] in (1,2):
+    if g.f2py_enabled and RandomPoints.shape[0] > 10000 and g.dictionary_SI['shape'] in (1,2,3):
         if g.debug:
+            print('{0}: Generated Random Numbers'.format(time.strftime("%X")))
+            print('Using Fortran to calculate densities.')
+        densities = np.float32(np.append(RandomPoints,np.zeros([RandomPoints.shape[0],1]),1)).T
+        if g.dictionary_SI['shape'] == 1:
+            fastmath.density.d1sphere(g.dictionary_SI['radius_1'],g.dictionary_SI['rho_1'],densities)
+        elif g.dictionary_SI['shape'] == 2:
+            fastmath.density.d2cylinder(g.dictionary_SI['radius_1'],g.dictionary_SI['rho_1'],densities)
+        elif g.dictionary_SI['shape'] == 3:
+            fastmath.density.d3coreshell(g.dictionary_SI['radius_1'],g.dictionary_SI['rho_1'],g.dictionary_SI['radius_2'],g.dictionary_SI['rho_2'],densities)
+        densities = densities.T
+        outside = [i for i in range(densities.shape[0]) if not densities[i,3]]
+        points_inside = np.delete(densities,outside,axis=0)
+        if g.debug:
+            print('{0}: Calculated Points Inside'.format(time.strftime("%X")))
+    elif g.opencl_enabled and RandomPoints.shape[0] > 10000 and g.dictionary_SI['shape'] in (1,2):
+        if g.debug:
+            print('{0}: Generated Random Numbers'.format(time.strftime("%X")))
             print('Using OpenCL for density calculation.')
         densities = g.opencl_density.density(RandomPoints)
-        points_inside = np.asarray([[RandomPoints[n],densities[n]] for n in range(RandomPoints.shape[0]) if abs(densities[n]) > 0.00001])
+        points = np.c_[RandomPoints,densities]
+        outside = [i for i in range(points.shape[0]) if not points[i,3]]
+        points_inside = np.delete(points,outside,axis=0)
+        #points_inside = np.asarray([np.append(RandomPoints[n],densities[n]) for n in range(RandomPoints.shape[0]) if abs(densities[n]) > 0.00001])
     else:
+        if g.debug:
+            print('{0}: Finished Generated Random Numbers'.format(time.strftime("%X")))
         points_inside = np.asarray([np.append(coords, [density(coords)]) for coords in RandomPoints if abs(density(coords))>0.00001])
+        if g.debug:
+            print('{0}: Calcualted Points Inside'.format(time.strftime("%X")))
     
-    if g.debug:
-       print('{0}: Finished Density Calculation'.format(time.strftime("%X")))
     #To use less RAM, i am clearing this variable now.
     RandomPoints = None
 
     if not g.quiet:
         print("{0} points will be used for the calculation.".format(len(points_inside)))
-    sim_info = open(dictionary_SI['path_to_subfolder']+"simulation_infomation.txt","a")
+    sim_info = open(g.dictionary_SI['path_to_subfolder']+"simulation_infomation.txt","a")
     sim_info.write("\n"+str(len(points_inside)) + " points were used for the calculation.")
     sim_info.close()
     
@@ -55,6 +69,8 @@ def Points_For_Calculation(seed=0):
 
     #Multiplying the matrix by each column. The transpose is to make the multiplication work properely.
     #I am multiplying the rotation matricies together, then multiplying it by the coordinates for each point
+    if g.debug:
+       print('{0}: Finished Points Calculation'.format(time.strftime("%X")))
     try:
        return np.asarray(points_inside.dot(np.transpose(rotz.dot(roty).dot(rotx))))
     except ValueError:
@@ -75,16 +91,15 @@ def Points_For_Calculation(seed=0):
 #NOTES:
 #Intensity = [[np.sum(np.cos(np.sum(<- (1,2,3)*(1,2,3)=(1,4,9) This sum adds the three components together to make this a dot product.
 #For the dot product, Qz =  2*EHC*sin( sqrt(x**2 + y**2) *QSize/pixels/2/EHC )**2
-symmetric = dictionary_SI['symmetric']
-Qz = dictionary_SI['Qz']
+symmetric = g.dictionary_SI['symmetric']
+Qz = g.dictionary_SI['Qz']
 
 #for asymmetric objects, no small angle approximation
 if g.opencl_enabled:
    def Detector_Intensity(Points,mask=[]):
-      global dictionary_SI
-      qsize=dictionary_SI['QSize']
-      ehc=dictionary_SI['EHC']
-      pixels=dictionary_SI['pixels']
+      qsize=g.dictionary_SI['QSize']
+      ehc=g.dictionary_SI['EHC']
+      pixels=g.dictionary_SI['pixels']
       if not len(mask):
          return g.opencl_sumint.sumint(qsize,ehc,pixels,Points,symmetric,Qz)
       else:
@@ -92,15 +107,14 @@ if g.opencl_enabled:
 elif symmetric == 0 and Qz == 0:
     #print "No symmetry; no small angle approximation."
     def Detector_Intensity(Points,mask=[]):
-        global dictionary_SI
-        QSize = dictionary_SI['QSize']
-        pixels = dictionary_SI['pixels']
-        EHC = dictionary_SI['EHC']
+        QSize = g.dictionary_SI['QSize']
+        pixels = g.dictionary_SI['pixels']
+        EHC = g.dictionary_SI['EHC']
         if g.f2py_enabled:
             if not len(mask):
                 mask = np.ones((pixels,pixels))
-            #return fastmath.fastmath.sumintensity00(QSize,EHC,mask,Points)
-            return fastmath.fastmath.sumintensity00(QSize,EHC,mask,Points.T)
+            #return fastmath.sumint.sumintensity00(QSize,EHC,mask,Points)
+            return fastmath.sumint.sumintensity00(QSize,EHC,mask,Points.T)
         else:
             #print "FYI: Could not accelerate using f2py."
             Intensity = np.array([[np.sum(np.cos(np.sum(
@@ -116,15 +130,14 @@ elif symmetric == 0 and Qz == 0:
 elif symmetric == 0 and Qz == 1:
     #print "No symmetry; small angle approximation."
     def Detector_Intensity(Points,mask=[]):
-        global dictionary_SI
-        QSize = dictionary_SI['QSize']
-        pixels = dictionary_SI['pixels']
-        EHC = dictionary_SI['EHC']
+        QSize = g.dictionary_SI['QSize']
+        pixels = g.dictionary_SI['pixels']
+        EHC = g.dictionary_SI['EHC']
         if g.f2py_enabled:
             if not len(mask):
                 mask = np.ones((pixels,pixels))
-            #return fastmath.fastmath.sumintensity00(QSize,EHC,mask,Points)    #Not a typo; sumint01 is (slightly) slower and thus pointless.
-            return fastmath.fastmath.sumintensity00(QSize,EHC,mask,Points.T)  #Not a typo; sumint 01 is (slightly) slower and thus pointless.
+            #return fastmath.sumint.sumintensity00(QSize,EHC,mask,Points)    #Not a typo; sumint01 is (slightly) slower and thus pointless.
+            return fastmath.sumint.sumintensity00(QSize,EHC,mask,Points.T)  #Not a typo; sumint 01 is (slightly) slower and thus pointless.
         else:
             #print "FYI: Could not accelerate using f2py."
             Intensity = np.array([[np.sum(np.cos(np.sum(
@@ -140,15 +153,14 @@ elif symmetric == 0 and Qz == 1:
 elif symmetric == 1 and Qz == 0:
     #print "Symmetry; no small angle approximation."
     def Detector_Intensity(Points,mask=[]):
-        global dictionary_SI
-        QSize = dictionary_SI['QSize']
-        pixels = dictionary_SI['pixels']
-        EHC = dictionary_SI['EHC']
+        QSize = g.dictionary_SI['QSize']
+        pixels = g.dictionary_SI['pixels']
+        EHC = g.dictionary_SI['EHC']
         if g.f2py_enabled:
             if not len(mask):
                 mask = np.ones((pixels,pixels))
-            #return fastmath.fastmath.sumintensity10(QSize,EHC,mask,Points)
-            return fastmath.fastmath.sumintensity10(QSize,EHC,mask,Points.T)
+            #return fastmath.sumint.sumintensity10(QSize,EHC,mask,Points)
+            return fastmath.sumint.sumintensity10(QSize,EHC,mask,Points.T)
         else:
             #print "FYI: Could not accelerate using f2py."
             Intensity = np.array([[np.sum(np.cos(np.sum(
@@ -161,15 +173,14 @@ elif symmetric == 1 and Qz == 0:
 elif symmetric == 1 and Qz == 1:
     #print "Symmetry; small angle approximation."
     def Detector_Intensity(Points,mask=[]):
-        global dictionary_SI
-        QSize = dictionary_SI['QSize']
-        pixels = dictionary_SI['pixels']
-        EHC = dictionary_SI['EHC']
+        QSize = g.dictionary_SI['QSize']
+        pixels = g.dictionary_SI['pixels']
+        EHC = g.dictionary_SI['EHC']
         if g.f2py_enabled:
             if not len(mask):
                 mask = np.ones((pixels,pixels))
-            #return fastmath.fastmath.sumintensity11(QSize,mask,Points)
-            return fastmath.fastmath.sumintensity11(QSize,mask,Points.T)
+            #return fastmath.sumint.sumintensity11(QSize,mask,Points)
+            return fastmath.sumint.sumintensity11(QSize,mask,Points.T)
         else:
             #print "FYI: Could not accelerate using f2py."
             Intensity = np.array([[np.sum(np.cos(np.sum(
@@ -184,22 +195,21 @@ elif symmetric == 1 and Qz == 1:
 ###########          Average Intensity         #############
 
 def Average_Intensity():
-    global dictionary_SI
-    num_plots = dictionary_SI['num_plots']
+    num_plots = g.dictionary_SI['num_plots']
     print "START TIME: "+time.strftime("%X")
-    sim_info = open(dictionary_SI['path_to_subfolder']+"simulation_infomation.txt","a")
+    sim_info = open(g.dictionary_SI['path_to_subfolder']+"simulation_infomation.txt","a")
     sim_info.write("\nStart Time: "+time.strftime("%X"))
     sim_info.close()
     for plot_number in range(int(num_plots)):
 
         print "Average Plot " + str(plot_number+1) + " out of " + str(int(num_plots))
         
-        sim_info = open(dictionary_SI['path_to_subfolder']+"simulation_infomation.txt","a")
+        sim_info = open(g.dictionary_SI['path_to_subfolder']+"simulation_infomation.txt","a")
         sim_info.write("\nAverage Plot, plot " + str(plot_number+1) + " out of " + str(int(num_plots)) )
         sim_info.close()
 
         try:
-            dictionary_SI['TEMP_VAR'] #This is here so it will only make the estimated time once.
+            g.dictionary_SI['TEMP_VAR'] #This is here so it will only make the estimated time once.
             ##Intensity = Detector_Intensity(Points_For_Calculation())  #Commented and separated so I can time these separately.
             Points = Points_For_Calculation()
             Intensity = Detector_Intensity(Points)
@@ -208,14 +218,14 @@ def Average_Intensity():
         except KeyError:
             Points = Points_For_Calculation()
             try:
-                dictionary_SI['current_value']
-                est_time = 0# 10**-7*len(Points)*dictionary_SI['pixels']**2*dictionary_SI['num_plots']*dictionary_SI['s_step']
+                g.dictionary_SI['current_value']
+                est_time = 0# 10**-7*len(Points)*g.dictionary_SI['pixels']**2*g.dictionary_SI['num_plots']*g.dictionary_SI['s_step']
             except KeyError:
-                est_time = 0# 10**-7*len(Points)*dictionary_SI['pixels']**2*dictionary_SI['num_plots']
+                est_time = 0# 10**-7*len(Points)*g.dictionary_SI['pixels']**2*g.dictionary_SI['num_plots']
             mins, secs = divmod(est_time, 60)
             hours, mins = divmod(est_time, 60)
             #print "Estimated time to finish all calculations: " + str(int(hours)) + " hours, " + str(int(mins)) + " minutes and " + str(int(secs)) + " seconds."
-            dictionary_SI['TEMP_VAR'] = 0
+            g.dictionary_SI['TEMP_VAR'] = 0
             Intensity = Detector_Intensity(Points)
             if g.debug:
                print("FINISHED CALCULATION {0}: {1}".format(plot_number+1,time.strftime("%X")))
@@ -231,7 +241,7 @@ def Average_Intensity():
             cumulative = np.asarray(Intensity)
     #this finds the average of all plots
     print "END TIME: "+time.strftime("%X")
-    sim_info = open(dictionary_SI['path_to_subfolder']+"simulation_infomation.txt","a")
+    sim_info = open(g.dictionary_SI['path_to_subfolder']+"simulation_infomation.txt","a")
     sim_info.write("\nEnd Time: "+time.strftime("%X"))
     sim_info.close()
     return cumulative/np.sum(cumulative)
@@ -241,12 +251,11 @@ def Average_Intensity():
 
 ###############################         Radial Intensity          #######################################
 def radial(Intensity):
-    global dictionary_SI
-    QSize = dictionary_SI['QSize']
-    pixels = dictionary_SI['pixels']
-    EHC = dictionary_SI['EHC']
-    num_plot_points = dictionary_SI['num_plot_points']
-    delta = dictionary_SI['delta']
+    QSize = g.dictionary_SI['QSize']
+    pixels = g.dictionary_SI['pixels']
+    EHC = g.dictionary_SI['EHC']
+    num_plot_points = g.dictionary_SI['num_plot_points']
+    delta = g.dictionary_SI['delta']
     return np.array([[0.5*QSize*temp/num_plot_points, np.mean([Intensity[x,y] for x in range(int(pixels)) for y in range(int(pixels))
                         if temp-0.5*delta <=  ( (x - 0.5*pixels)**2 + (y - 0.5*pixels)**2 )**0.5  <=temp+0.5*delta])]
                      for temp in range(int(num_plot_points))])[1:,]
@@ -255,13 +264,12 @@ def radial(Intensity):
 
 #########################             Plot Angle at a fixed radius           ###########################
 def plotting_circle(Intensity):
-    global dictionary_SI
-    pixels = dictionary_SI['pixels']
+    pixels = g.dictionary_SI['pixels']
     xrow, yrow = np.shape(Intensity)
     
-    circ_delta = float(dictionary_SI['circ_delta'])
-    theta_delta = float(dictionary_SI['theta_delta'])
-    pixel_radius = float(dictionary_SI['pixel_radius'])
+    circ_delta = float(g.dictionary_SI['circ_delta'])
+    theta_delta = float(g.dictionary_SI['theta_delta'])
+    pixel_radius = float(g.dictionary_SI['pixel_radius'])
     
 
     rad_theta = np.asarray([[  [ ((x-0.5*pixels)**2 + (y-0.5*pixels)**2)**0.5 , np.angle((x-0.5*pixels)+1j*(y-0.5*pixels))+3.1416  ] for y in range(int(yrow))] for x in range(int(xrow))])
@@ -278,6 +286,5 @@ def plotting_circle(Intensity):
 #################################           Saving Data to a CSV File           #####################
 #Name must be entered as a string
 def save(data, name):
-    global dictionary_SI
-    np.savetxt(dictionary_SI['path_to_subfolder']+name+".csv", data, delimiter=",")
+    np.savetxt(g.dictionary_SI['path_to_subfolder']+name+".csv", data, delimiter=",")
 
