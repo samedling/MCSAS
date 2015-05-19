@@ -32,11 +32,12 @@ class OpenCL:
          self.program.sumint11(self.queue,out.shape,None,np.float32(qsize),np.int32(x_pixels),buf_points,np.int32(y_pixels),np.int32(npts),out_buffer)
       #cl.enqueue_read_buffer(self.queue,out_buffer,out).wait()
       cl.enqueue_copy(self.queue,out,out_buffer)
-      return out.reshape(pixels,-1)    #converts to square
+      return out.reshape(y_pixels,-1)    #converts to square    #TODO: or y_pixels??
 
-   def sumint_mask(self,qsize,ehc,pixels,mask,points,sym=0,small=0):
+   def sumint_mask(self,qsize,ehc,mask,points,sym=0,small=0):
       '''Returns the normalized intensity.'''
       npts=points.shape[0]
+      x_pixels,y_pixels = mask.shape
       x_coords,y_coords=np.asarray([[i,j] for i in range(mask.shape[0]) for j in range(mask.shape[1]) if mask[i,j]]).T  #get x,y coordinates of non-zero mask points
       buf_x = cl.Buffer(self.context,cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=np.int32(x_coords))
       buf_y = cl.Buffer(self.context,cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=np.int32(y_coords))
@@ -46,11 +47,11 @@ class OpenCL:
 
       sym = 0
       if sym == 0:
-         self.program.sumint00mask(self.queue,out.shape,None,np.float32(qsize),np.float32(ehc),np.int32(pixels),buf_x,buf_y,buf_points,np.int32(npts),out_buffer)
+         self.program.sumint00mask(self.queue,out.shape,None,np.float32(qsize),np.float32(ehc),np.int32(x_pixels),np.int32(y_pixels),buf_x,buf_y,buf_points,np.int32(npts),out_buffer)
       elif small == 0:
-         self.program.sumint10mask(self.queue,out.shape,None,np.float32(qsize),np.float32(ehc),np.int32(pixels),buf_x,buf_y,buf_points,np.int32(npts),out_buffer)
+         self.program.sumint10mask(self.queue,out.shape,None,np.float32(qsize),np.float32(ehc),np.int32(x_pixels),np.int32(y_pixels),buf_x,buf_y,buf_points,np.int32(npts),out_buffer)
       else:
-         self.program.sumint11mask(self.queue,out.shape,None,np.float32(qsize),np.int32(pixels),buf_x,buf_y,buf_points,np.int32(npts),out_buffer)
+         self.program.sumint11mask(self.queue,out.shape,None,np.float32(qsize),np.int32(x_pixels),np.int32(y_pixels),buf_x,buf_y,buf_points,np.int32(npts),out_buffer)
       #cl.enqueue_read_buffer(self.queue,out_buffer,out).wait()
       cl.enqueue_copy(self.queue,out,out_buffer)
       #return x_coords,y_coords,out

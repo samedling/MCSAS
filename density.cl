@@ -55,6 +55,6 @@ __kernel void d4gaussian (
 {
    int n = get_global_id(0);
    float dist = pow(points[n][0],2)+pow(points[n][1],2);
-   density[n] = exp(-dist/pow(radius_2,2))
+   density[n] = exp(-dist/pow(radius_2,2));
 }
 

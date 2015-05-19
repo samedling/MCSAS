@@ -10,7 +10,7 @@ inline float my_dot (float* a, float*b, int length) {
 }
 
 __kernel void sumint00 (
-   const float qsize, const float ehc, const int x_pixels, const int y_pixels
+   const float qsize, const float ehc, const int x_pixels, const int y_pixels,
    __global const float4* points, const int npts, __global float* intensity)
 {
 // For no symmetry and no small angle approximation //
@@ -32,7 +32,7 @@ __kernel void sumint00 (
 }
 
 __kernel void sumint10 (
-   const float qsize, const float ehc, const int x_pixels, const int y_pixels
+   const float qsize, const float ehc, const int x_pixels, const int y_pixels,
    __global const float4* points, const int npts, __global float* intensity)
 {
 // For symmetry but no small angle approximation //
@@ -51,7 +51,7 @@ __kernel void sumint10 (
 }
 
 __kernel void sumint11 (
-   const float qsize, const int x_pixels, const int y_pixels
+   const float qsize, const int x_pixels, const int y_pixels,
    __global const float4* points, const int npts, __global float* intensity)
 {
 // For symmetry and small angle approximation //
@@ -69,7 +69,7 @@ __kernel void sumint11 (
 
 //Pass in separate x and y arrays.//
 __kernel void sumint00mask (
-   const float qsize, const float ehc, const int pixels, __constant int* xval, __constant int* yval,
+   const float qsize, const float ehc, const int x_pixels, const int y_pixels, __constant int* xval, __constant int* yval,
    __global const float4* points, const int npts, __global float* intensity)
 {
 // For no symmetry and no small angle approximation //
@@ -77,8 +77,8 @@ __kernel void sumint00mask (
    int n = get_global_id(0);
    int i = xval[n];
    int j = yval[n];
-   float Q[3] = { i*qsize/pixels-0.5*qsize, j*qsize/pixels-0.5*qsize,
-        2*ehc*pow(sin(sqrt(pow((i-0.5*pixels),2)+pow(j-0.5*pixels,2))*qsize/(pixels*2*ehc)),2) };
+   float Q[3] = { i*qsize/x_pixels-0.5*qsize, j*qsize/y_pixels-0.5*qsize,
+        2*ehc*pow(sin(sqrt(pow((i-0.5*x_pixels),2)+pow(j-0.5*y_pixels,2))*qsize/(x_pixels*2*ehc)),2) };
    temp_intensity = 0;
    temp_intensity_2 = 0;
    for ( int p = 0; p < npts; p++) {
@@ -92,7 +92,7 @@ __kernel void sumint00mask (
 
 
 __kernel void sumint10mask (
-   const float qsize, const float ehc, const int pixels, __constant int* xval, __constant int* yval,
+   const float qsize, const float ehc, const int x_pixels, const int y_pixels, __constant int* xval, __constant int* yval,
    __global const float4* points, const int npts, __global float* intensity)
 {
 // For symmetry but no small angle approximation //
@@ -100,8 +100,8 @@ __kernel void sumint10mask (
    int n = get_global_id(0);
    int i = xval[n];
    int j = yval[n];
-   float Q[3] = { i*qsize/pixels-0.5*qsize, j*qsize/pixels-0.5*qsize,
-        2*ehc*pow(sin(sqrt(pow((i-0.5*pixels),2)+pow(j-0.5*pixels,2))*qsize/(pixels*2*ehc)),2) };
+   float Q[3] = { i*qsize/x_pixels-0.5*qsize, j*qsize/y_pixels-0.5*qsize,
+        2*ehc*pow(sin(sqrt(pow((i-0.5*x_pixels),2)+pow(j-0.5*y_pixels,2))*qsize/(x_pixels*2*ehc)),2) };
    temp_intensity = 0;
    for ( int p = 0; p < npts; p++) {
        float R[3] = {points[p][0],points[p][1],points[p][2]};
@@ -111,7 +111,7 @@ __kernel void sumint10mask (
 }
 
 __kernel void sumint11mask (
-   const float qsize, const int pixels, __constant int* xval, __constant int* yval,
+   const float qsize, const int x_pixels, const int y_pixels, __constant int* xval, __constant int* yval,
    __global const float4* points, const int npts, __global float* intensity)
 {
 // For symmetry and small angle approximation //
@@ -119,7 +119,7 @@ __kernel void sumint11mask (
    int n = get_global_id(0);
    int i = xval[n];
    int j = yval[n];
-   float Q[2] = { i*qsize/pixels-0.5*qsize, j*qsize/pixels-0.5*qsize};
+   float Q[2] = { i*qsize/x_pixels-0.5*qsize, j*qsize/y_pixels-0.5*qsize};
    for ( int p = 0; p < npts; p++) {
        float R[2] = {points[p][0],points[p][1]};
        temp_intensity += points[p][3]*cos(my_dot(Q,R,2));

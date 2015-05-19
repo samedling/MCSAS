@@ -98,8 +98,10 @@ if g.opencl_enabled:
       x_pixels,y_pixels = [int(i) for i in g.dictionary_SI['pixels'].split()]
       if not len(mask):
          return g.opencl_sumint.sumint(qsize,ehc,x_pixels,y_pixels,Points,symmetric,Qz)
+         #mask = np.ones((x_pixels,y_pixels))
+         #return g.opencl_sumint.sumint_mask(qsize,ehc,mask,Points,symmetric,Qz)
       else:
-         return g.opencl_sumint.sumint_mask(qsize,ehc,x_pixels,y_pixels,mask,Points,symmetric,Qz)
+         return g.opencl_sumint.sumint_mask(qsize,ehc,mask,Points,symmetric,Qz)
 elif symmetric == 0 and Qz == 0:
     #print "No symmetry; no small angle approximation."
     def Detector_Intensity(Points,mask=[]):
@@ -110,7 +112,7 @@ elif symmetric == 0 and Qz == 0:
             if not len(mask):
                 mask = np.ones((y_pixels,x_pixels))         #WHY BACKWARDS??
             #return fastmath.sumint.sumintensity00(QSize,EHC,mask,Points)
-            return fastmath.sumint.sumintensity00(QSize,EHC,mask,Points.T)
+            return fastmath.sumint.sumintensity00(QSize,EHC,mask,Points.T)  #TODO: NOT THE SAME AS OTHER ONES!!
         else:
             #print "FYI: Could not accelerate using f2py."
             Intensity = np.array([[np.sum(np.cos(np.sum(
