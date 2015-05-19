@@ -1,5 +1,5 @@
 #!/usr/bin/python
-version = '0.2.0'
+version = '0.3.0'
 
 
 try:
@@ -22,23 +22,23 @@ from scipy.optimize import leastsq
 import global_vars as g
 
 #Looks for fastmath.so to speed up intensity calculation.
-try:
-   import pyopencl as cl
-except ImportError:
-   g.opencl_enabled = False
 if g.opencl_enabled:
-   from sumint import OpenCL
-   g.opencl_density = OpenCL()
-   g.opencl_density.load_program('density.cl')
-   g.opencl_sumint = OpenCL()
-   g.opencl_sumint.load_program('sumint.cl')
-   print("Accelerating using OpenCL.")
-try:
-   import fastmath
-   g.f2py_enabled = True
-   print("Accelerating using f2py.")
-except ImportError:
-   g.f2py_enabled = False
+   try:
+      import pyopencl as cl
+      from opencl import OpenCL
+      g.opencl_density = OpenCL()
+      g.opencl_density.load_program('density.cl')
+      g.opencl_sumint = OpenCL()
+      g.opencl_sumint.load_program('sumint.cl')
+      print("Accelerating using OpenCL.")
+   except ImportError:
+      g.opencl_enabled = False
+if g.f2py_enabled:
+   try:
+      import fastmath
+      print("Accelerating using f2py.")
+   except ImportError:
+      g.f2py_enabled = False
 if not g.f2py_enabled and not g.opencl_enabled:
    print("Could not accelerate using either OpenCL or f2py.")
    print("See README for how to install either OpenCL or f2py.")
@@ -155,7 +155,7 @@ def get_numbers_from_gui():
     g.dictionary_SI["QSize"] = g.dictionary["QSize"]*10**9
 
     #g.dictionary_SI['num_plot_points'] = int(g.dictionary_SI['pixels']/2.)
-    g.dictionary_SI['num_plot_points'] = min([int(i) for i in g.dictionary['center'].split()])/2
+    g.dictionary_SI['num_plot_points'] = min([int(i) for i in g.dictionary['pixels'].split()])/2
     g.dictionary_SI['delta'] = 1. #number of pixels in width
 
     g.dictionary_SI['circ_delta'] = 1.4*g.dictionary_SI['circ_delta']
@@ -526,8 +526,8 @@ def load_exp_image(preview=False,enlarge_mask=1):
       except IOError:
          print('File {0} does not exist.'.format(filename))
          return
-      normalize = 1.0/np.sum(exp_data)
-      exp_data=exp_data*normalize
+      normalized = 1.0/np.sum(exp_data)
+      exp_data=exp_data*normalized
       #exp_data=ndimage.gaussian_filter(exp_data,sigma=3)
       return exp_data
    else:
@@ -563,10 +563,16 @@ def load_exp_image(preview=False,enlarge_mask=1):
                mask[i,j] = 0
             elif enlarge_mask and padded[i:i+3,j:j+3].min() < mask_threshold:        #do after normalize?
                mask[i,j] = 0  #could set to ~0.1 if want to decrease but not zero it.
-      normalize = 1.0/np.sum(exp_data*mask)
-      exp_data=exp_data*normalize
+      normalized = 1.0/np.sum(exp_data*mask)
+      exp_data=exp_data*normalized
       #img=Image.fromarray(exp_data)   #To go back to an image.
       return exp_data,mask
+
+def normalize(data,mask=[]):
+   if not len(mask):
+      return data/np.sum(data)
+   else:
+      return data/np.sum(data*mask)
 
 def plot_exp_data():#threshold=1e-7,zero_value=1e-7):
     '''Plots experimental data, using center and crop parameters if nonzero.'''
@@ -781,6 +787,7 @@ def plot_residuals():
    save(calc_intensity,"_calc")     #wrong suffix!!
    #err = np.zeros(np.product(exp_data.shape)).reshape(exp_data.shape)
    err = np.zeros(exp_data.shape)
+   print(mask.shape,exp_data.shape,calc_intensity.shape)
    for i in range(exp_data.shape[0]):
       for j in range(exp_data.shape[1]):
          #err[i,j] = exp_data[i,j]-calc_intensity[i,j]

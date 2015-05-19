@@ -47,3 +47,14 @@ __kernel void d3coreshell (
       density[n] = rho_2;
    }
 }
+
+
+__kernel void d4gaussian (
+   const float radius_2,
+   __global const float4* points, __global float* density)
+{
+   int n = get_global_id(0);
+   float dist = pow(points[n][0],2)+pow(points[n][1],2);
+   density[n] = exp(-dist/pow(radius_2,2))
+}
+

@@ -13,6 +13,13 @@ import numpy as np
 
 import global_vars as g
 
+def density_vector(all_coords):
+   '''Vectorizes any density function.'''
+   all_densities = np.empty(all_coords.shape[0])
+   for i in range(all_coords.shape[0]):
+      all_densities[i] = density(all_coords[i,:])
+   return all_densities
+
 if g.dictionary_SI['shape'] == 0:
     print "Analytic Model Only"
 
@@ -45,9 +52,9 @@ elif g.dictionary_SI['shape'] == 3:
         dist = np.sqrt(np.sum(coords[0:2]**2))
         if g.dictionary_SI['radius_2']<dist<g.dictionary_SI['radius_1']:
             b= g.dictionary_SI['rho_2']
-        if dist<g.dictionary_SI['radius_2']:
+        elif dist<g.dictionary_SI['radius_2']:
             b= g.dictionary_SI['rho_1']
-        if dist>g.dictionary_SI['radius_1']:
+        elif dist>g.dictionary_SI['radius_1']:
             b=0
         return b
 #
@@ -68,8 +75,7 @@ elif g.dictionary_SI['shape'] == 3:
 elif g.dictionary_SI['shape'] == 4:
     print "Monte Carlo Gaussian"
     def density(coords):
-        b= np.exp(-(np.sum(coords[0:2]**2))/(g.dictionary_SI['radius_2']**2))
-        return b
+        return np.exp(-(np.sum(coords[0:2]**2))/(g.dictionary_SI['radius_2']**2))
 
 elif g.dictionary_SI['shape'] == 5:
     print "Chopped Cone Model - radius one is the radius closer to the -Z side of the box"

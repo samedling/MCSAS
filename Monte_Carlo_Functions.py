@@ -21,9 +21,9 @@ def Points_For_Calculation(seed=0):
     RandomPoints = np.asarray([((np.random.normal()*g.dictionary_SI['travel']+x_coord)%x_dim - x_dim/2, (np.random.normal()*g.dictionary_SI['travel']+y_coord)%y_dim - y_dim/2, (np.random.normal()*g.dictionary_SI['travel']*z_scale+z_coord)%z_dim - z_dim/2)
                     for z_coord in np.arange(-z_dim/2, z_dim/2, ave_dist*z_scale) for y_coord in np.arange(-y_dim/2, y_dim/2, ave_dist) for x_coord in np.arange(-x_dim/2, x_dim/2, ave_dist)])
 
+    #Fortran implementation about 8x faster than new python implementation.
     if g.f2py_enabled and RandomPoints.shape[0] > 10000 and g.dictionary_SI['shape'] in (1,2,3):
         if g.debug:
-            print('{0}: Generated Random Numbers'.format(time.strftime("%X")))
             print('Using Fortran to calculate densities.')
         densities = np.float32(np.append(RandomPoints,np.zeros([RandomPoints.shape[0],1]),1)).T
         if g.dictionary_SI['shape'] == 1:
@@ -35,11 +35,8 @@ def Points_For_Calculation(seed=0):
         densities = densities.T
         outside = [i for i in range(densities.shape[0]) if not densities[i,3]]
         points_inside = np.delete(densities,outside,axis=0)
+    elif g.opencl_enabled and RandomPoints.shape[0] > 10000 and g.dictionary_SI['shape'] in (1,2,3):
         if g.debug:
-            print('{0}: Calculated Points Inside'.format(time.strftime("%X")))
-    elif g.opencl_enabled and RandomPoints.shape[0] > 10000 and g.dictionary_SI['shape'] in (1,2):
-        if g.debug:
-            print('{0}: Generated Random Numbers'.format(time.strftime("%X")))
             print('Using OpenCL for density calculation.')
         densities = g.opencl_density.density(RandomPoints)
         points = np.c_[RandomPoints,densities]
@@ -47,17 +44,16 @@ def Points_For_Calculation(seed=0):
         points_inside = np.delete(points,outside,axis=0)
         #points_inside = np.asarray([np.append(RandomPoints[n],densities[n]) for n in range(RandomPoints.shape[0]) if abs(densities[n]) > 0.00001])
     else:
-        if g.debug:
-            print('{0}: Finished Generated Random Numbers'.format(time.strftime("%X")))
-        points_inside = np.asarray([np.append(coords, [density(coords)]) for coords in RandomPoints if abs(density(coords))>0.00001])
-        if g.debug:
-            print('{0}: Calcualted Points Inside'.format(time.strftime("%X")))
+        points = np.c_[RandomPoints,density_vector(RandomPoints)]
+        outside = [i for i in range(points.shape[0]) if not points[i,3]]
+        points_inside = np.delete(points,outside,axis=0)
+        #points_inside = np.asarray([np.append(coords, [density(coords)]) for coords in RandomPoints if abs(density(coords))>0.00001])  #30% slower implementation
     
     #To use less RAM, i am clearing this variable now.
     RandomPoints = None
 
     if not g.quiet:
-        print("{0} points will be used for the calculation.".format(len(points_inside)))
+        print("{0}: {1} points will be used for the calculation.".format(time.strftime("%X"),len(points_inside)))
     sim_info = open(g.dictionary_SI['path_to_subfolder']+"simulation_infomation.txt","a")
     sim_info.write("\n"+str(len(points_inside)) + " points were used for the calculation.")
     sim_info.close()
@@ -69,8 +65,6 @@ def Points_For_Calculation(seed=0):
 
     #Multiplying the matrix by each column. The transpose is to make the multiplication work properely.
     #I am multiplying the rotation matricies together, then multiplying it by the coordinates for each point
-    if g.debug:
-       print('{0}: Finished Points Calculation'.format(time.strftime("%X")))
     try:
        return np.asarray(points_inside.dot(np.transpose(rotz.dot(roty).dot(rotx))))
     except ValueError:
@@ -103,7 +97,7 @@ if g.opencl_enabled:
       if not len(mask):
          return g.opencl_sumint.sumint(qsize,ehc,x_pixels,y_pixels,Points,symmetric,Qz)
       else:
-         return g.opencl_sumint.sumint_mask(qsize,ehc,x_pixels,,y_pixels,mask,Points,symmetric,Qz)
+         return g.opencl_sumint.sumint_mask(qsize,ehc,x_pixels,y_pixels,mask,Points,symmetric,Qz)
 elif symmetric == 0 and Qz == 0:
     #print "No symmetry; no small angle approximation."
     def Detector_Intensity(Points,mask=[]):

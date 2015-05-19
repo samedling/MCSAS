@@ -53,3 +53,20 @@ tags are not pushed by default; either:
 `git push origin <tag name>`
 `git push origin --tags`       #If you have lots of tags
 
+
+## Conflicts ##
+
+If there's a conflict, run `git status` to see which files are in direct conflict.  Edit each of the sections in each file surrounded by:
+
+   <<<<<<<
+   code1
+   =======
+   code2
+   >>>>>>>
+
+(or similar) so that only the code you want is left (making sure to delete all the <=>s), then run `git add <filename>` for each, and commit like normal.
+
+Or, you might need to run the following separately:
+
+   git fetch origin master
+   git merge

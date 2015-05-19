@@ -52,6 +52,7 @@ subroutine sumintensity00(qsize,ehc,mask,x_pixels,y_pixels,points,npts,intensity
             end do
             intensity(i,j) = temp_intensity**2 + temp_intensity_2**2
             total_intensity = total_intensity + intensity(i,j)
+            !total_intensity = total_intensity + intensity(i,j)*mask(i,j)
             !total_intensity = total_intensity + temp_intensity**2 + temp_intensity_2**2
          else
             intensity(i,j) = 0
@@ -118,7 +119,7 @@ subroutine sumintensity10(qsize,ehc,mask,x_pixels,y_pixels,points,npts,intensity
    integer*4 :: p
    !'symmetry'; no small angle approximation
    total_intensity = 0
-   !$OMP PARALLEL DO PRIVATE(Q,temp_intensity,temp_intensity_2) SHARED(mask,points,intensity) REDUCTION(+:total_intensity)
+   !$OMP PARALLEL DO PRIVATE(Q,temp_intensity) SHARED(mask,points,intensity) REDUCTION(+:total_intensity)
    do j=1,y_pixels
       do i=1,x_pixels
          if (mask(i,j) > 0) then
@@ -154,7 +155,7 @@ subroutine sumintensity11(qsize,mask,x_pixels,y_pixels,points,npts,intensity)
    integer*4 :: p
    !'symmetry'; small angle approximation
    total_intensity = 0
-   !$OMP PARALLEL DO PRIVATE(Q,temp_intensity,temp_intensity_2) SHARED(mask,points,intensity) REDUCTION(+:total_intensity)
+   !$OMP PARALLEL DO PRIVATE(Q,temp_intensity) SHARED(mask,points,intensity) REDUCTION(+:total_intensity)
    do j=1,y_pixels
       do i=1,x_pixels
          if (mask(i,j) > 0) then
@@ -253,7 +254,17 @@ subroutine d3coreshell(radius_1,rho_1,radius_2,rho_2,points,npts)
    return
 end subroutine d3coreshell
 
-
+subroutine d4gaussian(radius_2,points,npts)
+   real*4, intent(in) :: radius_2
+   real*4, dimension(4,npts), intent(inout) :: points
+   integer*4, intent(in) :: npts
+   !$OMP PARALLEL DO
+   do i=1,npts
+      dist = points(1,i)**2+points(2,i)**2
+      points(4,i) = EXP(-dist/(radius_2)**2)
+   end do
+   !$OMP END PARALLEL DO
+end subroutine d4gaussian
 
 
 
