@@ -22,9 +22,9 @@ def Points_For_Calculation(seed=0):
                     for z_coord in np.arange(-z_dim/2, z_dim/2, ave_dist*z_scale) for y_coord in np.arange(-y_dim/2, y_dim/2, ave_dist) for x_coord in np.arange(-x_dim/2, x_dim/2, ave_dist)])
 
     #Fortran implementation about 8x faster than new python implementation.
-    if g.f2py_enabled and RandomPoints.shape[0] > 10000 and g.dictionary_SI['shape'] in (1,2,3):
+    if g.f2py_enabled and RandomPoints.shape[0] > 100000 and g.dictionary_SI['shape'] in (1,2,3,4):
         if g.debug:
-            print('Using Fortran to calculate densities.')
+            print('{0}: Using Fortran to calculate densities.'.format(time.strftime("%X")))
         densities = np.float32(np.append(RandomPoints,np.zeros([RandomPoints.shape[0],1]),1)).T
         if g.dictionary_SI['shape'] == 1:
             fastmath.density.d1sphere(g.dictionary_SI['radius_1'],g.dictionary_SI['rho_1'],densities)
@@ -32,12 +32,14 @@ def Points_For_Calculation(seed=0):
             fastmath.density.d2cylinder(g.dictionary_SI['radius_1'],g.dictionary_SI['rho_1'],densities)
         elif g.dictionary_SI['shape'] == 3:
             fastmath.density.d3coreshell(g.dictionary_SI['radius_1'],g.dictionary_SI['rho_1'],g.dictionary_SI['radius_2'],g.dictionary_SI['rho_2'],densities)
+        elif g.dictionary_SI['shape'] == 4:
+            fastmath.density.d4gaussian(g.dictionary_SI['radius_2'],densities)
         densities = densities.T
         outside = [i for i in range(densities.shape[0]) if not densities[i,3]]
         points_inside = np.delete(densities,outside,axis=0)
-    elif g.opencl_enabled and RandomPoints.shape[0] > 10000 and g.dictionary_SI['shape'] in (1,2,3):
+    elif g.opencl_enabled and RandomPoints.shape[0] > 100000 and g.dictionary_SI['shape'] in (1,2,3,4):
         if g.debug:
-            print('Using OpenCL for density calculation.')
+            print('{0}: Using OpenCL for density calculation.'.format(time.strftime("%X")))
         densities = g.opencl_density.density(RandomPoints)
         points = np.c_[RandomPoints,densities]
         outside = [i for i in range(points.shape[0]) if not points[i,3]]
@@ -106,7 +108,7 @@ elif symmetric == 0 and Qz == 0:
         EHC = g.dictionary_SI['EHC']
         if g.f2py_enabled:
             if not len(mask):
-                mask = np.ones((x_pixels,y_pixels))
+                mask = np.ones((y_pixels,x_pixels))         #WHY BACKWARDS??
             #return fastmath.sumint.sumintensity00(QSize,EHC,mask,Points)
             return fastmath.sumint.sumintensity00(QSize,EHC,mask,Points.T)
         else:
@@ -129,9 +131,9 @@ elif symmetric == 0 and Qz == 1:
         EHC = g.dictionary_SI['EHC']
         if g.f2py_enabled:
             if not len(mask):
-                mask = np.ones((x_pixels,y_pixels))
+                mask = np.ones((y_pixels,x_pixels))
             #return fastmath.sumint.sumintensity00(QSize,EHC,mask,Points)    #Not a typo; sumint01 is (slightly) slower and thus pointless.
-            return fastmath.sumint.sumintensity00(QSize,EHC,mask,Points.T)  #Not a typo; sumint 01 is (slightly) slower and thus pointless.
+            return fastmath.sumint.sumintensity00(QSize,EHC,mask.T,Points.T)  #Not a typo; sumint 01 is (slightly) slower and thus pointless.
         else:
             #print "FYI: Could not accelerate using f2py."
             Intensity = np.array([[np.sum(np.cos(np.sum(
@@ -152,9 +154,9 @@ elif symmetric == 1 and Qz == 0:
         EHC = g.dictionary_SI['EHC']
         if g.f2py_enabled:
             if not len(mask):
-                mask = np.ones((x_pixels,y_pixels))
+                mask = np.ones((y_pixels,x_pixels))
             #return fastmath.sumint.sumintensity10(QSize,EHC,mask,Points)
-            return fastmath.sumint.sumintensity10(QSize,EHC,mask,Points.T)
+            return fastmath.sumint.sumintensity10(QSize,EHC,mask.T,Points.T)
         else:
             #print "FYI: Could not accelerate using f2py."
             Intensity = np.array([[np.sum(np.cos(np.sum(
@@ -174,7 +176,7 @@ elif symmetric == 1 and Qz == 1:
             if not len(mask):
                 mask = np.ones((x_pixels,y_pixels))
             #return fastmath.sumint.sumintensity11(QSize,mask,Points)
-            return fastmath.sumint.sumintensity11(QSize,mask,Points.T)
+            return fastmath.sumint.sumintensity11(QSize,mask.T,Points.T)
         else:
             #print "FYI: Could not accelerate using f2py."
             Intensity = np.array([[np.sum(np.cos(np.sum(
@@ -188,7 +190,7 @@ elif symmetric == 1 and Qz == 1:
 
 ###########          Average Intensity         #############
 
-def Average_Intensity():
+def Average_Intensity(mask=[]):
     num_plots = g.dictionary_SI['num_plots']
     print "START TIME: "+time.strftime("%X")
     sim_info = open(g.dictionary_SI['path_to_subfolder']+"simulation_infomation.txt","a")
@@ -206,7 +208,7 @@ def Average_Intensity():
             g.dictionary_SI['TEMP_VAR'] #This is here so it will only make the estimated time once.
             ##Intensity = Detector_Intensity(Points_For_Calculation())  #Commented and separated so I can time these separately.
             Points = Points_For_Calculation()
-            Intensity = Detector_Intensity(Points)
+            Intensity = Detector_Intensity(Points,mask)
             if g.debug:
                print("FINISHED CALCULATION {0}: {1}".format(plot_number+1,time.strftime("%X")))
         except KeyError:
@@ -220,7 +222,7 @@ def Average_Intensity():
             hours, mins = divmod(est_time, 60)
             #print "Estimated time to finish all calculations: " + str(int(hours)) + " hours, " + str(int(mins)) + " minutes and " + str(int(secs)) + " seconds."
             g.dictionary_SI['TEMP_VAR'] = 0
-            Intensity = Detector_Intensity(Points)
+            Intensity = Detector_Intensity(Points,mask)
             if g.debug:
                print("FINISHED CALCULATION {0}: {1}".format(plot_number+1,time.strftime("%X")))
             else:
@@ -246,13 +248,12 @@ def Average_Intensity():
 ###############################         Radial Intensity          #######################################
 def radial(Intensity):
     QSize = g.dictionary_SI['QSize']
-    x_pixels,y_pixels = [int(i) for i in g.dictionary_SI['pixels'].split()]
+    #x_pixels,y_pixels = [int(i) for i in g.dictionary_SI['pixels'].split()]
+    x_pixels,y_pixels=Intensity.shape
     EHC = g.dictionary_SI['EHC']
     num_plot_points = g.dictionary_SI['num_plot_points']
     delta = g.dictionary_SI['delta']
-    return np.array([[0.5*QSize*temp/num_plot_points, np.mean([Intensity[x,y] for x in range(x_pixels) for y in range(y_pixels)
-                        if temp-0.5*delta <=  ( (x - 0.5*x_pixels)**2 + (y - 0.5*y_pixels)**2 )**0.5  <=temp+0.5*delta])]
-                     for temp in range(int(num_plot_points))])[1:,]
+    return np.array([[0.5*QSize*temp/num_plot_points, np.mean([Intensity[x,y] for x in range(x_pixels) for y in range(y_pixels) if temp-0.5*delta <=  np.sqrt( (x - 0.5*x_pixels)**2 + (y - 0.5*y_pixels)**2 )  <=temp+0.5*delta])] for temp in range(int(num_plot_points))])[1:,]
 
 
 

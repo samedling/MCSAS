@@ -556,7 +556,8 @@ def load_exp_image(preview=False,enlarge_mask=1):
       print("Resized to {0}.".format(downsample))
       exp_data=np.array(downsampled)
       padded=np.lib.pad(exp_data,((1,1),(1,1)),'edge')   #pads the array for enlarging mask
-      mask=np.ones(np.product(exp_data.shape)).reshape(exp_data.shape)
+      #mask=np.ones(np.product(exp_data.shape)).reshape(exp_data.shape)
+      mask=np.ones_like(exp_data)
       for i in range(mask.shape[0]):
          for j in range(mask.shape[1]):
             if exp_data[i,j] < mask_threshold:        #do after normalize?
@@ -726,15 +727,15 @@ def fast_mask(exp_data,mask,speedup=5):
       return mask
    elif speedup == 2:
       mod=2
-      percentile=80
+      percentile=90
       pad=1
    elif speedup == 5:
       mod=3
-      percentile=94
+      percentile=95
       pad=1
    elif speedup == 10:
       mod=5
-      percentile=95
+      percentile=96
       pad=1
    else:
       percentile=min(99,max(50,100-50./speedup))
@@ -758,7 +759,7 @@ def fast_mask(exp_data,mask,speedup=5):
                   mask[i,j] = 0
    final=total-mask.sum()
    print('Of {0} pixels, {1} are masked by beamstop and {2} are being skipped for speed.'.format(total,int(starting),int(final-starting)))
-   print('Estimated speedup: {0:.3}x.'.format(total/(total-final)))
+   print('Estimated speedup: {0:.3}x.'.format(float(total)/(total-final)))
    return mask
 
 def convert_from_SI():
@@ -787,7 +788,6 @@ def plot_residuals():
    save(calc_intensity,"_calc")     #wrong suffix!!
    #err = np.zeros(np.product(exp_data.shape)).reshape(exp_data.shape)
    err = np.zeros(exp_data.shape)
-   print(mask.shape,exp_data.shape,calc_intensity.shape)
    for i in range(exp_data.shape[0]):
       for j in range(exp_data.shape[1]):
          #err[i,j] = exp_data[i,j]-calc_intensity[i,j]
