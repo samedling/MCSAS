@@ -526,8 +526,9 @@ def load_exp_image(preview=False,enlarge_mask=1):
       except IOError:
          print('File {0} does not exist.'.format(filename))
          return
-      normalized = 1.0/np.sum(exp_data)
-      exp_data=exp_data*normalized
+      #normalized = 1.0/np.sum(exp_data)
+      #exp_data=exp_data*normalized
+      exp_data=normalize(exp_data)
       #exp_data=ndimage.gaussian_filter(exp_data,sigma=3)
       return exp_data
    else:
@@ -564,16 +565,22 @@ def load_exp_image(preview=False,enlarge_mask=1):
                mask[i,j] = 0
             elif enlarge_mask and padded[i:i+3,j:j+3].min() < mask_threshold:        #do after normalize?
                mask[i,j] = 0  #could set to ~0.1 if want to decrease but not zero it.
-      normalized = 1.0/np.sum(exp_data*mask)
-      exp_data=exp_data*normalized
+      #normalized = 1.0/np.sum(exp_data*mask)
+      #exp_data=exp_data*normalized
+      exp_data=normalize(exp_data,mask)
       #img=Image.fromarray(exp_data)   #To go back to an image.
       return exp_data,mask
 
-def normalize(data,mask=[]):
+def normalize(data,mask=[],background=0):
+   '''Normalizes, taking mask into account and, if neccessary, adding constant background first.  Be careful not to run this twice in a row, or you'll add double the background.'''
+   if background:
+       data += g.dictionary_SI['background']
    if not len(mask):
-      return data/np.sum(data)
+      total = 1.0/np.sum(data)
+      return data*total
    else:
-      return data/np.sum(data*mask)
+      total = 1.0/np.sum(data*mask)
+      return data*total
 
 def plot_exp_data():#threshold=1e-7,zero_value=1e-7):
     '''Plots experimental data, using center and crop parameters if nonzero.'''
@@ -614,7 +621,8 @@ def residuals(param,exp_data,mask=[],random_seed=2015):
       mask = np.ones(exp_data.shape)
    #load_functions()    #DO I NEED?  #Reintilizes functions with the new parameters.
    #calc_intensity = Average_Intensity() #might just take longer or might be necessary to accomodate randomness in Points_For_Calculation
-   calc_intensity = Detector_Intensity(Points_For_Calculation(seed=random_seed),mask)  #like Average_Intensity() but just runs once and without time printouts and with same random_seed
+   calc_intensity = normalize(Detector_Intensity(Points_For_Calculation(seed=random_seed),mask),mask,True)  #like Average_Intensity() but just runs once and without time printouts and with same random_seed
+   #calc_intensity = Detector_Intensity(Points_For_Calculation(seed=random_seed),mask)  #like Average_Intensity() but just runs once and without time printouts and with same random_seed
    #err = mask*(exp_data - (calc_intensity + g.dictionary_SI['background']))  #TODO: CLEANUP FOLLOWING FOR LOOPS TO THIS?
    err = np.zeros(np.product(exp_data.shape)).reshape(exp_data.shape)
    for i in x:
@@ -640,7 +648,8 @@ def fit_step(exp_data,mask=[],update_freq=50):
    '''Runs a small number of iterations of fitting exp_data.'''
    global parameters
    guess = parameters.get_param()
-   norm_exp_data = exp_data/np.sum(exp_data*mask) #data normalized taking mask into account.
+   #norm_exp_data = exp_data/np.sum(exp_data*mask) #data normalized taking mask into account.
+   exp_data = normalize(exp_data,mask)
    fit_param = leastsq(residuals,guess,args=(exp_data,mask,int(time.time())),full_output=1,maxfev=update_freq)
    #parameters.set_param(fit_param[0])   #These two lines shouldn't really be needed.
    #parameters.sync_dict()
@@ -682,6 +691,7 @@ def perform_fit():  #Gets run when you press the Button.
    lprint('{0}: Starting fit...'.format(time.strftime("%X")),logfile)
    if grid_compression:
       mask = fast_mask(exp_data,mask,grid_compression)
+      exp_data = normalize(exp_data,mask)
    total_steps = 0
    while total_steps < max_iter or max_iter == 0:
       fit_param = fit_step(exp_data,mask,update_freq)
@@ -709,9 +719,10 @@ def perform_fit():  #Gets run when you press the Button.
    #with open(g.dictionary_SI['path_to_subfolder']+"default.txt", 'wb') as f:
    #   pickle.dump(g.dictionary, f) #saving a copy in the subfolder for reference.
    if plot_fit and plot_diff:
-      fit_results=Average_Intensity()
+      fit_results=normalize(Average_Intensity(),background=True)
       save(fit_results,"_fit")
-      diff = abs(exp_data - (fit_results + g.dictionary_SI['background']))
+      diff = abs(exp_data - fit_results)
+      #diff = abs(exp_data - (fit_results + g.dictionary_SI['background']))
       Fit_plot(exp_data*mask,fit_results,diff)
    elif plot_fit:
       fit_results=Average_Intensity()
@@ -828,50 +839,6 @@ def view_fit(exp_data,fit_results,fit_residuals):
 
 
 
-def xy_grid(exp_data,percentile=95,mode=2,pad=1):
-   '''Returns xy grid of points which are either above a threshold or every mode^2 datapoint.  Available modes are (2,3,5,10), corresponding to a decrease of (4,9,25,100) of points below threshold percentile.'''
-   all_x=range(exp_data.shape[0])
-   all_y=range(exp_data.shape[1])
-   threshold=np.percentile(exp_data,percentile)
-   x,y=[],[]
-   if pad:
-      padded=np.lib.pad(exp_data,((1,1),(1,1)),'edge')   #pads the array
-      for i in all_x:
-         for j in all_y:
-            if padded[i:i+3,j:j+3].min() > threshold:
-               x.append(i)
-               y.append(j)
-            elif mode == 10 and i%10==5 and j%10==5:  #factor <100
-               x.append(i)
-               y.append(j)
-            elif mode == 5 and i%5==2 and j%5==2:     #factor <25
-               x.append(i)
-               y.append(j)
-            elif mode == 3 and i%3==1 and j%3==1:     #factor <9
-               x.append(i)
-               y.append(j)
-            elif mode == 2 and i%2==0 and j%2==0:     #factor <4
-               x.append(i)
-               y.append(j)
-   else:
-      for i in all_x:
-         for j in all_y:
-            if exp_data[i,j] > threshold:
-               x.append(i)
-               y.append(j)
-            elif mode == 10 and i%10==5 and j%10==5:  #factor <100
-               x.append(i)
-               y.append(j)
-            elif mode == 5 and i%5==2 and j%5==2:     #factor <25
-               x.append(i)
-               y.append(j)
-            elif mode == 3 and i%3==1 and j%3==1:     #factor <9
-               x.append(i)
-               y.append(j)
-            elif mode == 2 and i%2==0 and j%2==0:     #factor <4
-               x.append(i)
-               y.append(j)
-   return x,y
 ### End Fitting Functions ###
 
 
