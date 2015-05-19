@@ -612,10 +612,11 @@ def residuals(param,exp_data,mask=[],random_seed=2015):
    y=range(exp_data.shape[1])
    if not len(mask):
       mask = np.ones(exp_data.shape)
-   err = np.zeros(np.product(exp_data.shape)).reshape(exp_data.shape)
    #load_functions()    #DO I NEED?  #Reintilizes functions with the new parameters.
    #calc_intensity = Average_Intensity() #might just take longer or might be necessary to accomodate randomness in Points_For_Calculation
    calc_intensity = Detector_Intensity(Points_For_Calculation(seed=random_seed),mask)  #like Average_Intensity() but just runs once and without time printouts and with same random_seed
+   #err = mask*(exp_data - (calc_intensity + g.dictionary_SI['background']))  #TODO: CLEANUP FOLLOWING FOR LOOPS TO THIS?
+   err = np.zeros(np.product(exp_data.shape)).reshape(exp_data.shape)
    for i in x:
       for j in y:
          #err[i,j] = exp_data[i,j]-calc_intensity[i,j]
@@ -710,6 +711,7 @@ def perform_fit():  #Gets run when you press the Button.
    if plot_fit and plot_diff:
       fit_results=Average_Intensity()
       save(fit_results,"_fit")
+      diff = abs(exp_data - (fit_results + g.dictionary_SI['background']))
       Fit_plot(exp_data*mask,fit_results,diff)
    elif plot_fit:
       fit_results=Average_Intensity()

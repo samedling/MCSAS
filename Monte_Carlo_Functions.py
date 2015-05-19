@@ -144,6 +144,26 @@ elif symmetric == 0 and Qz == 1:
                               *Points[:,0:3], axis = 1))*np.transpose(Points[:,3:4]))**2
                           for col in range(int(x_pixels))] for row in range(int(y_pixels))])
             return Intensity/np.sum(Intensity)
+            #Possibly faster, mask-aware implementation.
+            #total_int = 0
+            #if not len(mask):
+                #mask = np.ones((x_pixels,y_pixels))
+            #Intensity = np.empty((x_pixels,y_pixels))
+            #for i in range(x_pixels):
+               #for j in range(y_pixels):
+                  #if mask[i,j] > 0:
+                     #Q = [i*QSize/x_pixels-0.5*QSize,j*QSize/y_pixels-0.5*QSize,
+                          #2*EHC*np.sin(np.sqrt((i-0.5*x_pixels)**2+(j-0.5*y_pixels)**2)*QSize/(x_pixels*2*EHC))**2]
+                     #temp_int = 0
+                     #temp_int_2 = 0
+                     #for p in range(Points.shape[0]):
+                        #QdotR = np.dot(Q,Points[p,0:3])
+                        #temp_int += Points[p,3]*np.cos(QdotR)
+                        #temp_int_2 += Points[p,3]*np.sin(QdotR)
+                     #Intensity[i,j] = temp_int**2 + temp_int_2**2
+                     #total_int += Intensity[i,j]
+            #return Intensity/total_int
+
 
 #for symmetric objects, no small angle approximation
 elif symmetric == 1 and Qz == 0:
