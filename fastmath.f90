@@ -19,7 +19,7 @@
 !Change mask implmentation so x,y coordinates of relevant pixels are passed in so there's no need for an if statement.
 
 
-module fastmath
+module sumint
 contains
 
 subroutine sumintensity00(qsize,ehc,mask,x_pixels,y_pixels,points,npts,intensity)
@@ -176,4 +176,86 @@ subroutine sumintensity11(qsize,mask,x_pixels,y_pixels,points,npts,intensity)
    return
 end subroutine sumintensity11
 
-end module fastmath
+end module sumint
+
+module density
+contains
+
+subroutine d1sphere(radius_1,rho_1,points,npts)
+   real*4, intent(in) :: radius_1,rho_1
+   real*4, dimension(4,npts), intent(inout) :: points
+   integer*4, intent(in) :: npts
+   !$OMP PARALLEL DO
+   do i=1,npts
+      if (points(1,i)**2+points(2,i)**2+points(3,i)**2 < radius_1**2) then
+         points(4,i) = rho_1
+      else
+         points(4,i) = 0
+      end if
+   end do
+   !OMP END PARALLEL DO
+   return
+end subroutine d1sphere
+
+
+subroutine d2cylinder2(radius_1,rho_1,points,npts,density)
+   real*4, intent(in) :: radius_1,rho_1
+   real*4, dimension(3,npts), intent(in) :: points
+   real*4, dimension(npts), intent(out) :: density
+   integer*4, intent(in) :: npts
+   !$OMP PARALLEL DO
+   do i=1,npts
+      if (points(1,i)**2+points(2,i)**2 < radius_1**2) then
+         density(i) = rho_1
+      else
+         density(i) = 0
+      end if
+   end do
+   !OMP END PARALLEL DO
+   return
+end subroutine d2cylinder2
+
+
+subroutine d2cylinder(radius_1,rho_1,points,npts)
+   real*4, intent(in) :: radius_1,rho_1
+   real*4, dimension(4,npts), intent(inout) :: points
+   integer*4, intent(in) :: npts
+   !$OMP PARALLEL DO
+   do i=1,npts
+      if (points(1,i)**2+points(2,i)**2 < radius_1**2) then
+         points(4,i) = rho_1
+      else
+         points(4,i) = 0
+      end if
+   end do
+   !OMP END PARALLEL DO
+   return
+end subroutine d2cylinder
+
+subroutine d3coreshell(radius_1,rho_1,radius_2,rho_2,points,npts)
+   real*4, intent(in) :: radius_1,rho_1
+   real*4, intent(in) :: radius_2,rho_2
+   real*4, dimension(4,npts), intent(inout) :: points
+   integer*4, intent(in) :: npts
+   real*4 :: dist
+   !$OMP PARALLEL DO
+   do i=1,npts
+      dist = points(1,i)**2+points(2,i)**2
+      if (dist < radius_2**2) then
+         points(4,i) = rho_1
+      else if (dist < radius_1**2) then
+         points(4,i) = rho_2
+      else
+         points(4,i) = 0
+      end if
+   end do
+   !OMP END PARALLEL DO
+   return
+end subroutine d3coreshell
+
+
+
+
+
+
+end module density

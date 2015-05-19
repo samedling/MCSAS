@@ -67,4 +67,62 @@ __kernel void sumint11 (
    intensity[n] = pow(temp_intensity,2);
 }
 
+//Pass in separate x and y arrays.//
+__kernel void sumint00mask (
+   const float qsize, const float ehc, const int pixels, __constant int* xval, __constant int* yval,
+   __global const float4* points, const int npts, __global float* intensity)
+{
+// For no symmetry and no small angle approximation //
+   float temp_intensity,temp_intensity_2,QdotR;
+   int n = get_global_id(0);
+   int i = xval[n];
+   int j = yval[n];
+   float Q[3] = { i*qsize/pixels-0.5*qsize, j*qsize/pixels-0.5*qsize,
+        2*ehc*pow(sin(sqrt(pow((i-0.5*pixels),2)+pow(j-0.5*pixels,2))*qsize/(pixels*2*ehc)),2) };
+   temp_intensity = 0;
+   temp_intensity_2 = 0;
+   for ( int p = 0; p < npts; p++) {
+       float R[3] = {points[p][0],points[p][1],points[p][2]};
+       QdotR = my_dot(Q,R,3);
+       temp_intensity += points[p][3]*cos(QdotR);
+       temp_intensity_2 += points[p][3]*sin(QdotR);
+   }
+   intensity[n] = pow(temp_intensity,2)+pow(temp_intensity_2,2);
+}
 
+
+__kernel void sumint10mask (
+   const float qsize, const float ehc, const int pixels, __constant int* xval, __constant int* yval,
+   __global const float4* points, const int npts, __global float* intensity)
+{
+// For symmetry but no small angle approximation //
+   float temp_intensity;
+   int n = get_global_id(0);
+   int i = xval[n];
+   int j = yval[n];
+   float Q[3] = { i*qsize/pixels-0.5*qsize, j*qsize/pixels-0.5*qsize,
+        2*ehc*pow(sin(sqrt(pow((i-0.5*pixels),2)+pow(j-0.5*pixels,2))*qsize/(pixels*2*ehc)),2) };
+   temp_intensity = 0;
+   for ( int p = 0; p < npts; p++) {
+       float R[3] = {points[p][0],points[p][1],points[p][2]};
+       temp_intensity += points[p][3]*cos(my_dot(Q,R,3));
+   }
+   intensity[n] = pow(temp_intensity,2);
+}
+
+__kernel void sumint11mask (
+   const float qsize, const int pixels, __constant int* xval, __constant int* yval,
+   __global const float4* points, const int npts, __global float* intensity)
+{
+// For symmetry and small angle approximation //
+   float temp_intensity = 0;
+   int n = get_global_id(0);
+   int i = xval[n];
+   int j = yval[n];
+   float Q[2] = { i*qsize/pixels-0.5*qsize, j*qsize/pixels-0.5*qsize};
+   for ( int p = 0; p < npts; p++) {
+       float R[2] = {points[p][0],points[p][1]};
+       temp_intensity += points[p][3]*cos(my_dot(Q,R,2));
+   }
+   intensity[n] = pow(temp_intensity,2);
+}

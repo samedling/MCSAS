@@ -4,15 +4,15 @@ from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 from matplotlib import cm
 
+import global_vars as g
 
 ###################               Plotting the points created              ##############################
 def Points_Plot(Points, save_name, show=1):
-    global dictionary_SI
     fig = plt.figure()
     ax = fig.gca(projection='3d')
 
-    ax.elev = dictionary_SI['altitude']
-    ax.azim = dictionary_SI['azimuth']
+    ax.elev = g.dictionary_SI['altitude']
+    ax.azim = g.dictionary_SI['azimuth']
 
     X = Points[:,0]
     Y = Points[:,1]
@@ -24,7 +24,7 @@ def Points_Plot(Points, save_name, show=1):
     #When plotting all points, do you want the axes to have the same scale? yes = 1, no = 0.
     #This sets the default, if 01input_variables has not been run.
 
-    if dictionary_SI['scale'] == 1:
+    if g.dictionary_SI['scale'] == 1:
         max_range = np.array([X.max()-X.min(), Y.max()-Y.min(), Z.max()-Z.min()]).max() / 2.0
         mean_x = X.mean()
         mean_y = Y.mean()
@@ -32,10 +32,10 @@ def Points_Plot(Points, save_name, show=1):
         ax.set_xlim(mean_x - max_range, mean_x + max_range)
         ax.set_ylim(mean_y - max_range, mean_y + max_range)
         ax.set_zlim(mean_z - max_range, mean_z + max_range)
-    ax.set_title(dictionary_SI['title'])
+    ax.set_title(g.dictionary_SI['title'])
 
 
-    plt.savefig(dictionary_SI['path_to_subfolder']+save_name+".png")
+    plt.savefig(g.dictionary_SI['path_to_subfolder']+save_name+".png")
     plt.show()
 
 
@@ -47,14 +47,13 @@ def Points_Plot(Points, save_name, show=1):
 
 #save_name and title must be strings "title"
 def Intensity_plot(Intensity, name, title, show):
-    global dictionary_SI
-    maximum = dictionary_SI['maximum']
-    minimum = dictionary_SI['minimum']
-    log_scale = dictionary_SI['log_scale']
-    bound = dictionary_SI['bound']
-    QSize = dictionary_SI['QSize']
-    save_name = dictionary['save_name']
-    ThreeD = dictionary['ThreeD']
+    maximum = g.dictionary_SI['maximum']
+    minimum = g.dictionary_SI['minimum']
+    log_scale = g.dictionary_SI['log_scale']
+    bound = g.dictionary_SI['bound']
+    QSize = g.dictionary_SI['QSize']
+    save_name = g.dictionary['save_name']
+    ThreeD = g.dictionary['ThreeD']
    #getting the dimentions of the Intensity array
     pixels_row, pixels_col = np.array(Intensity).shape
 
@@ -70,7 +69,7 @@ def Intensity_plot(Intensity, name, title, show):
         im=Image.Image()
         #im=Image.fromarray(np.log10(Intensity))
         im=Image.fromarray(np.uint32(128*np.log10(Intensity)/np.log10(np.amax(Intensity))))
-        im.save(dictionary_SI['path_to_subfolder']+'Intensity.bmp')
+        im.save(g.dictionary_SI['path_to_subfolder']+'Intensity.bmp')
     
 
     if ThreeD == 0: #For a 2D heat map
@@ -113,8 +112,8 @@ def Intensity_plot(Intensity, name, title, show):
         #You can change the angle of elevation and azimith - think of an alt/az  telescope
         #leave commented to get a different projection.
         #ax.elev = 0 #to view side on.
-        ax.elev = dictionary_SI['altitude']
-        ax.azim = dictionary_SI['azimuth']
+        ax.elev = g.dictionary_SI['altitude']
+        ax.azim = g.dictionary_SI['azimuth']
     
         #make 0 to cut off the top and bottom.
         if bound == 1:
@@ -133,20 +132,19 @@ def Intensity_plot(Intensity, name, title, show):
 
 
     ax.set_title(title)
-    plt.savefig(dictionary_SI['path_to_subfolder']+name+".png")   #should name be save_name?
+    plt.savefig(g.dictionary_SI['path_to_subfolder']+name+".png")   #should name be save_name?
     if show:
         plt.show()
 
 
 def Fit_plot(experimental,fit,residuals,orientation='Vertical'):
     '''Shows a multiplot containing residuals, experimental data, and fit results.'''
-    global dictionary_SI
-    maximum = dictionary_SI['maximum']
-    minimum = dictionary_SI['minimum']
-    log_scale = dictionary_SI['log_scale']
-    bound = dictionary_SI['bound']
-    QSize = dictionary_SI['QSize']
-    save_name = dictionary['save_name']
+    maximum = g.dictionary_SI['maximum']
+    minimum = g.dictionary_SI['minimum']
+    log_scale = g.dictionary_SI['log_scale']
+    bound = g.dictionary_SI['bound']
+    QSize = g.dictionary_SI['QSize']
+    save_name = g.dictionary['save_name']
    #getting the dimentions of the Intensity array
     pixels_row, pixels_col = np.array(residuals).shape
 
@@ -201,7 +199,7 @@ def Fit_plot(experimental,fit,residuals,orientation='Vertical'):
        cbar_ax = fig.add_axes([0.95,0.15,0.02,0.7])
     fig.colorbar(im, cax=cbar_ax)        
 
-    #plt.savefig(dictionary_SI['path_to_subfolder']+save_name+".png")
+    #plt.savefig(g.dictionary_SI['path_to_subfolder']+save_name+".png")
     plt.show()
 
 
@@ -211,21 +209,20 @@ def Fit_plot(experimental,fit,residuals,orientation='Vertical'):
 ##################              Plotting the Radial Intensity          #########################
 #this defines the analytic model as a function, if possible.
 def radial_intensity_plot(radial_intensity, name, title, show):
-    global dictionary_SI
-    analytic = dictionary_SI['analytic']
-    save_name = dictionary_SI['save_name']
-    maximum = dictionary_SI['maximum']
-    minimum = dictionary_SI['minimum']
+    analytic = g.dictionary_SI['analytic']
+    save_name = g.dictionary_SI['save_name']
+    maximum = g.dictionary_SI['maximum']
+    minimum = g.dictionary_SI['minimum']
     plt.close()
     plt.cla()
     plt.clf()
 
-    if dictionary_SI['bound'] ==1:
+    if g.dictionary_SI['bound'] ==1:
         normalised = [max(min(x[1],maximum), minimum) for x in radial_intensity]
     else:
         normalised=radial_intensity[:,1]
 
-    if dictionary_SI['log_scale'] == 1:
+    if g.dictionary_SI['log_scale'] == 1:
         plt.loglog(radial_intensity[:,0]*10**-9, normalised,'.b')#this plots points
         plt.loglog(radial_intensity[:,0]*10**-9, normalised,'-b')#this plots lines between the points
     else:
@@ -237,9 +234,9 @@ def radial_intensity_plot(radial_intensity, name, title, show):
         theoretical = theory(radial_intensity[:,0])
         ratio = np.amax(radial_intensity[:,1])/np.amax(theoretical)
         TR = theoretical*ratio
-        if dictionary_SI['bound'] ==1:
+        if g.dictionary_SI['bound'] ==1:
              TR = [max(min(x,maximum), minimum) for x in TR]
-        if dictionary_SI['log_scale'] == 1:
+        if g.dictionary_SI['log_scale'] == 1:
             plt.loglog(radial_intensity[:,0]*10**-9, TR,'r-')
         else:
             plt.plot(radial_intensity[:,0]*10**-9, TR,'r-')
@@ -251,7 +248,7 @@ def radial_intensity_plot(radial_intensity, name, title, show):
     pylab.xlabel('Q Range (nm^-1)')
     pylab.ylabel('Relative Intensity')
         
-    plt.savefig(dictionary_SI['path_to_subfolder']+name+".png")
+    plt.savefig(g.dictionary_SI['path_to_subfolder']+name+".png")
     if show == 1:
         pylab.show()
     
@@ -260,21 +257,20 @@ def radial_intensity_plot(radial_intensity, name, title, show):
 ##################           plotting by angle            #################
 
 def angle_plot(data, name, title, show):
-    global dictionary_SI
-    analytic = dictionary_SI['analytic']
-    save_name = dictionary_SI['save_name']
-    maximum = dictionary_SI['maximum']
-    minimum = dictionary_SI['minimum']
+    analytic = g.dictionary_SI['analytic']
+    save_name = g.dictionary_SI['save_name']
+    maximum = g.dictionary_SI['maximum']
+    minimum = g.dictionary_SI['minimum']
     plt.close()
     plt.cla()
     plt.clf()
 
-    if dictionary_SI['bound'] ==1:
+    if g.dictionary_SI['bound'] ==1:
         normalised = [max(min(x[1],maximum), minimum) for x in data]
     else:
         normalised=data[:,1]
 
-    if dictionary_SI['log_scale'] == 1:
+    if g.dictionary_SI['log_scale'] == 1:
         plt.semilogy(data[:,0], normalised,'.b')#this plots points
         plt.semilogy(data[:,0], normalised,'-b')#this plots lines between the points
     else:
@@ -289,7 +285,7 @@ def angle_plot(data, name, title, show):
     pylab.ylabel('Relative Intensity')
 
     
-    plt.savefig(dictionary_SI['path_to_subfolder']+name+".png")
+    plt.savefig(g.dictionary_SI['path_to_subfolder']+name+".png")
     if show == 1:
         pylab.show()
 
