@@ -75,7 +75,8 @@ def Intensity_plot(Intensity, name, title, show):
 
     if ThreeD == 0: #For a 2D heat map
         fig = plt.figure()
-        ax = fig.add_subplot(111)
+        #ax = fig.add_subplot(111)
+        ax = fig.add_subplot(111, aspect='equal')
         #CHANGE COLOUR MAP HERE!!
         #Pictures of the colour map are at: http://matplotlib.org/users/colormaps.html
         #put _r at the end to reverse the direction of the colour.

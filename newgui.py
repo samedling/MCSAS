@@ -20,7 +20,7 @@ from scipy.optimize import leastsq
 #from scipy import ndimage  #possible smoothing of exp_data before viewing
 
 #Looks for fastmath.so to speed up intensity calculation.
-opencl_enabled = True
+opencl_enabled = False
 try:
    import pyopencl as cl
 except ImportError:
@@ -54,7 +54,7 @@ if debug:
 #These are the default settings
 dictionary = {'advanced':1, 'altitude':45, 'analytic': 2, 'ave_dist': 0.6, 'azimuth':45, 'bound': 1, 'circ_delta':5, 'comments':'',
               'degrees': 1, 'energy_wavelength': 12, 'energy_wavelength_box': 0, 'gauss':0, 'log_scale': 1, 'maximum': 0.01, 'minimum': 1e-8,
-              'num_plots': 1, 'pixels': 200, 'proportional_radius':0.5, 'QSize': 6,'Qz': 0, 'radius_1': 5.0, 'radius_2': 2.5, 'rho_1': 1.0, 'rho_2': -0.5,
+              'num_plots': 1, 'pixels': (200,200), 'proportional_radius':0.5, 'QSize': 6,'Qz': 0, 'radius_1': 5.0, 'radius_2': 2.5, 'rho_1': 1.0, 'rho_2': -0.5,
               'save_img':1, 'save_name': 'save_name', 'scale': 1,'SD':1, 'seq_hide':0, 'shape': 2, 's_start': 0, 's_step': 2,
               's_stop': 1, 'subfolder':'subfolder', 's_var': 'x_theta', 'symmetric': 0,
               'theta_delta':20, 'ThreeD': 0, 'title': 'title', 'x_theta': 0,'y_theta': 0,'z_theta': 0,'z_dim': 100,'z_scale':1,#}
@@ -159,12 +159,15 @@ def get_numbers_from_gui():
     dictionary_SI["radius_2"] = dictionary["radius_2"]*10**-9
     dictionary_SI["QSize"] = dictionary["QSize"]*10**9
 
-    dictionary_SI['num_plot_points'] = int(dictionary_SI['pixels']/2.)
+    #dictionary_SI['num_plot_points'] = int(dictionary_SI['pixels']/2.)
+    dictionary_SI['num_plot_points'] = min([int(i) for i in dictionary['center'].split()])/2
     dictionary_SI['delta'] = 1. #number of pixels in width
 
-
     dictionary_SI['circ_delta'] = 1.4*dictionary_SI['circ_delta']
-    dictionary_SI['pixel_radius'] = dictionary['proportional_radius']*dictionary_SI['pixels']/2.
+    try:
+       dictionary_SI['pixel_radius'] = dictionary['proportional_radius']*dictionary_SI['pixels']/2.
+    except TypeError:
+       dictionary_SI['pixel_radius'] = dictionary['proportional_radius']*int(dictionary_SI['pixels'].split()[0])/2.
     dictionary_SI['theta_delta'] = 6.283/dictionary['theta_delta']
     
 
@@ -527,7 +530,8 @@ def load_exp_image(preview=False,enlarge_mask=1):
    '''Loads experimental data from file, cropping it and downsampling it if neccessary, and normalizes.  Also outputs the mask corresponding to the beamstop.'''
    #and 2D array containing a list of x,y points for the grid.'''
    global dictionary
-   downsample=(dictionary['pixels'],dictionary['pixels'])
+   #downsample=(dictionary['pixels'],dictionary['pixels'])
+   downsample=[int(i) for i in dictionary_SI['pixels'].split()]
    center=[int(i) for i in dictionary['center'].split()]
    border=int(dictionary['border'])
    mask_threshold=dictionary['mask_threshold']
@@ -556,7 +560,15 @@ def load_exp_image(preview=False,enlarge_mask=1):
          print("Cropped to {0}.".format(cropped.size))
       else:
          cropped=Image.open(filename)
-      downsampled=cropped.resize(downsample,Image.BICUBIC)      #NEAREST,BILINEAR,BICUBIC,ANTIALIAS (worst to best; fastest to slowest; except ANTIALIAS does weird things sometimes)
+      downsampled=cropped.resize((max(downsample),max(downsample)),Image.BICUBIC)      #NEAREST,BILINEAR,BICUBIC,ANTIALIAS (worst to best; fastest to slowest; except ANTIALIAS does weird things sometimes)
+      if downsample[0] < downsample[1]: #tall rechtangle
+         w,h = downsample
+         d = h-w
+         downsampled=downsampled.crop((d/2,0,h-d/2,h))
+      elif downsample[1] < downsample[0]:  #flat rectangle
+         w,h = downsample
+         d = w-h
+         downsampled=downsampled.crop((0,d/2,w,w-d/2))
       print("Resized to {0}.".format(downsample))
       exp_data=np.array(downsampled)
       padded=np.lib.pad(exp_data,((1,1),(1,1)),'edge')   #pads the array for enlarging mask
@@ -567,7 +579,7 @@ def load_exp_image(preview=False,enlarge_mask=1):
                mask[i,j] = 0
             elif enlarge_mask and padded[i:i+3,j:j+3].min() < mask_threshold:        #do after normalize?
                mask[i,j] = 0  #could set to ~0.1 if want to decrease but not zero it.
-      normalize = 1.0/np.sum(exp_data)
+      normalize = 1.0/np.sum(exp_data*mask)
       exp_data=exp_data*normalize
       #img=Image.fromarray(exp_data)   #To go back to an image.
       return exp_data,mask
@@ -638,6 +650,7 @@ def fit_step(exp_data,mask=[],update_freq=50):
    '''Runs a small number of iterations of fitting exp_data.'''
    global dictionary_SI,parameters
    guess = parameters.get_param()
+   norm_exp_data = exp_data/np.sum(exp_data*mask) #data normalized taking mask into account.
    fit_param = leastsq(residuals,guess,args=(exp_data,mask,int(time.time())),full_output=1,maxfev=update_freq)
    #parameters.set_param(fit_param[0])   #These two lines shouldn't really be needed.
    #parameters.sync_dict()
@@ -1093,7 +1106,7 @@ if __name__ == "__main__":
    ROW+=1
    enter_num('azimuth', "Azimuth", ROW, COL)
    ROW+=1
-   enter_num('pixels', "Number of Pixels", ROW, COL)
+   enter_num('pixels', "Number of Pixels (x y)", ROW, COL)
    ROW+=1
    enter_num('ave_dist', "Neighbouring Point Distance (nm)", ROW, COL)
    ROW+=1

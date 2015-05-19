@@ -74,29 +74,29 @@ if opencl_enabled:
       global dictionary_SI
       qsize=dictionary_SI['QSize']
       ehc=dictionary_SI['EHC']
-      pixels=dictionary_SI['pixels']
-      return opencl_instance.sumint(qsize,ehc,pixels,Points,symmetric,Qz)
+      x_pixels,y_pixels = [int(i) for i in dictionary_SI['pixels'].split()]
+      return opencl_instance.sumint(qsize,ehc,x_pixels,y_pixels,Points,symmetric,Qz)
 elif symmetric == 0 and Qz == 0:
     #print "No symmetry; no small angle approximation."
     def Detector_Intensity(Points,mask=[]):
         global dictionary_SI
         QSize = dictionary_SI['QSize']
-        pixels = dictionary_SI['pixels']
+        x_pixels,y_pixels = [int(i) for i in dictionary_SI['pixels'].split()]
         EHC = dictionary_SI['EHC']
         if f2py_enabled:
             if not len(mask):
-                mask = np.ones((pixels,pixels))
+                mask = np.ones((x_pixels,y_pixels))
             #return fastmath.fastmath.sumintensity00(QSize,EHC,mask,Points)
             return fastmath.fastmath.sumintensity00(QSize,EHC,mask,Points.T)
         else:
             #print "FYI: Could not accelerate using f2py."
             Intensity = np.array([[np.sum(np.cos(np.sum(
-                [row*QSize/pixels-0.5*QSize, col*QSize/pixels-0.5*QSize, 2*EHC*np.sin((((row-0.5*pixels)**2 + (col-0.5*pixels)**2)**0.5)*QSize/pixels/2/EHC)**2]
+                [row*QSize/y_pixels-0.5*QSize, col*QSize/x_pixels-0.5*QSize, 2*EHC*np.sin((((row-0.5*y_pixels)**2 + (col-0.5*x_pixels)**2)**0.5)*QSize/x_pixels/2/EHC)**2]
                 *Points[:,0:3], axis = 1))*np.transpose(Points[:,3:4]))**2
                           +np.sum(np.sin(np.sum(
-                              [row*QSize/pixels-0.5*QSize, col*QSize/pixels-0.5*QSize, 2*EHC*np.sin((((row-0.5*pixels)**2 + (col-0.5*pixels)**2)**0.5)*QSize/pixels/2/EHC)**2]
+                              [row*QSize/y_pixels-0.5*QSize, col*QSize/x_pixels-0.5*QSize, 2*EHC*np.sin((((row-0.5*y_pixels)**2 + (col-0.5*x_pixels)**2)**0.5)*QSize/x_pixels/2/EHC)**2]
                               *Points[:,0:3], axis = 1))*np.transpose(Points[:,3:4]))**2
-                          for col in range(int(pixels))] for row in range(int(pixels))])
+                          for col in range(int(x_pixels))] for row in range(int(y_pixels))])
             return Intensity/np.sum(Intensity)
 
 #for asymmetric objects, small angle approximation
@@ -105,22 +105,22 @@ elif symmetric == 0 and Qz == 1:
     def Detector_Intensity(Points,mask=[]):
         global dictionary_SI
         QSize = dictionary_SI['QSize']
-        pixels = dictionary_SI['pixels']
+        x_pixels,y_pixels = [int(i) for i in dictionary_SI['pixels'].split()]
         EHC = dictionary_SI['EHC']
         if f2py_enabled:
             if not len(mask):
-                mask = np.ones((pixels,pixels))
+                mask = np.ones((x_pixels,y_pixels))
             #return fastmath.fastmath.sumintensity00(QSize,EHC,mask,Points)    #Not a typo; sumint01 is (slightly) slower and thus pointless.
             return fastmath.fastmath.sumintensity00(QSize,EHC,mask,Points.T)  #Not a typo; sumint 01 is (slightly) slower and thus pointless.
         else:
             #print "FYI: Could not accelerate using f2py."
             Intensity = np.array([[np.sum(np.cos(np.sum(
-                [row*QSize/pixels-0.5*QSize, col*QSize/pixels-0.5*QSize, 0]
+                [row*QSize/y_pixels-0.5*QSize, col*QSize/x_pixels-0.5*QSize, 0]
                 *Points[:,0:3], axis = 1))*np.transpose(Points[:,3:4]))**2
                           +np.sum(np.sin(np.sum(
-                              [row*QSize/pixels-0.5*QSize, col*QSize/pixels-0.5*QSize, 2*EHC*np.sin((((row-0.5*pixels)**2 + (col-0.5*pixels)**2)**0.5)*QSize/pixels/2/EHC)**2]
+                              [row*QSize/y_pixels-0.5*QSize, col*QSize/x_pixels-0.5*QSize, 2*EHC*np.sin((((row-0.5*y_pixels)**2 + (col-0.5*x_pixels)**2)**0.5)*QSize/x_pixels/2/EHC)**2]
                               *Points[:,0:3], axis = 1))*np.transpose(Points[:,3:4]))**2
-                          for col in range(int(pixels))] for row in range(int(pixels))])
+                          for col in range(int(x_pixels))] for row in range(int(y_pixels))])
             return Intensity/np.sum(Intensity)
 
 #for symmetric objects, no small angle approximation
@@ -129,19 +129,19 @@ elif symmetric == 1 and Qz == 0:
     def Detector_Intensity(Points,mask=[]):
         global dictionary_SI
         QSize = dictionary_SI['QSize']
-        pixels = dictionary_SI['pixels']
+        x_pixels,y_pixels = [int(i) for i in dictionary_SI['pixels'].split()]
         EHC = dictionary_SI['EHC']
         if f2py_enabled:
             if not len(mask):
-                mask = np.ones((pixels,pixels))
+                mask = np.ones((x_pixels,y_pixels))
             #return fastmath.fastmath.sumintensity10(QSize,EHC,mask,Points)
             return fastmath.fastmath.sumintensity10(QSize,EHC,mask,Points.T)
         else:
             #print "FYI: Could not accelerate using f2py."
             Intensity = np.array([[np.sum(np.cos(np.sum(
-                [row*QSize/pixels-0.5*QSize, col*QSize/pixels-0.5*QSize, 2*EHC*np.sin((((row-0.5*pixels)**2 + (col-0.5*pixels)**2)**0.5)*QSize/pixels/2/EHC)**2]
+                [row*QSize/y_pixels-0.5*QSize, col*QSize/x_pixels-0.5*QSize, 2*EHC*np.sin((((row-0.5*y_pixels)**2 + (col-0.5*x_pixels)**2)**0.5)*QSize/x_pixels/2/EHC)**2]
                 *Points[:,0:3],axis =1))*np.transpose(Points[:,3:4]))**2
-                          for col in range(int(pixels))] for row in range(int(pixels))])
+                          for col in range(int(x_pixels))] for row in range(int(y_pixels))])
             return Intensity/np.sum(Intensity)
 
 #for symmetric objects, small angle approximation
@@ -150,19 +150,19 @@ elif symmetric == 1 and Qz == 1:
     def Detector_Intensity(Points,mask=[]):
         global dictionary_SI
         QSize = dictionary_SI['QSize']
-        pixels = dictionary_SI['pixels']
+        x_pixels,y_pixels = [int(i) for i in dictionary_SI['pixels'].split()]
         EHC = dictionary_SI['EHC']
         if f2py_enabled:
             if not len(mask):
-                mask = np.ones((pixels,pixels))
+                mask = np.ones((x_pixels,y_pixels))
             #return fastmath.fastmath.sumintensity11(QSize,mask,Points)
             return fastmath.fastmath.sumintensity11(QSize,mask,Points.T)
         else:
             #print "FYI: Could not accelerate using f2py."
             Intensity = np.array([[np.sum(np.cos(np.sum(
-                [row*QSize/pixels-0.5*QSize, col*QSize/pixels-0.5*QSize, 0.]
+                [row*QSize/y_pixels-0.5*QSize, col*QSize/x_pixels-0.5*QSize, 0.]
                 *Points[:,0:3],axis =1))*np.transpose(Points[:,3:4]))**2
-                          for col in range(int(pixels))] for row in range(int(pixels))])
+                          for col in range(int(x_pixels))] for row in range(int(y_pixels))])
             return Intensity/np.sum(Intensity)
 
 
@@ -230,12 +230,12 @@ def Average_Intensity():
 def radial(Intensity):
     global dictionary_SI
     QSize = dictionary_SI['QSize']
-    pixels = dictionary_SI['pixels']
+    x_pixels,y_pixels = [int(i) for i in dictionary_SI['pixels'].split()]
     EHC = dictionary_SI['EHC']
     num_plot_points = dictionary_SI['num_plot_points']
     delta = dictionary_SI['delta']
-    return np.array([[0.5*QSize*temp/num_plot_points, np.mean([Intensity[x,y] for x in range(int(pixels)) for y in range(int(pixels))
-                        if temp-0.5*delta <=  ( (x - 0.5*pixels)**2 + (y - 0.5*pixels)**2 )**0.5  <=temp+0.5*delta])]
+    return np.array([[0.5*QSize*temp/num_plot_points, np.mean([Intensity[x,y] for x in range(x_pixels) for y in range(y_pixels)
+                        if temp-0.5*delta <=  ( (x - 0.5*x_pixels)**2 + (y - 0.5*y_pixels)**2 )**0.5  <=temp+0.5*delta])]
                      for temp in range(int(num_plot_points))])[1:,]
 
 
@@ -243,7 +243,7 @@ def radial(Intensity):
 #########################             Plot Angle at a fixed radius           ###########################
 def plotting_circle(Intensity):
     global dictionary_SI
-    pixels = dictionary_SI['pixels']
+    x_pixels,y_pixels = [int(i) for i in dictionary_SI['pixels'].split()]
     xrow, yrow = np.shape(Intensity)
     
     circ_delta = float(dictionary_SI['circ_delta'])
@@ -251,7 +251,7 @@ def plotting_circle(Intensity):
     pixel_radius = float(dictionary_SI['pixel_radius'])
     
 
-    rad_theta = np.asarray([[  [ ((x-0.5*pixels)**2 + (y-0.5*pixels)**2)**0.5 , np.angle((x-0.5*pixels)+1j*(y-0.5*pixels))+3.1416  ] for y in range(int(yrow))] for x in range(int(xrow))])
+    rad_theta = np.asarray([[  [ ((x-0.5*x_pixels)**2 + (y-0.5*y_pixels)**2)**0.5 , np.angle((x-0.5*x_pixels)+1j*(y-0.5*y_pixels))+3.1416  ] for y in range(int(yrow))] for x in range(int(xrow))])
     return np.array([[theta,
                       np.mean( [Intensity[x,y] for x in range(int(xrow))  for y in range(int(yrow))
                         if pixel_radius-circ_delta/2.         <=rad_theta[x,y,0]<=    pixel_radius+circ_delta/2.
