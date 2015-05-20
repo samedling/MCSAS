@@ -513,8 +513,6 @@ class Fit_Parameters():
 
 def load_exp_image(preview=False,enlarge_mask=1):
    '''Loads experimental data from file, cropping it and downsampling it if neccessary, and normalizes.  Also outputs the mask corresponding to the beamstop.'''
-   #and 2D array containing a list of x,y points for the grid.'''
-   #downsample=(g.dictionary['pixels'],g.dictionary['pixels'])
    downsample=[int(i) for i in g.dictionary_SI['pixels'].split()]
    center=[int(i) for i in g.dictionary['center'].split()]
    border=int(g.dictionary['border'])
@@ -526,10 +524,7 @@ def load_exp_image(preview=False,enlarge_mask=1):
       except IOError:
          print('File {0} does not exist.'.format(filename))
          return
-      #normalized = 1.0/np.sum(exp_data)
-      #exp_data=exp_data*normalized
       exp_data=normalize(exp_data)
-      #exp_data=ndimage.gaussian_filter(exp_data,sigma=3)
       return exp_data
    else:
       if sum(center):
@@ -546,27 +541,24 @@ def load_exp_image(preview=False,enlarge_mask=1):
       else:
          cropped=Image.open(filename)
       downsampled=cropped.resize((max(downsample),max(downsample)),Image.BICUBIC)      #NEAREST,BILINEAR,BICUBIC,ANTIALIAS (worst to best; fastest to slowest; except ANTIALIAS does weird things sometimes)
-      if downsample[0] < downsample[1]: #tall rechtangle
+      if downsample[0] < downsample[1]: #tall rectangle
          w,h = downsample
          d = h-w
          downsampled=downsampled.crop((d/2,0,h-d/2,h))
-      elif downsample[1] < downsample[0]:  #flat rectangle
+      elif downsample[1] < downsample[0]:  #wide rectangle
          w,h = downsample
          d = w-h
          downsampled=downsampled.crop((0,d/2,w,w-d/2))
       print("Resized to {0}.".format(downsample))
       exp_data=np.array(downsampled)
       padded=np.lib.pad(exp_data,((1,1),(1,1)),'edge')   #pads the array for enlarging mask
-      #mask=np.ones(np.product(exp_data.shape)).reshape(exp_data.shape)
       mask=np.ones_like(exp_data)
       for i in range(mask.shape[0]):
          for j in range(mask.shape[1]):
-            if exp_data[i,j] < mask_threshold:        #do after normalize?
+            if exp_data[i,j] < mask_threshold:        #todo? do after normalize to use shown value instead of raw value?
                mask[i,j] = 0
             elif enlarge_mask and padded[i:i+3,j:j+3].min() < mask_threshold:        #do after normalize?
                mask[i,j] = 0  #could set to ~0.1 if want to decrease but not zero it.
-      #normalized = 1.0/np.sum(exp_data*mask)
-      #exp_data=exp_data*normalized
       exp_data=normalize(exp_data,mask)
       #img=Image.fromarray(exp_data)   #To go back to an image.
       return exp_data,mask
@@ -599,25 +591,18 @@ def plot_exp_data():#threshold=1e-7,zero_value=1e-7):
         image=load_exp_image(preview=True)
         print('Original image size is {0} x {1} pixels.'.format(image.shape[0],image.shape[1]))
         print('This takes a minute...')
-        threshold=np.median(image)/10
-        zero_value=threshold
-        image[image<threshold]=zero_value
+        threshold=np.median(image)/10     #These 3 lines not necessary since upper/lower bounds is similar
+        zero_value=threshold              #but these work automatically fairly well
+        image[image<threshold]=zero_value #so they're worth keeping for now.
         Intensity_plot(image,"exp_data",'Before Cropping or Downsampling',1)
     else:
         cropped=load_exp_image()
-        #cropped[cropped<threshold]=zero_value
-        #Intensity_plot(cropped,"exp_data2",'After Cropping and Downsampling',1)
-        #threshold=np.median(cropped[0])/10      #Remove this since upper/lower bounds is the same.
-        #zero_value=threshold
         masked=cropped[0]*cropped[1]
-        #masked[masked<threshold]=zero_value
         #for i in (2,5,10,20,50,80,90,95,98,99):
             #print('{0}th percentile value is {1:0.4}.'.format(i,np.percentile(masked,i)))
         print('Recommended value for background noise parameter is {0:0.4}.'.format(np.percentile(masked,25)))
         Intensity_plot(masked,"exp_data2",'After Cropping and Downsampling',1)
     return
-
-
 
 def residuals(param,exp_data,mask=[],random_seed=2015):
    '''Returns residual array of difference between experimental data and data calculated from passed parameters.'''
@@ -628,23 +613,11 @@ def residuals(param,exp_data,mask=[],random_seed=2015):
    y=range(exp_data.shape[1])
    if not len(mask):
       mask = np.ones(exp_data.shape)
-   #load_functions()    #DO I NEED?  #Reintilizes functions with the new parameters.
-   #calc_intensity = Average_Intensity() #might just take longer or might be necessary to accomodate randomness in Points_For_Calculation
-   calc_intensity = normalize(Detector_Intensity(Points_For_Calculation(seed=random_seed),mask),mask,True)  #like Average_Intensity() but just runs once and without time printouts and with same random_seed
+   calc_intensity = normalize(Detector_Intensity(Points_For_Calculation(seed=random_seed),mask),mask,True)
    #TODO: it shouldn't be able to set the background too high....???
-   #calc_intensity = Detector_Intensity(Points_For_Calculation(seed=random_seed),mask)  #like Average_Intensity() but just runs once and without time printouts and with same random_seed
-   #err = mask*(exp_data - (calc_intensity + g.dictionary_SI['background']))  #TODO: CLEANUP FOLLOWING FOR LOOPS TO THIS?
-   err = np.zeros(np.product(exp_data.shape)).reshape(exp_data.shape)
-   for i in x:
-      for j in y:
-         #err[i,j] = exp_data[i,j]-calc_intensity[i,j]
-         if mask[i,j]:
-            err[i,j] = mask[i,j]*(exp_data[i,j]-(calc_intensity[i,j]+g.dictionary_SI['background']))
-         #err[i,j] = exp_data[i,j]-max(calc_intensity[i,j],g.dictionary_SI['background'])
+   err = mask*(exp_data - (calc_intensity + g.dictionary_SI['background']))
    print('{0}: Total error = {1:.4}; sum of squares = {2:.4}'.format(time.strftime("%X"),np.abs(err).sum(),np.square(err).sum()))
    return np.ravel(err)     #flattens err since leastsq only takes 1D array
-     
-
 
 def lprint(text,filename=0):
    '''Simple routine for logging text printed to the screen.'''
@@ -653,7 +626,6 @@ def lprint(text,filename=0):
       with open(filename,'a') as log:
          log.write(text+"\n")
 
-
 def fit_step(exp_data,mask=[],update_freq=50):
    '''Runs a small number of iterations of fitting exp_data.'''
    global parameters
@@ -661,8 +633,6 @@ def fit_step(exp_data,mask=[],update_freq=50):
    #norm_exp_data = exp_data/np.sum(exp_data*mask) #data normalized taking mask into account.
    exp_data = normalize(exp_data,mask)
    fit_param = leastsq(residuals,guess,args=(exp_data,mask,int(time.time())),full_output=1,maxfev=update_freq)
-   #parameters.set_param(fit_param[0])   #These two lines shouldn't really be needed.
-   #parameters.sync_dict()
    with open(root_folder+"/default.txt", 'wb') as f:
       pickle.dump(g.dictionary, f)#Saving the infomation from g.dictionary so it can be loaded later
    with open(g.dictionary_SI['path_to_subfolder']+"default.txt", 'wb') as f:
@@ -695,7 +665,7 @@ def perform_fit():  #Gets run when you press the Button.
    if update_freq == 0:
       update_freq = max_iter
    exp_data,mask=load_exp_image()
-   parameters=Fit_Parameters()  #Creates class of parameters with values and names.
+   parameters=Fit_Parameters()  #Creates object of parameters with values and names.
    lprint('Starting values:',logfile)
    parameters.print_param(logfile)
    lprint('{0}: Starting fit...'.format(time.strftime("%X")),logfile)
@@ -703,7 +673,7 @@ def perform_fit():  #Gets run when you press the Button.
       mask = fast_mask(exp_data,mask,grid_compression)
       exp_data = normalize(exp_data,mask)
    total_steps = 0
-   while total_steps < max_iter or max_iter == 0:
+   while total_steps < max_iter or max_iter == 0:     #TODO: debug or disable update_interval
       fit_param = fit_step(exp_data,mask,update_freq)
       total_steps+=fit_param[2]['nfev']
       if fit_param[2]['nfev'] < update_freq:      #Checks if fit is completed.
@@ -722,7 +692,6 @@ def perform_fit():  #Gets run when you press the Button.
          parameters.print_param(logfile)
    diff=fit_param[2]['fvec'].reshape(exp_data.shape)
    g.quiet=initial_quiet
-   #need to refresh g.dictionary_SI?
    save(diff,"_fit_residuals")
    #with open(root_folder+"/default.txt", 'wb') as f:
    #   pickle.dump(g.dictionary, f)#Saving the infomation from g.dictionary so it can be loaded later
@@ -809,42 +778,15 @@ def plot_residuals():
    exp_data,mask=load_exp_image()
    calc_intensity=Average_Intensity()
    save(calc_intensity,"_calc")     #wrong suffix!!
-   #err = np.zeros(np.product(exp_data.shape)).reshape(exp_data.shape)
-   err = np.zeros(exp_data.shape)
-   for i in range(exp_data.shape[0]):
-      for j in range(exp_data.shape[1]):
-         #err[i,j] = exp_data[i,j]-calc_intensity[i,j]
-         if mask[i,j]:
-            err[i,j] = mask[i,j]*(exp_data[i,j]-(calc_intensity[i,j]+g.dictionary['background']))
+   err = mask*(exp_data - (calc_intensity + g.dictionary_SI['background']))
    save(err,"_guess_residuals")
    plot_residuals=np.abs(err)
    print('{0}: Total error = {1:.4}; sum of squares = {2:.4}'.format(time.strftime("%X"),plot_residuals.sum(),np.square(err).sum()))
    if plot_all:
-      #view_fit(exp_data*mask,calc_intensity,plot_residuals)
       Fit_plot(exp_data*mask,calc_intensity,plot_residuals)
    else:
       print('Plotting difference.')
       Intensity_plot(plot_residuals,"residuals",'Difference Plot',1)
-
-#Unused:
-def view_fit(exp_data,fit_results,fit_residuals):
-   '''Copied from view_intensity() with minor changes to plot all relevant fitting plots.'''
-   plot_fit = g.dictionary['plot_fit_tick']
-   plot_residuals = g.dictionary['plot_residuals_tick'] #local name
-   #get_numbers_from_gui()
-   #load_functions()
-   if plot_fit:
-      print('Plotting exp data and calculated results.')
-      threshold=np.median(exp_data)/10
-      zero_value=threshold
-      exp_data[exp_data<threshold]=zero_value
-      Intensity_plot(exp_data,"exp_data",'Experimental Data',1)
-      Intensity_plot(fit_results,"fit",'Calculated Data',1)
-   if plot_residuals:
-      print('Plotting difference.')
-      Intensity_plot(fit_residuals,"residuals",'Difference Plot',1)
-   clear_mem()
-   print("Program Finished.")
 
 
 

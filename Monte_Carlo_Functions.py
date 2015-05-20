@@ -90,7 +90,6 @@ def Points_For_Calculation(seed=0):
 symmetric = g.dictionary_SI['symmetric']
 Qz = g.dictionary_SI['Qz']
 
-#for asymmetric objects, no small angle approximation
 if g.opencl_enabled:
    def Detector_Intensity(Points,mask=[]):
       qsize=g.dictionary_SI['QSize']
@@ -102,6 +101,8 @@ if g.opencl_enabled:
          #return g.opencl_sumint.sumint_mask(qsize,ehc,mask,Points,symmetric,Qz)
       else:
          return g.opencl_sumint.sumint_mask(qsize,ehc,mask,Points,symmetric,Qz)
+
+#for asymmetric objects, no small angle approximation
 elif symmetric == 0 and Qz == 0:
     #print "No symmetry; no small angle approximation."
     def Detector_Intensity(Points,mask=[]):
@@ -110,11 +111,9 @@ elif symmetric == 0 and Qz == 0:
         EHC = g.dictionary_SI['EHC']
         if g.f2py_enabled:
             if not len(mask):
-                mask = np.ones((y_pixels,x_pixels))         #WHY BACKWARDS??
-            #return fastmath.sumint.sumintensity00(QSize,EHC,mask,Points)
-            return fastmath.sumint.sumintensity00(QSize,EHC,mask,Points.T)  #TODO: NOT THE SAME AS OTHER ONES!!
+                mask = np.ones((y_pixels,x_pixels))
+            return fastmath.sumint.sumintensity00(QSize,EHC,mask,Points.T)
         else:
-            #print "FYI: Could not accelerate using f2py."
             Intensity = np.array([[np.sum(np.cos(np.sum(
                 [row*QSize/y_pixels-0.5*QSize, col*QSize/x_pixels-0.5*QSize, 2*EHC*np.sin((((row-0.5*y_pixels)**2 + (col-0.5*x_pixels)**2)**0.5)*QSize/x_pixels/2/EHC)**2]
                 *Points[:,0:3], axis = 1))*np.transpose(Points[:,3:4]))**2
@@ -134,10 +133,8 @@ elif symmetric == 0 and Qz == 1:
         if g.f2py_enabled:
             if not len(mask):
                 mask = np.ones((y_pixels,x_pixels))
-            #return fastmath.sumint.sumintensity00(QSize,EHC,mask,Points)    #Not a typo; sumint01 is (slightly) slower and thus pointless.
-            return fastmath.sumint.sumintensity00(QSize,EHC,mask.T,Points.T)  #Not a typo; sumint 01 is (slightly) slower and thus pointless.
+            return fastmath.sumint.sumintensity00(QSize,EHC,mask,Points.T)  #Not a typo; sumint 01 is (slightly) slower and thus pointless.
         else:
-            #print "FYI: Could not accelerate using f2py."
             Intensity = np.array([[np.sum(np.cos(np.sum(
                 [row*QSize/y_pixels-0.5*QSize, col*QSize/x_pixels-0.5*QSize, 0]
                 *Points[:,0:3], axis = 1))*np.transpose(Points[:,3:4]))**2
@@ -146,25 +143,6 @@ elif symmetric == 0 and Qz == 1:
                               *Points[:,0:3], axis = 1))*np.transpose(Points[:,3:4]))**2
                           for col in range(int(x_pixels))] for row in range(int(y_pixels))])
             return Intensity/np.sum(Intensity)
-            #Possibly faster, mask-aware implementation.
-            #total_int = 0
-            #if not len(mask):
-                #mask = np.ones((x_pixels,y_pixels))
-            #Intensity = np.empty((x_pixels,y_pixels))
-            #for i in range(x_pixels):
-               #for j in range(y_pixels):
-                  #if mask[i,j] > 0:
-                     #Q = [i*QSize/x_pixels-0.5*QSize,j*QSize/y_pixels-0.5*QSize,
-                          #2*EHC*np.sin(np.sqrt((i-0.5*x_pixels)**2+(j-0.5*y_pixels)**2)*QSize/(x_pixels*2*EHC))**2]
-                     #temp_int = 0
-                     #temp_int_2 = 0
-                     #for p in range(Points.shape[0]):
-                        #QdotR = np.dot(Q,Points[p,0:3])
-                        #temp_int += Points[p,3]*np.cos(QdotR)
-                        #temp_int_2 += Points[p,3]*np.sin(QdotR)
-                     #Intensity[i,j] = temp_int**2 + temp_int_2**2
-                     #total_int += Intensity[i,j]
-            #return Intensity/total_int
 
 
 #for symmetric objects, no small angle approximation
@@ -177,10 +155,8 @@ elif symmetric == 1 and Qz == 0:
         if g.f2py_enabled:
             if not len(mask):
                 mask = np.ones((y_pixels,x_pixels))
-            #return fastmath.sumint.sumintensity10(QSize,EHC,mask,Points)
-            return fastmath.sumint.sumintensity10(QSize,EHC,mask.T,Points.T)
+            return fastmath.sumint.sumintensity10(QSize,EHC,mask,Points.T)
         else:
-            #print "FYI: Could not accelerate using f2py."
             Intensity = np.array([[np.sum(np.cos(np.sum(
                 [row*QSize/y_pixels-0.5*QSize, col*QSize/x_pixels-0.5*QSize, 2*EHC*np.sin((((row-0.5*y_pixels)**2 + (col-0.5*x_pixels)**2)**0.5)*QSize/x_pixels/2/EHC)**2]
                 *Points[:,0:3],axis =1))*np.transpose(Points[:,3:4]))**2
@@ -196,11 +172,9 @@ elif symmetric == 1 and Qz == 1:
         EHC = g.dictionary_SI['EHC']
         if g.f2py_enabled:
             if not len(mask):
-                mask = np.ones((x_pixels,y_pixels))
-            #return fastmath.sumint.sumintensity11(QSize,mask,Points)
-            return fastmath.sumint.sumintensity11(QSize,mask.T,Points.T)
+                mask = np.ones((y_pixels,x_pixels))
+            return fastmath.sumint.sumintensity11(QSize,mask,Points.T)
         else:
-            #print "FYI: Could not accelerate using f2py."
             Intensity = np.array([[np.sum(np.cos(np.sum(
                 [row*QSize/y_pixels-0.5*QSize, col*QSize/x_pixels-0.5*QSize, 0.]
                 *Points[:,0:3],axis =1))*np.transpose(Points[:,3:4]))**2
