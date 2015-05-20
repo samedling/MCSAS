@@ -573,14 +573,23 @@ def load_exp_image(preview=False,enlarge_mask=1):
 
 def normalize(data,mask=[],background=0):
    '''Normalizes, taking mask into account and, if neccessary, adding constant background first.  Be careful not to run this twice in a row, or you'll add double the background.'''
-   if background:
-       data += g.dictionary_SI['background']
    if not len(mask):
-      total = 1.0/np.sum(data)
-      return data*total
+      mask = np.ones_like(data)
+   if background:
+      norm_to = (1.0 - g.dictionary_SI['background']*np.sum(mask))  #TODO: returns BAD negative number if background_noise is too high.
+      if g.debug:
+         print g.dictionary_SI['background']
+         print("Normalizing to {0}".format(norm_to))
+      #total = np.sum(data*mask) + g.dictionary_SI['background']*np.sum(mask)
+      total = norm_to/np.sum(data*mask)
+      normalized = data*total + g.dictionary_SI['background']*mask
    else:
-      total = 1.0/np.sum(data*mask)
-      return data*total
+      norm_to = 1.0
+      total = norm_to/np.sum(data*mask)
+      normalized = data*total
+   if g.debug:
+      print("Normalized so total value is {0} and lowest value is {1}.".format(np.sum(normalized),np.min(normalized)))
+   return normalized
 
 def plot_exp_data():#threshold=1e-7,zero_value=1e-7):
     '''Plots experimental data, using center and crop parameters if nonzero.'''
@@ -622,6 +631,7 @@ def residuals(param,exp_data,mask=[],random_seed=2015):
    #load_functions()    #DO I NEED?  #Reintilizes functions with the new parameters.
    #calc_intensity = Average_Intensity() #might just take longer or might be necessary to accomodate randomness in Points_For_Calculation
    calc_intensity = normalize(Detector_Intensity(Points_For_Calculation(seed=random_seed),mask),mask,True)  #like Average_Intensity() but just runs once and without time printouts and with same random_seed
+   #TODO: it shouldn't be able to set the background too high....???
    #calc_intensity = Detector_Intensity(Points_For_Calculation(seed=random_seed),mask)  #like Average_Intensity() but just runs once and without time printouts and with same random_seed
    #err = mask*(exp_data - (calc_intensity + g.dictionary_SI['background']))  #TODO: CLEANUP FOLLOWING FOR LOOPS TO THIS?
    err = np.zeros(np.product(exp_data.shape)).reshape(exp_data.shape)
