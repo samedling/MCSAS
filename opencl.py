@@ -32,7 +32,7 @@ class OpenCL:
          self.program.sumint11(self.queue,out.shape,None,np.float32(qsize),np.int32(x_pixels),buf_points,np.int32(y_pixels),np.int32(npts),out_buffer)
       #cl.enqueue_read_buffer(self.queue,out_buffer,out).wait()
       cl.enqueue_copy(self.queue,out,out_buffer)
-      return out.reshape(y_pixels,-1)    #converts to square    #TODO: or y_pixels??
+      return out.reshape(y_pixels,-1)    #Converts 1D intensity back to 2D.
 
    def sumint_mask(self,qsize,ehc,mask,points,sym=0,small=0):
       '''Returns the normalized intensity.'''
@@ -46,17 +46,28 @@ class OpenCL:
       out_buffer = cl.Buffer(self.context,cl.mem_flags.WRITE_ONLY,out.nbytes)   #for the output
 
       sym = 0
-      if sym == 0:
-         self.program.sumint00mask(self.queue,out.shape,None,np.float32(qsize),np.float32(ehc),np.int32(x_pixels),np.int32(y_pixels),buf_x,buf_y,buf_points,np.int32(npts),out_buffer)
-      elif small == 0:
-         self.program.sumint10mask(self.queue,out.shape,None,np.float32(qsize),np.float32(ehc),np.int32(x_pixels),np.int32(y_pixels),buf_x,buf_y,buf_points,np.int32(npts),out_buffer)
-      else:
+      try:
+         if sym == 0:
+            self.program.sumint00mask(self.queue,out.shape,None,np.float32(qsize),np.float32(ehc),np.int32(x_pixels),np.int32(y_pixels),buf_x,buf_y,buf_points,np.int32(npts),out_buffer)
+         elif small == 0:
+            self.program.sumint10mask(self.queue,out.shape,None,np.float32(qsize),np.float32(ehc),np.int32(x_pixels),np.int32(y_pixels),buf_x,buf_y,buf_points,np.int32(npts),out_buffer)
+         else:
+            self.program.sumint11mask(self.queue,out.shape,None,np.float32(qsize),np.int32(x_pixels),np.int32(y_pixels),buf_x,buf_y,buf_points,np.int32(npts),out_buffer)
+      except:
+         print("Runtime Error. Too many pixels being calculated for OpenCL to work with grid compression.")
+         print("Either disable grid compression entirely or decrease number of pixels or increase grid compression.")
+         if g.debug:
+            print("Number of pixels: {0}.".format(len(x_coords)))
+            print("(Number of points: {0}.)".format(npts))
+         if g.dictionary_SI['grid_compression'] < 5:
+            print("Try grid compression of 5 or 10")
          self.program.sumint11mask(self.queue,out.shape,None,np.float32(qsize),np.int32(x_pixels),np.int32(y_pixels),buf_x,buf_y,buf_points,np.int32(npts),out_buffer)
+         return
       #cl.enqueue_read_buffer(self.queue,out_buffer,out).wait()
       cl.enqueue_copy(self.queue,out,out_buffer)
       #return x_coords,y_coords,out
       out2d=np.zeros_like(mask)
-      for i in range(len(x_coords)):
+      for i in range(len(x_coords)):    #Converts 1D intensity back to 2D.
          out2d[x_coords[i],y_coords[i]] = out[i]
       return out2d
 
@@ -64,7 +75,7 @@ class OpenCL:
       '''Returns list of densities.'''
       shape = g.dictionary_SI['shape']
       #buf_points = cl.Buffer(self.context,cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=np.float32(random_points))  #Copy input arrays into memory.
-      buf_points = cl.Buffer(self.context,cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=np.float32(np.append(random_points,np.zeros([len(random_points),1]),1)))  #Copy input arrays into memory.
+      buf_points = cl.Buffer(self.context,cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=np.float32(np.append(random_points,np.zeros([len(random_points),1]),1)))  #Copy input arrays into memory. Pad with zeros to use float4*.
       out=np.empty(random_points.shape[0],dtype=np.float32)
       out_buffer = cl.Buffer(self.context,cl.mem_flags.WRITE_ONLY,out.nbytes)   #for the output
       if shape == 1:
@@ -84,10 +95,3 @@ class OpenCL:
       return out
          
 
-
-#no mask; implement mask so x,y coordinates of relevant pixels are passed in.
-
-if __name__ == "__main__":
-   instance = OpenCL()
-   instance.load_program('sumint.cl')
-   intensity = instance.sumint(qsize,ehc,pixels,points)

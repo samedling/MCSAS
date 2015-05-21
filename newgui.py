@@ -1,5 +1,5 @@
 #!/usr/bin/python
-version = '0.3.0'
+version = '0.3.1'
 
 
 try:
@@ -570,8 +570,7 @@ def normalize(data,mask=[],background=0):
    if background:
       norm_to = (1.0 - g.dictionary_SI['background']*np.sum(mask))  #TODO: returns BAD negative number if background_noise is too high.
       if g.debug:
-         print g.dictionary_SI['background']
-         print("Normalizing to {0}".format(norm_to))
+         print("Normalizing to {0} so will be normalized to 1 when background of {1} is added.".format(norm_to,g.dictionary_SI['background']))
       #total = np.sum(data*mask) + g.dictionary_SI['background']*np.sum(mask)
       total = norm_to/np.sum(data*mask)
       normalized = data*total + g.dictionary_SI['background']*mask
@@ -669,9 +668,8 @@ def perform_fit():  #Gets run when you press the Button.
    lprint('Starting values:',logfile)
    parameters.print_param(logfile)
    lprint('{0}: Starting fit...'.format(time.strftime("%X")),logfile)
-   if grid_compression:
+   if grid_compression > 1:
       mask = fast_mask(exp_data,mask,grid_compression)
-      exp_data = normalize(exp_data,mask)
    total_steps = 0
    while total_steps < max_iter or max_iter == 0:     #TODO: debug or disable update_interval
       fit_param = fit_step(exp_data,mask,update_freq)

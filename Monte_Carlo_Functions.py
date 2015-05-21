@@ -44,15 +44,13 @@ def Points_For_Calculation(seed=0):
         points = np.c_[RandomPoints,densities]
         outside = [i for i in range(points.shape[0]) if not points[i,3]]
         points_inside = np.delete(points,outside,axis=0)
-        #points_inside = np.asarray([np.append(RandomPoints[n],densities[n]) for n in range(RandomPoints.shape[0]) if abs(densities[n]) > 0.00001])
     else:
         points = np.c_[RandomPoints,density_vector(RandomPoints)]
         outside = [i for i in range(points.shape[0]) if not points[i,3]]
         points_inside = np.delete(points,outside,axis=0)
         #points_inside = np.asarray([np.append(coords, [density(coords)]) for coords in RandomPoints if abs(density(coords))>0.00001])  #30% slower implementation
     
-    #To use less RAM, i am clearing this variable now.
-    RandomPoints = None
+    RandomPoints = None         #To use less RAM, i am clearing this variable now.
 
     if not g.quiet:
         print("{0}: {1} points will be used for the calculation.".format(time.strftime("%X"),len(points_inside)))
@@ -65,7 +63,7 @@ def Points_For_Calculation(seed=0):
     roty = np.array([[np.cos(y_theta),0,np.sin(y_theta),0],[0,1,0,0],[-np.sin(y_theta),0,np.cos(y_theta),0],[0,0,0,1]])
     rotx = np.array([[1,0,0,0],[0,np.cos(x_theta),-np.sin(x_theta),0],[0,np.sin(x_theta),np.cos(x_theta),0],[0,0,0,1]])
 
-    #Multiplying the matrix by each column. The transpose is to make the multiplication work properely.
+    #Multiplying the matrix by each column. The transpose is to make the multiplication work properly.
     #I am multiplying the rotation matricies together, then multiplying it by the coordinates for each point
     try:
        return np.asarray(points_inside.dot(np.transpose(rotz.dot(roty).dot(rotx))))
@@ -95,10 +93,8 @@ if g.opencl_enabled:
       qsize=g.dictionary_SI['QSize']
       ehc=g.dictionary_SI['EHC']
       x_pixels,y_pixels = [int(i) for i in g.dictionary_SI['pixels'].split()]
-      if not len(mask):
+      if not len(mask) or g.dictionary['grid_compression'] < 2:
          return g.opencl_sumint.sumint(qsize,ehc,x_pixels,y_pixels,Points,symmetric,Qz)
-         #mask = np.ones((x_pixels,y_pixels))
-         #return g.opencl_sumint.sumint_mask(qsize,ehc,mask,Points,symmetric,Qz)
       else:
          return g.opencl_sumint.sumint_mask(qsize,ehc,mask,Points,symmetric,Qz)
 

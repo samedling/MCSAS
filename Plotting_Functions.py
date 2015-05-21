@@ -137,7 +137,7 @@ def Intensity_plot(Intensity, name, title, show):
         plt.show()
 
 
-def Fit_plot(experimental,fit,residuals,orientation='Vertical'):
+def Fit_plot(experimental,fit,residuals,orientation=False):
     '''Shows a multiplot containing residuals, experimental data, and fit results.'''
     maximum = g.dictionary_SI['maximum']
     minimum = g.dictionary_SI['minimum']
@@ -147,6 +147,12 @@ def Fit_plot(experimental,fit,residuals,orientation='Vertical'):
     save_name = g.dictionary['save_name']
    #getting the dimentions of the Intensity array
     pixels_row, pixels_col = np.array(residuals).shape
+
+    if not orientation:
+        if pixels_row > pixels_col:
+            orientation = 'Horizontal'
+        else:
+            orientation = 'Vertical'
 
     #This creates new arrays which are bounded.
     if bound:
@@ -166,7 +172,8 @@ def Fit_plot(experimental,fit,residuals,orientation='Vertical'):
     if orientation[0] in ('V','v'):    #If vertical
        fig,axes = plt.subplots(nrows=3,ncols=1,figsize=(5,10))
     else:
-       fig,axes = plt.subplots(nrows=1,ncols=3,figsize=(12,3))
+       #fig,axes = plt.subplots(nrows=1,ncols=3,figsize=(12,3))
+       fig,axes = plt.subplots(nrows=1,ncols=3,figsize=(8,3))
 
     #Pictures of the colour map are at: http://matplotlib.org/users/colormaps.html
     #put _r at the end to reverse the direction of the colour.
@@ -195,8 +202,10 @@ def Fit_plot(experimental,fit,residuals,orientation='Vertical'):
        fig.subplots_adjust(right=0.85)  #Moves subplots to make room for color bar.
        cbar_ax = fig.add_axes([0.80,0.15,0.05,0.7])
     else:
-       fig.subplots_adjust(right=0.92)  #Moves subplots to make room for color bar.
-       cbar_ax = fig.add_axes([0.95,0.15,0.02,0.7])
+       #fig.subplots_adjust(right=0.92)  #Moves subplots to make room for color bar.
+       #cbar_ax = fig.add_axes([0.95,0.15,0.02,0.7])
+       fig.subplots_adjust(right=0.82)  #Moves subplots to make room for color bar.
+       cbar_ax = fig.add_axes([0.90,0.15,0.02,0.7])
     fig.colorbar(im, cax=cbar_ax)        
 
     #plt.savefig(g.dictionary_SI['path_to_subfolder']+save_name+".png")

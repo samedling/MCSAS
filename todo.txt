@@ -1,13 +1,14 @@
 Recently Done (commit message):
 
 To Do:
-Make sure I'm happy with both plot_residuals and fit_exp_data plots.
-check fortran non-square arrays:
-Have normalize use the area of each pixel (a value stored in mask?)
-   debug newly written normalize function
 
+## High Priority ##
+Add additional shapes to fortran.
+Test matrix math speedup in fortran.
+
+
+## Medium Priority ##
 Debug or disable update_interval.
-Enable horizontal multiplot (including GUI flag)?
 Better downsampling & cropping of exp_data (only crop once).
 Create test cases (which should also be timed).
 Comment & clean up code.
@@ -16,6 +17,9 @@ Speed up by changing to_return=a*2 to a*=2;return a to avoid copying.
 Add Abort button.
 Don't overwrite filenames.
 
+## Low Priority ##
+
+Enable horizontal multiplot GUI flag
 Add separate filenames for fit_results.
 Difference plot should always be linear (not log)?
 Add initial messages to fitlog (geometry,cropping,downsampling)
