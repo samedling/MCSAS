@@ -5,7 +5,7 @@ To Do:
 ## High Priority ##
 Add additional shapes to fortran.
 Test matrix math speedup in fortran.
-
+Update Ubuntu and SciL binaries.
 
 ## Medium Priority ##
 Debug or disable update_interval.

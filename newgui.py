@@ -68,6 +68,10 @@ else: #os.name == 'posix' or sys.platform == 'linux2'
    root_folder = os.getcwd()  #Mac/Linux
 #Check for write access?
 
+#Windows: os.name='nt', sys.platform='win32'
+#Ubuntu: os.name='posix', sys.platform='linux2'
+#Mac OS X: os.name='posix', sys.platform='darwin'
+
 try:
     d = pickle.load(open(root_folder+"/default.txt", 'rb'))
     if len(g.dictionary) != len(d): #I check that it is the same length - This is needed if any new variables are added to g.dictionary
