@@ -22,7 +22,7 @@ def Points_For_Calculation(seed=0):
                     for z_coord in np.arange(-z_dim/2, z_dim/2, ave_dist*z_scale) for y_coord in np.arange(-y_dim/2, y_dim/2, ave_dist) for x_coord in np.arange(-x_dim/2, x_dim/2, ave_dist)])
 
     #Fortran implementation about 8x faster than new python implementation.
-    if g.f2py_enabled and RandomPoints.shape[0] > 100000 and g.dictionary_SI['shape'] in (1,2,3,4):
+    if g.f2py_enabled and RandomPoints.shape[0] > 100000 and g.dictionary_SI['shape'] in (1,2,3,4,5,6,7,11,13,14):
         if g.debug:
             print('{0}: Using Fortran to calculate densities.'.format(time.strftime("%X")))
         densities = np.float32(np.append(RandomPoints,np.zeros([RandomPoints.shape[0],1]),1)).T
@@ -31,9 +31,21 @@ def Points_For_Calculation(seed=0):
         elif g.dictionary_SI['shape'] == 2:
             fastmath.density.d2cylinder(g.dictionary_SI['radius_1'],g.dictionary_SI['rho_1'],densities)
         elif g.dictionary_SI['shape'] == 3:
-            fastmath.density.d3coreshell(g.dictionary_SI['radius_1'],g.dictionary_SI['rho_1'],g.dictionary_SI['radius_2'],g.dictionary_SI['rho_2'],densities)
+            fastmath.density.d3coreshell(g.dictionary_SI['radius_1'],g.dictionary_SI['radius_2'],g.dictionary_SI['rho_1'],g.dictionary_SI['rho_2'],densities)
         elif g.dictionary_SI['shape'] == 4:
             fastmath.density.d4gaussian(g.dictionary_SI['radius_2'],densities)
+        elif g.dictionary_SI['shape'] == 5:
+            fastmath.density.d5choppedcone(g.dictionary_SI['radius_1'],g.dictionary_SI['radius_2'],g.dictionary_SI['rho_1'],g.dictionary_SI['z_dim'],densities)
+        elif g.dictionary_SI['shape'] == 6:
+            fastmath.density.d6hexprism(g.dictionary_SI['radius_1'],g.dictionary_SI['rho_1'],densities)
+        elif g.dictionary_SI['shape'] == 7:
+            fastmath.density.d7rectprism(g.dictionary_SI['radius_2'],g.dictionary_SI['rho_1'],densities)
+        elif g.dictionary_SI['shape'] == 11:
+            fastmath.density.d11doubleslit(g.dictionary_SI['radius_1'],g.dictionary_SI['radius_2'],g.dictionary_SI['rho_1'],densities)
+        elif g.dictionary_SI['shape'] == 13:
+            fastmath.density.d13sine(g.dictionary_SI['radius_1'],g.dictionary_SI['radius_2'],g.dictionary_SI['rho_1'],g.dictionary_SI['rho_2'],g.dictionary_SI['z_dim'],densities)
+        elif g.dictionary_SI['shape'] == 14:
+            fastmath.density.d14doublecone(g.dictionary_SI['radius_1'],g.dictionary_SI['radius_2'],g.dictionary_SI['rho_1'],g.dictionary_SI['z_dim'],densities)
         densities = densities.T
         outside = [i for i in range(densities.shape[0]) if not densities[i,3]]
         points_inside = np.delete(densities,outside,axis=0)

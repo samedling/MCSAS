@@ -32,9 +32,11 @@ subroutine sumintensity00(qsize,ehc,mask,x_pixels,y_pixels,points,npts,intensity
    real*4, dimension(4,npts), intent(in) :: points
    real*4, dimension(x_pixels,y_pixels), intent(in) :: mask
    real*8, dimension(x_pixels,y_pixels), intent(out) :: intensity
-   real*8 :: temp_intensity,temp_intensity_2,total_intensity,QdotR
    real*8, dimension(3) :: Q
+   real*8 :: temp_intensity,temp_intensity_2,total_intensity,QdotR
    integer*4 :: p
+   !real*8 :: total_intensity
+   !real*8, dimension(npts) :: QdotR
    !'asymmetry'; no small angle approximation
    total_intensity = 0
    !$OMP PARALLEL DO PRIVATE(Q,QdotR,temp_intensity,temp_intensity_2) SHARED(mask,points,intensity) REDUCTION(+:total_intensity)
@@ -45,11 +47,11 @@ subroutine sumintensity00(qsize,ehc,mask,x_pixels,y_pixels,points,npts,intensity
                 2*ehc*sin(sqrt((i-0.5*x_pixels)**2+(j-0.5*y_pixels)**2)*qsize/(x_pixels*2*ehc))**2 /)
                 !!TODO: POSSIBLE FORMULA ERROR, CHECK X_PIXELS IN DENOMINATOR!!
             !intensity(i,j)= SUM(density(p)*COS(DOT_PRODUCT(Q,R(p))))**2 + SUM(density(p)*SIN(DOT_PRODUCT(Q,R(p))))**2
+            !TODO: possible speedup:
+            !QdotR = MATMUL(Q,points(1:3,:))
+            !intensity(i,j) = SUM(points(4,:)*COS(QdotR))**2 + SUM(SIN(points(4,:)*SIN(QdotR)))**2
             temp_intensity = 0
             temp_intensity_2 = 0
-            !TODO: possible speedup:
-            !QdotR = MATMUL(points(1:3,:),Q)
-            !intensity(i,j) = SUM(points(4,:)*COS(QdotR))**2 + SUM(SIN(points(4,:)*SIN(QdotR)))**2
             do p=1,npts
                QdotR = DOT_PRODUCT(Q,points(1:3,p))
                temp_intensity = temp_intensity + points(4,p)*COS(QdotR)
@@ -218,9 +220,8 @@ subroutine d2cylinder(radius_1,rho_1,points,npts)
    return
 end subroutine d2cylinder
 
-subroutine d3coreshell(radius_1,rho_1,radius_2,rho_2,points,npts)
-   real*4, intent(in) :: radius_1,rho_1
-   real*4, intent(in) :: radius_2,rho_2
+subroutine d3coreshell(radius_1,radius_2,rho_1,rho_2,points,npts)
+   real*4, intent(in) :: radius_1,radius_2,rho_1,rho_2
    real*4, dimension(4,npts), intent(inout) :: points
    integer*4, intent(in) :: npts
    real*4 :: dist
@@ -251,7 +252,118 @@ subroutine d4gaussian(radius_2,points,npts)
    !$OMP END PARALLEL DO
 end subroutine d4gaussian
 
+subroutine d5choppedcone(radius_1,radius_2,rho_1,z_dim,points,npts)
+   real*4, intent(in) :: radius_1,radius_2,rho_1,z_dim
+   real*4, dimension(4,npts), intent(inout) :: points
+   integer*4, intent(in) :: npts
+   !$OMP PARALLEL DO
+   do i=1,npts
+      if (SQRT(SUM(points(1:2,i)**2)) < points(3,i)*(radius_2-radius_1)/z_dim+(radius_1+radius_2)/2) then
+         points(4,i) = rho_1
+      else
+         points(4,i) = 0
+      end if
+   end do
+   !$OMP END PARALLEL DO
+end subroutine d5choppedcone
 
+subroutine d6hexprism(radius_1,rho_1,points,npts)
+   real*4, intent(in) :: radius_1,rho_1
+   real*4, dimension(4,npts), intent(inout) :: points
+   integer*4, intent(in) :: npts
+   real*4, dimension(3) :: coords
+   real*4, parameter :: sqrt3over2 = SQRT(3.)/2.
+   !$OMP PARALLEL DO
+   do i=1,npts
+      coords = points(1:3,i)/radius_1
+      if ((coords(2)**2>0.75) .OR. (coords(2)+(coords(1)-1)*sqrt3over2 > 0) .OR. (coords(2)+(coords(1)+1)*sqrt3over2 < 0) &
+          .OR. (coords(2)-(coords(1)-1)*sqrt3over2 < 0) .OR. (coords(2)-(coords(1)+1)*sqrt3over2 > 0)) then
+         points(4,i) = 0
+      else
+         points(4,i) = rho_1
+      end if
+   end do
+   !$OMP END PARALLEL DO
+end subroutine d6hexprism
 
+subroutine d7rectprism(radius_2,rho_1,points,npts)
+   real*4, intent(in) :: radius_2,rho_1
+   real*4, dimension(4,npts), intent(inout) :: points
+   integer*4, intent(in) :: npts
+   !$OMP PARALLEL DO
+   do i=1,npts
+      if (points(1,i) < radius_2) then
+         points(4,i) = rho_1
+      else
+         points(4,i) = 0
+      end if
+   end do
+   !$OMP END PARALLEL DO
+end subroutine d7rectprism
+
+subroutine d11doubleslit(radius_1,radius_2,rho_1,points,npts)
+   real*4, intent(in) :: radius_1,radius_2,rho_1
+   real*4, dimension(4,npts), intent(inout) :: points
+   integer*4, intent(in) :: npts
+   !$OMP PARALLEL DO
+   do i=1,npts
+      if (((-radius_1/2 < points(1,i)) .AND. (points(1,i) < -radius_2/2)) &
+          .OR. ((radius_2/2 < points(1,i)) .AND. (points(1,i) < radius_1/2))) then
+         points(4,i) = rho_1
+      else
+         points(4,i) = 0
+      end if
+   end do
+   !$OMP END PARALLEL DO
+end subroutine d11doubleslit
+
+subroutine d13sine(radius_1,radius_2,rho_1,rho_2,z_dim,points,npts)
+   real*4, intent(in) :: radius_1,radius_2,rho_1,rho_2,z_dim
+   real*4, dimension(4,npts), intent(inout) :: points
+   integer*4, intent(in) :: npts
+   real*4, parameter :: pi = 4.0*ATAN(1.0)
+   !$OMP PARALLEL DO
+   do i=1,npts
+      if (SQRT(SUM(points(1:2,i)**2)) < (radius_1+radius_2)/2 + (radius_1-radius_2)*SIN(points(3,i)*rho_2*2*pi/z_dim)/2) then
+         points(4,i) = rho_1
+      else
+         points(4,i) = 0
+      end if
+   end do
+   !$OMP END PARALLEL DO
+end subroutine d13sine
+
+subroutine d14doublecone(radius_1,radius_2,rho_1,z_dim,points,npts)
+   real*4, intent(in) :: radius_1,radius_2,rho_1,z_dim
+   real*4, dimension(4,npts), intent(inout) :: points
+   integer*4, intent(in) :: npts
+   !$OMP PARALLEL DO
+   do i=1,npts
+      if (SQRT(SUM(points(1:2,i)**2)) < radius_2+ABS(points(3,i))*(radius_1-radius_2)/z_dim/2) then
+         points(4,i) = rho_1
+      else
+         points(4,i) = 0
+      end if
+   end do
+   !$OMP END PARALLEL DO
+end subroutine d14doublecone
+
+!Template:
+!subroutine d#name(...,points,npts)
+!   real*4, intent(in) :: ...
+!   real*4, dimension(4,npts), intent(inout) :: points
+!   integer*4, intent(in) :: npts
+!   !$OMP PARALLEL DO
+!   do i=1,npts
+!      points(4,i) = ???
+!   end do
+!   !$OMP END PARALLEL DO
+!end subroutine d#name
+
+!Note, unlike Python, fortran:
+!array indices start at 1, not 0.
+!array slices include the last numbered element.
+!multidimensional array order is swapped.
 
 end module density
+

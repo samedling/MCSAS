@@ -3,9 +3,9 @@ Recently Done (commit message):
 To Do:
 
 ## High Priority ##
-Add additional shapes to fortran.
 Test matrix math speedup in fortran.
 Update Ubuntu and SciL binaries.
+Add additional shapes to OpenCL.
 
 ## Medium Priority ##
 Debug or disable update_interval.
