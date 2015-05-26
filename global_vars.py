@@ -1,8 +1,9 @@
 #list of global variables
 
 
-opencl_enabled = True
+opencl_enabled = False
 f2py_enabled = True
+accelerate_points = True   #In case there are bugs and you want to disable only this portion of the acceleration.
 
 quiet = False
 verbose = False
@@ -19,6 +20,10 @@ dictionary = {'advanced':1, 'altitude':45, 'analytic': 2, 'ave_dist': 0.6, 'azim
               'fit_radius_1': 1, 'fit_radius_2': 0, 'fit_rho_1': 1, 'fit_rho_2': 0, 'fit_z_dim': 1, 'fit_x_theta': 1, 'fit_y_theta': 1, 'fit_z_theta': 1, 'fit_background': 1, 'fit_other': 0
               }
 
+if debug:
+   print("Debug mode is on.")
+   quiet = False
+   verbose = True
 
 def vprint(x,level=1):
    try:

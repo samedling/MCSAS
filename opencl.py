@@ -78,6 +78,7 @@ class OpenCL:
       buf_points = cl.Buffer(self.context,cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=np.float32(np.append(random_points,np.zeros([len(random_points),1]),1)))  #Copy input arrays into memory. Pad with zeros to use float4*.
       out=np.empty(random_points.shape[0],dtype=np.float32)
       out_buffer = cl.Buffer(self.context,cl.mem_flags.WRITE_ONLY,out.nbytes)   #for the output
+      #TODO: consider all possible variables as a single input array instead of 5 separate variables
       if shape == 1:
          radius_1,rho_1 = g.dictionary_SI['radius_1'],g.dictionary_SI['rho_1']
          self.program.d1sphere(self.queue,out.shape,None,np.float32(radius_1),np.float32(rho_1),buf_points,out_buffer)
@@ -85,12 +86,29 @@ class OpenCL:
          radius_1,rho_1 = g.dictionary_SI['radius_1'],g.dictionary_SI['rho_1']
          self.program.d2cylinder(self.queue,out.shape,None,np.float32(radius_1),np.float32(rho_1),buf_points,out_buffer)
       elif shape == 3:
-         radius_1,rho_1 = g.dictionary_SI['radius_1'],g.dictionary_SI['rho_1']
-         radius_2,rho_2 = g.dictionary_SI['radius_2'],g.dictionary_SI['rho_2']
-         self.program.d3coreshell(self.queue,out.shape,None,np.float32(radius_1),np.float32(rho_1),np.float32(radius_2),np.float32(rho_2),buf_points,out_buffer)
+         radius_1,radius_2,rho_1,rho_2 = g.dictionary_SI['radius_1'],g.dictionary_SI['radius_2'],g.dictionary_SI['rho_1'],g.dictionary_SI['rho_2']
+         self.program.d3coreshell(self.queue,out.shape,None,np.float32(radius_1),np.float32(radius_2),np.float32(rho_1,np.float32(rho_2),buf_points,out_buffer)
       elif shape == 4:
          radius_2 = g.dictionary_SI['radius_2']
          self.program.d4gaussian(self.queue,out.shape,None,np.float32(radius_2),buf_points,out_buffer)
+      elif shape == 5:
+         radius_1,radius_2,rho_1,z_dim = g.dictionary_SI['radius_1'],g.dictionary_SI['radius_2'],g.dictionary_SI['rho_1'],g.dictionary_SI['z_dim']
+         self.program.d5choppedcone(self.queue,out.shape,None,np.float32(radius_1),np.float32(radius_2),np.float32(rho_1),np.float32(z_dim),buf_points,out_buffer)
+      elif shape == 6:
+         radius_1,rho_1 = g.dictionary_SI['radius_1'],g.dictionary_SI['rho_1']
+         self.program.d6hexprism(self.queue,out.shape,None,np.float32(radius_1),np.float32(rho_1),buf_points,out_buffer)
+      elif shape == 7:
+         radius_2,rho_1 = g.dictionary_SI['radius_2'],g.dictionary_SI['rho_1']
+         self.program.d6hexprism(self.queue,out.shape,None,np.float32(radius_2),np.float32(rho_1),buf_points,out_buffer)
+      elif shape == 11:
+         radius_1,radius_2,rho_1 = g.dictionary_SI['radius_1'],g.dictionary_SI['radius_2'],g.dictionary_SI['rho_1']
+         self.program.d11doubleslit(self.queue,out.shape,None,np.float32(radius_1),np.float32(radius_2),np.float32(rho_1),buf_points,out_buffer)
+      elif shape == 13:
+         radius_1,radius_2,rho_1,rho_2,z_dim = g.dictionary_SI['radius_1'],g.dictionary_SI['radius_2'],g.dictionary_SI['rho_1'],g.dictionary['rho_2'],g.dictionary_SI['z_dim']
+         self.program.d13sine(self.queue,out.shape,None,np.float32(radius_1),np.float32(radius_2),np.float32(rho_1),np.float32(rho_2),np.float32(z_dim),buf_points,out_buffer)
+      elif shape == 14:
+         radius_1,radius_2,rho_1,z_dim = g.dictionary_SI['radius_1'],g.dictionary_SI['radius_2'],g.dictionary_SI['rho_1'],g.dictionary_SI['z_dim']
+         self.program.d14doublecone(self.queue,out.shape,None,np.float32(radius_1),np.float32(radius_2),np.float32(rho_1),np.float32(z_dim),buf_points,out_buffer)
       cl.enqueue_copy(self.queue,out,out_buffer)
       return out
          

@@ -3,17 +3,19 @@ Recently Done (commit message):
 To Do:
 
 ## High Priority ##
+
 Test matrix math speedup in fortran.
-Update Ubuntu and SciL binaries.
-Add additional shapes to OpenCL.
+   Update Ubuntu and SciL binaries if necessary??
+Debug additional OpenCL shapes.
+Speed up by changing to_return=a*2 to a*=2;return a to avoid copying.
+Debug or disable update_interval.
 
 ## Medium Priority ##
-Debug or disable update_interval.
+
 Better downsampling & cropping of exp_data (only crop once).
 Create test cases (which should also be timed).
 Comment & clean up code.
 Implement scale parameter.
-Speed up by changing to_return=a*2 to a*=2;return a to avoid copying.
 Add Abort button.
 Don't overwrite filenames.
 
