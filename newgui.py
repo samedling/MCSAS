@@ -133,7 +133,11 @@ def get_numbers_from_gui():
        elif x=='analytic':
           g.dictionary[x] = Analytic_dict[g.dictionary_in['analytic'].get()]
        else:
-          g.dictionary[x] = g.dictionary_in[x].get() 
+          try:
+             g.dictionary[x] = g.dictionary_in[x].get() 
+          except AttributeError:
+             if debug:
+                print("{0} could not be imported from GUI.".format(x))
     
     for x in g.dictionary:
         try:
@@ -528,8 +532,7 @@ def load_exp_image(preview=False,enlarge_mask=1):
       except IOError:
          print('File {0} does not exist.'.format(filename))
          return
-      exp_data=normalize(exp_data)
-      return exp_data
+      return normalize(exp_data)
    else:
       if sum(center):
          img=Image.open(filename)
@@ -563,9 +566,9 @@ def load_exp_image(preview=False,enlarge_mask=1):
                mask[i,j] = 0
             elif enlarge_mask and padded[i:i+3,j:j+3].min() < mask_threshold:        #do after normalize?
                mask[i,j] = 0  #could set to ~0.1 if want to decrease but not zero it.
-      exp_data=normalize(exp_data,mask)
+      #exp_data=normalize(exp_data,mask)
       #img=Image.fromarray(exp_data)   #To go back to an image.
-      return exp_data,mask
+      return normalize(exp_data,mask),mask
 
 def normalize(data,mask=[],background=0):
    '''Normalizes, taking mask into account and, if neccessary, adding constant background first.  Be careful not to run this twice in a row, or you'll add double the background.'''
@@ -578,12 +581,15 @@ def normalize(data,mask=[],background=0):
       #total = np.sum(data*mask) + g.dictionary_SI['background']*np.sum(mask)
       total = norm_to/np.sum(data*mask)
       normalized = data*total + g.dictionary_SI['background']*mask
+      #data *= total                               #todo: might be faster
+      #data += g.dictionary_SI['background']*mask  #todo: might be faster
    else:
-      norm_to = 1.0
-      total = norm_to/np.sum(data*mask)
+      total = 1.0/np.sum(data*mask)
       normalized = data*total
-   if g.debug:
-      print("Normalized so total value is {0} and lowest value is {1}.".format(np.sum(normalized),np.min(normalized)))
+      #data *= total    #todo: should be a little faster
+   if g.debug: 
+      #print("Normalized so total value is {0} and lowest value is {1}.".format(np.sum(normalized),np.min(normalized)))
+      print("Normalized so total value is {0} and lowest value is {1}.".format(np.sum(normalized*mask),np.min(normalized)))
    return normalized
 
 def plot_exp_data():#threshold=1e-7,zero_value=1e-7):
@@ -618,7 +624,10 @@ def residuals(param,exp_data,mask=[],random_seed=2015):
       mask = np.ones(exp_data.shape)
    calc_intensity = normalize(Detector_Intensity(Points_For_Calculation(seed=random_seed),mask),mask,True)
    #TODO: it shouldn't be able to set the background too high....???
+   #TODO: remove +backgrund from next line??
    err = mask*(exp_data - (calc_intensity + g.dictionary_SI['background']))
+   #calc_intensity += g.dictionary_SI'background'] - exp_data  #todo: might be faster
+   #calc_intensity *= mask                                     #todo: might be faster
    print('{0}: Total error = {1:.4}; sum of squares = {2:.4}'.format(time.strftime("%X"),np.abs(err).sum(),np.square(err).sum()))
    return np.ravel(err)     #flattens err since leastsq only takes 1D array
 
@@ -781,6 +790,8 @@ def plot_residuals():
    calc_intensity=Average_Intensity()
    save(calc_intensity,"_calc")     #wrong suffix!!
    err = mask*(exp_data - (calc_intensity + g.dictionary_SI['background']))
+   #calc_intensity += g.dictionary_SI'background'] - exp_data  #todo: might be faster
+   #calc_intensity *= mask                                     #todo: might be faster
    save(err,"_guess_residuals")
    plot_residuals=np.abs(err)
    print('{0}: Total error = {1:.4}; sum of squares = {2:.4}'.format(time.strftime("%X"),plot_residuals.sum(),np.square(err).sum()))
@@ -1149,8 +1160,8 @@ if __name__ == "__main__":
    ROW += 1
    enter_num('max_iter', "Maximum Iterations (0=default)", ROW, COL)
    ROW += 1
-   enter_num('update_freq', "Update Interval", ROW, COL)
-   ROW += 1
+   #enter_num('update_freq', "Update Interval", ROW, COL)   #TODO: debug
+   #ROW += 1
    enter_num('grid_compression', "Grid Compression (2, 5, or 10)", ROW, COL)
    ROW += 1
    tick('plot_fit_tick',"Plot Fit Results", ROW, COL)

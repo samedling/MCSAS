@@ -9,12 +9,8 @@ def Points_For_Calculation(seed=0):
     if seed:
        np.random.seed([seed])
     
-    x_dim = g.dictionary_SI['x_dim']
-    y_dim = g.dictionary_SI['y_dim']
-    z_dim = g.dictionary_SI['z_dim']
-    x_theta = g.dictionary_SI['x_theta']
-    y_theta = g.dictionary_SI['y_theta']
-    z_theta = g.dictionary_SI['z_theta']
+    x_dim,y_dim,z_dim = g.dictionary_SI['x_dim'],g.dictionary_SI['y_dim'],g.dictionary_SI['z_dim']
+    x_theta,y_theta,z_theta = g.dictionary_SI['x_theta'],g.dictionary_SI['y_theta'],g.dictionary_SI['z_theta']
     ave_dist = g.dictionary_SI['ave_dist']
     z_scale = g.dictionary_SI['z_scale']
     #I make a grid, then find a random number from a normal distribution with radius ave_dist. this gets added to the grid coordinates to randomise this.

@@ -87,7 +87,7 @@ class OpenCL:
          self.program.d2cylinder(self.queue,out.shape,None,np.float32(radius_1),np.float32(rho_1),buf_points,out_buffer)
       elif shape == 3:
          radius_1,radius_2,rho_1,rho_2 = g.dictionary_SI['radius_1'],g.dictionary_SI['radius_2'],g.dictionary_SI['rho_1'],g.dictionary_SI['rho_2']
-         self.program.d3coreshell(self.queue,out.shape,None,np.float32(radius_1),np.float32(radius_2),np.float32(rho_1,np.float32(rho_2),buf_points,out_buffer)
+         self.program.d3coreshell(self.queue,out.shape,None,np.float32(radius_1),np.float32(radius_2),np.float32(rho_1),np.float32(rho_2),buf_points,out_buffer)
       elif shape == 4:
          radius_2 = g.dictionary_SI['radius_2']
          self.program.d4gaussian(self.queue,out.shape,None,np.float32(radius_2),buf_points,out_buffer)

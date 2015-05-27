@@ -1,13 +1,13 @@
 #list of global variables
 
 
-opencl_enabled = False
+opencl_enabled = True
 f2py_enabled = True
 accelerate_points = True   #In case there are bugs and you want to disable only this portion of the acceleration.
 
 quiet = False
 verbose = False
-debug = True
+debug = False
 
 #default settings:
 dictionary = {'advanced':1, 'altitude':45, 'analytic': 2, 'ave_dist': 0.6, 'azimuth':45, 'bound': 1, 'circ_delta':5, 'comments':'',
