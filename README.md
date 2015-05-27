@@ -9,8 +9,13 @@ Make sure you have the latest version.
  * Or a current zipfile may be at https://drive.google.com/open?id=0B8EbmzXGZtaZV3MxUlhSUjczQm8
    
  * Or run `git clone https://github.com/samedling/MCSAS.git` to download the entire repository.
+
+
+There are two optional but recommended ways of speeding up the code:
+
+ 1. (Strongly recommended:) Install PyOpenCL following the directions at http://wiki.tiker.net/PyOpenCL/Installation and then the first time your run it, it will ask you which platform and device you want to use.  Try the GPU first; if it doesn't work, use the CPU.  On my dual core CPU, I obtained a 25x speedup (and during fitting enabled another 10x speedup for a total of ~250x); quad core CPUs should be nearly twice as fast and GPUs should be even faster!
  
-If you have gfortran installed, run `make` to compile the Fortran code to achieve 2-100x speedup (depending on number of cores); if you have ifort installed, edit the makefile before running `make`. Or, if you are running Ubuntu or OS X, try copying the relevant fastmath-<OS>_<CPU>.so file to fastmath.so.
+ 2. In addition, if you have gfortran installed, run `make` to compile the Fortran code; if you have ifort installed, edit the makefile before running `make`. Or, if you are running Ubuntu or OS X, try copying the relevant fastmath-<OS>_<CPU>.so file to fastmath.so.  I've found this useful even if you are running OpenCL on the CPU (it might be unnecessary if running OpenCL on the GPU).  On my dual core CPU, I obtained an 8x speedup (and during fitting another 10x speedup for ~80x); quad core CPUs likely not much faster.  There is a small benefit to having this in addition to OpenCL.
 
 Run `python newgui.py` on the command line or open it in Canopy and click run.  (Note: you may discover running `nice python newgui.py` results in your system being a lot more responsive.)
 
@@ -32,15 +37,21 @@ Tested on OS X 10.10 "Yosemite".
 
 If things ran fine before, but after updating returns KeyError, remove the file called default.txt.
 
-OS X (and Windows?): You need to close all the old plots before you can run things again.  Otherwise, it's otherwise unresponsive for some reason.
+OS X and Windows: You need to close all the old plots before you can run things again.  Otherwise, it's otherwise unresponsive for some reason.
 
 OS X/EPD/Tkinter: Make sure you have Canopy.  EPD might tell you it's updated everything, but it's still not the same as Canopy.
+
+If you receive compiler OpenCL compiler warnings when starting the program it's probably due to your OpenCL device not supporting 64-bit floating point numbers; it should be fine, but if you get errors later, try using a different OpenCL device.
+
+Linux/OpenCL: apt-get on Ubuntu wasn't helpful to me; follow the directions linked above for more success.
 
 PIL: On older systems you may need to manually remove PIL and install Pillow (`sudo pip uninstall PIL` and `sudo pip install Pillow`); newer systems should simply come with Pillow.  Otherwise Image won't be able to read the funny SAXS TIF files.
 
 Scientific Linux/F2PY: Make sure you are using the version of F2PY which matches your version of Python (2.7+), otherwise just loading the Fortran module causes a Segmentation Fault.
 
+Fortran/Hyperthreading: If you have a Core i7 processor, (or other CPU with hyperthreading) performance may be slightly improved by adding `export OMP_NUM_THREADS=<n>` to your .bash_profile (where n = the number of physical cores).
 
+Due to the large number of shapes, it's possible some of the sped-up versions of these have bugs.  If you find that the shapes don't look right, edit the global_vars.py file so `accelerate_points = False` to disable the erroneous speedup.
 
 ## Running the Program ##
 
@@ -60,11 +71,11 @@ The Radial Symmetry and Small Angle Approx. checkboxes speed the program, so che
 1. Input the name of the experimental data file to fit and click "Plot Exp Data".  If "Center of Beamstop" is left blank ("0 0") then it will plot the original experimental data (which takes a minute).  The lower bounds option in the center column is quite useful here.  Try a value in the range 1e-8 to 1e-6.  Then, move the mouse over the center of the beamstop and read the x,y-coordinates from the plot screen.  Use these values and replot the experimental data.  It will crop a sqaure around the center and downsample it so the side length is equal to the Pixels parameter.
 2. Input known values, uncheck relevant parameter boxes, make a good guess of unknown parameters.  To see how good your guess is, press "Plot Residuals".
 3. When you have a satisfactory guess, click "Fit Exp Data".  Make sure that the update interval isn't too small, or it will actually take longer and/or make no progress.  Each iteration, it prints out the time and the sum of the residuals; be aware that it is normal for the sum of the residuals to go several iterations without changing significantly.
-4. Read the fit results from the terminal.  If you had a grid compression >1 and now you want more printable results, copy the fit results back into the GUI and Plot Residuals.
+4. Read the fit results from the terminal.  If you had a grid compression >1 (assuming you're using Fortran acceleration) and now you want more printable results, copy the fit results back into the GUI and Plot Residuals.
 
 Some comments:
 * Grid compression only works with fortran.
-* If the fit steps are each taking less than 10 seconds, there would probaly be very little additional time taken by increasind pixels by 40% or halving the grid compression.
+* If the fit steps are each taking less than 10 seconds, there would probaly be very little additional time taken by increasing pixels by 40% or halving the grid compression.
 
 
 
@@ -155,6 +166,17 @@ To create a new branch so you can make commits based on an older version (again,
 
     git checkout -b <branch_name> <hex_number>
 
+For potentially unstable changes, use the develop branch:
+
+    git checkout -b <branch_name>   #Creates branch from current commit.
+    git checkout develop        #Switch branches.
+    
+Make your changes, commits, etc.  Then merge:
+
+    git checkout master         #Switch back to master.
+    git merge develop --no-ff   #Merge while preserving commit history.
+    git push
+    
 
 
 ## Copyright ##
