@@ -136,7 +136,7 @@ def get_numbers_from_gui():
           try:
              g.dictionary[x] = g.dictionary_in[x].get() 
           except AttributeError:
-             if debug:
+             if g.debug:
                 print("{0} could not be imported from GUI.".format(x))
     
     for x in g.dictionary:
