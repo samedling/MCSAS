@@ -60,7 +60,7 @@ __kernel void d4gaussian (
 
 
 __kernel void d5choppedcone (
-   const float radius_1, const float radius_2, const float rho_1 const float z_dim,
+   const float radius_1, const float radius_2, const float rho_1, const float z_dim,
    __global const float4* points, __global float* density)
 {
    int n = get_global_id(0);
@@ -78,7 +78,7 @@ __kernel void d6hexprism (
    int n = get_global_id(0);
    density[n] = rho_1;
    float sqrt3over2 = sqrt(3.0)*0.5;
-   float coords = points[0:3]/radius_1 //???//
+   float coords = points[0][3]/radius_1; //???//
    if (pow(coords[1],2) > 0.75) or (coords[1]+(coords[0]-1)*sqrt3over2 > 0) or (coords[1]+(coords[0]+1)*sqrt3over2 < 0) or (coords[1]-(coords[0]-1)*sqrt3over < 0) or (coords[1]-(coords[0]+1)*sqrt3over2 > 0) {  //???//
       density[n] = 0;
    }

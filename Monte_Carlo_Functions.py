@@ -45,7 +45,7 @@ def Points_For_Calculation(seed=0):
         densities = densities.T
         outside = [i for i in range(densities.shape[0]) if not densities[i,3]]
         points_inside = np.delete(densities,outside,axis=0)
-    elif g.accelerate_points and g.opencl_enabled and RandomPoints.shape[0] > 100000 and g.dictionary_SI['shape'] in (1,2,3,4,5,6,7,11,13,14):
+    elif False and g.accelerate_points and g.opencl_enabled and RandomPoints.shape[0] > 100000 and g.dictionary_SI['shape'] in (1,2,3,4,5,6,7,11,13,14):
         if g.debug:
             print('{0}: Using OpenCL for density calculation.'.format(time.strftime("%X")))
         densities = g.opencl_density.density(RandomPoints)

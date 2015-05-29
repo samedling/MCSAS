@@ -26,8 +26,8 @@ if g.opencl_enabled:
    try:
       import pyopencl as cl
       from opencl import OpenCL
-      g.opencl_density = OpenCL()
-      g.opencl_density.load_program('density.cl')
+      #g.opencl_density = OpenCL()
+      #g.opencl_density.load_program('density.cl')
       g.opencl_sumint = OpenCL()
       g.opencl_sumint.load_program('sumint.cl')
       print("Accelerating using OpenCL.")
