@@ -1,5 +1,5 @@
 #!/usr/bin/python
-version = '0.3.1'
+version = '0.3.2'
 
 
 try:
@@ -136,7 +136,7 @@ def get_numbers_from_gui():
           try:
              g.dictionary[x] = g.dictionary_in[x].get() 
           except AttributeError:
-             if debug:
+             if g.debug:
                 print("{0} could not be imported from GUI.".format(x))
     
     for x in g.dictionary:
@@ -593,7 +593,7 @@ def normalize(data,mask=[],background=0):
    return normalized
 
 def plot_exp_data():#threshold=1e-7,zero_value=1e-7):
-    '''Plots experimental data, using center and crop parameters if nonzero.'''
+    '''Plots experimental data, using center and crop parameters if nonzero.  Also shows the effect of grid compression if enabled.'''
     get_numbers_from_gui()
     load_functions()    #Needed for plotting routines.
     if g.dictionary['center'] == "0 0":
@@ -608,9 +608,14 @@ def plot_exp_data():#threshold=1e-7,zero_value=1e-7):
         cropped=load_exp_image()
         masked=cropped[0]*cropped[1]
         #for i in (2,5,10,20,50,80,90,95,98,99):
-            #print('{0}th percentile value is {1:0.4}.'.format(i,np.percentile(masked,i)))
+           #print('{0}th percentile value is {1:0.4}.'.format(i,np.percentile(masked,i)))
         print('Recommended value for background noise parameter is {0:0.4}.'.format(np.percentile(masked,25)))
-        Intensity_plot(masked,"exp_data2",'After Cropping and Downsampling',1)
+        if g.dictionary['grid_compression'] > 1:
+           newmask = fast_mask(cropped[0],cropped[1],g.dictionary['grid_compression'])
+           masked=cropped[0]*cropped[1]
+           Intensity_plot(masked,"exp_data2",'After Cropping and Downsampling',1)
+        else:
+           Intensity_plot(masked,"exp_data2",'After Cropping and Downsampling',1)
     return
 
 def residuals(param,exp_data,mask=[],random_seed=2015):
@@ -725,7 +730,7 @@ def perform_fit():  #Gets run when you press the Button.
 
 
 def fast_mask(exp_data,mask,speedup=5):
-   '''Speeds calculation by adding points to mask.  Speedup can be (2,5,10).'''
+   '''Speeds calculation by adding points to mask.  Speedup can be (2,5,10). Returns new mask, but should also edit the old one.'''
    if speedup < 2:
       return mask
    elif speedup == 2:
@@ -761,7 +766,9 @@ def fast_mask(exp_data,mask,speedup=5):
                if not (i%mod==mod/2 and j%mod==mod/2):
                   mask[i,j] = 0
    final=total-mask.sum()
-   print('Of {0} pixels, {1} are masked by beamstop and {2} are being skipped for speed.'.format(total,int(starting),int(final-starting)))
+   #print('Of {0} pixels, {1} are masked by beamstop and {2} are being skipped for speed.'.format(total,int(starting),int(final-starting)))
+   print('Using {0} pixels out of a total of {1}.'.format(total-int(final),total))
+   print('{0} are masked by beamstop and {1} are being skipped for speed.'.format(int(starting),int(final-starting)))
    print('Estimated speedup: {0:.3}x.'.format(float(total)/(total-final)))
    return mask
 
@@ -787,7 +794,9 @@ def plot_residuals():
       print('Acceleration is NOT enabled!')
    print('{0}: Starting calculation...'.format(time.strftime("%X")))
    exp_data,mask=load_exp_image()
-   calc_intensity=Average_Intensity()
+   if g.dictionary['grid_compression'] > 1:
+      newmask = fast_mask(exp_data,mask,g.dictionary['grid_compression'])
+   calc_intensity=Average_Intensity(newmask)
    save(calc_intensity,"_calc")     #wrong suffix!!
    err = mask*(exp_data - (calc_intensity + g.dictionary_SI['background']))
    #calc_intensity += g.dictionary_SI'background'] - exp_data  #todo: might be faster
@@ -1160,8 +1169,8 @@ if __name__ == "__main__":
    ROW += 1
    enter_num('max_iter', "Maximum Iterations (0=default)", ROW, COL)
    ROW += 1
-   #enter_num('update_freq', "Update Interval", ROW, COL)   #TODO: debug
-   #ROW += 1
+   enter_num('update_freq', "Update Interval", ROW, COL)   #TODO: debug
+   ROW += 1
    enter_num('grid_compression', "Grid Compression (2, 5, or 10)", ROW, COL)
    ROW += 1
    tick('plot_fit_tick',"Plot Fit Results", ROW, COL)

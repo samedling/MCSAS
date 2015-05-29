@@ -4,14 +4,12 @@ To Do:
 
 ## High Priority ##
 
-Test matrix math speedup in fortran.
-   Update Ubuntu and SciL binaries if necessary??
 Debug additional OpenCL shapes.
+Debug update_interval.
+Move fitting code to fit.py.
 
 ## Medium Priority ##
 
-Debug update_interval.
-Move fitting code to fit.py.
 Move other functions (sequence,make_intensity, etc.) somewhere??
 Rename newgui.py to mcsas.py or gui.py or something.
 

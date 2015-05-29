@@ -15,7 +15,6 @@
 !TODO:
 !Tell OpenMP to synchronize access to shared variables (points) if possible.
 !!$OMP PARALLEL DO ... COLLAPSE(2) !tells it to collapse the double do loop
-!sumintensity might be faster if innermost do loop is replaced with matrix multiplication (MATMUL) and SUM
 !If running with more than 100,000 points (>3MB) and grid no larger than 100x100, it may be faster to move the points loop from innermost to outermost.  Note, this will require storing a temporary Q(3,x,y) array in order to still avoid calculating Q 100,000 times.
 !Divide up points into smaller chuncks, make temp_intensity into arrays so can sqaure at end.
 !Change mask implmentation so x,y coordinates of relevant pixels are passed in so there's no need for an if statement.
@@ -35,8 +34,6 @@ subroutine sumintensity00(qsize,ehc,mask,x_pixels,y_pixels,points,npts,intensity
    real*8, dimension(3) :: Q
    real*8 :: temp_intensity,temp_intensity_2,total_intensity,QdotR
    integer*4 :: p
-   !real*8 :: total_intensity
-   !real*8, dimension(npts) :: QdotR
    !'asymmetry'; no small angle approximation
    total_intensity = 0
    !$OMP PARALLEL DO PRIVATE(Q,QdotR,temp_intensity,temp_intensity_2) SHARED(mask,points,intensity) REDUCTION(+:total_intensity)
@@ -47,9 +44,6 @@ subroutine sumintensity00(qsize,ehc,mask,x_pixels,y_pixels,points,npts,intensity
                 2*ehc*sin(sqrt((i-0.5*x_pixels)**2+(j-0.5*y_pixels)**2)*qsize/(x_pixels*2*ehc))**2 /)
                 !!TODO: POSSIBLE FORMULA ERROR, CHECK X_PIXELS IN DENOMINATOR!!
             !intensity(i,j)= SUM(density(p)*COS(DOT_PRODUCT(Q,R(p))))**2 + SUM(density(p)*SIN(DOT_PRODUCT(Q,R(p))))**2
-            !TODO: possible speedup:
-            !QdotR = MATMUL(Q,points(1:3,:))
-            !intensity(i,j) = SUM(points(4,:)*COS(QdotR))**2 + SUM(SIN(points(4,:)*SIN(QdotR)))**2
             temp_intensity = 0
             temp_intensity_2 = 0
             do p=1,npts
@@ -70,6 +64,54 @@ subroutine sumintensity00(qsize,ehc,mask,x_pixels,y_pixels,points,npts,intensity
    return
 end subroutine sumintensity00
 
+subroutine test00(qsize,ehc,mask,x_pixels,y_pixels,points,npts,intensity)
+   real*8, intent(in) :: qsize
+   integer*4, intent(in) :: x_pixels,y_pixels
+   real*8, intent(in) :: ehc
+   integer*4, intent(in) :: npts
+   real*4, dimension(4,npts), intent(in) :: points
+   real*4, dimension(x_pixels,y_pixels), intent(in) :: mask
+   real*8, dimension(x_pixels,y_pixels), intent(out) :: intensity
+   real*8, dimension(3) :: Q
+   real*8 :: total_intensity,QdotR
+   real*8, dimension(x_pixels,y_pixels) :: temp_intensity,temp_intensity_2
+   integer*4 :: p
+   !'asymmetry'; no small angle approximation
+   total_intensity = 0
+   temp_intensity(:,:) = 0
+   temp_intensity_2(:,:) = 0
+   !$OMP PARALLEL DO PRIVATE(Q,QdotR) SHARED(mask,points) REDUCTION(+:temp_intensity,temp_intensity_2)
+   do p=1,npts
+   do j=1,y_pixels
+      do i=1,x_pixels
+         if (mask(i,j) > 0) then
+            Q = (/ i*qsize/x_pixels-0.5*qsize, j*qsize/y_pixels-0.5*qsize, &
+                2*ehc*sin(sqrt((i-0.5*x_pixels)**2+(j-0.5*y_pixels)**2)*qsize/(x_pixels*2*ehc))**2 /)
+                !!TODO: POSSIBLE FORMULA ERROR, CHECK X_PIXELS IN DENOMINATOR!!
+            !intensity(i,j)= SUM(density(p)*COS(DOT_PRODUCT(Q,R(p))))**2 + SUM(density(p)*SIN(DOT_PRODUCT(Q,R(p))))**2
+            QdotR = DOT_PRODUCT(Q,points(1:3,p))
+            temp_intensity(i,j) = temp_intensity(i,j) + points(4,p)*COS(QdotR)
+            temp_intensity_2(i,j) = temp_intensity_2(i,j) + points(4,p)*SIN(QdotR)
+            !total_intensity = total_intensity + intensity(i,j)*mask(i,j)
+         end if
+      end do
+   end do
+   end do
+   !$OMP END PARALLEL DO
+   intensity(:,:) = temp_intensity(:,:)**2 + temp_intensity_2(:,:)**2
+   total_intensity = SUM(intensity)
+   intensity = intensity / total_intensity
+   !!$OMP PARALLEL DO PRIVATE() SHARED(intensity) REDUCTION(+:total_intensity)
+   !do j=1,y_pixels
+   !   do i=1,x_pixels
+   !         intensity(i,j) = temp_intensity(i,j)**2 + temp_intensity_2**2
+   !         total_intensity = total_intensity + intensity(i,j)
+   !   end do
+   !end do
+   !intensity = intensity / total_intensity
+   !!$OMP END PARALLEL DO
+   return
+end subroutine test00
 
 !Computationally, there is no reason to ever use this; it takes (slightly) longer than sumint00.
 subroutine sumintensity01(qsize,ehc,mask,x_pixels,y_pixels,points,npts,intensity)

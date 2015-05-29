@@ -76,6 +76,8 @@ def Points_For_Calculation(seed=0):
     try:
        return np.asarray(points_inside.dot(np.transpose(rotz.dot(roty).dot(rotx))))
     except ValueError:
+       print RandomPoints.shape
+       print points.shape
        print rotx.shape, roty.shape, rotz.shape
        print rotz.dot(roty).dot(rotx).shape
        print points_inside.shape
