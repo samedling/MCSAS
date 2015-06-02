@@ -1,5 +1,15 @@
 #!/usr/bin/python
 
+# This file contains the basic OpenCL initilization commands in a class OpenCL.
+# After importing OpenCL from this file, create and instance of the OpenCL class, and then load a program.
+# instance = OpenCL()
+# instance.load_program(filename)
+# It also contains functions to perform various calculations:
+# sumint: calculates the intensity at all points
+# sumint_mask: calculates the intensity at unmasked points only
+# density: calculates density for some of the possible shapes (due to if statements, OpenCL isn't really ideal for this)
+
+
 import numpy as np
 import pyopencl as cl
 

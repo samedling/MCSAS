@@ -795,8 +795,8 @@ def plot_residuals():
    print('{0}: Starting calculation...'.format(time.strftime("%X")))
    exp_data,mask=load_exp_image()
    if g.dictionary['grid_compression'] > 1:
-      newmask = fast_mask(exp_data,mask,g.dictionary['grid_compression'])
-   calc_intensity=Average_Intensity(newmask)
+      fast_mask(exp_data,mask,g.dictionary['grid_compression'])
+   calc_intensity=Average_Intensity(mask)
    save(calc_intensity,"_calc")     #wrong suffix!!
    err = mask*(exp_data - (calc_intensity + g.dictionary_SI['background']))
    #calc_intensity += g.dictionary_SI'background'] - exp_data  #todo: might be faster

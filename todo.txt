@@ -4,6 +4,7 @@ To Do:
 
 ## High Priority ##
 
+Add basic comments to the top of each file.
 Debug additional OpenCL shapes.
 Debug update_interval.
 Move fitting code to fit.py.

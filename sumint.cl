@@ -1,3 +1,8 @@
+\\This file contains the OpenCL code for much faster calculations of the intensity.
+  Separate kernels exist both with and without symmetry and the small angle approximation, as well as those without any points masked.
+  The first number in the title indicates if it's summetric (1=symmetric,0=asymmetric).
+  The second number in the title indicates if the small-angle approximation is used.\\
+
 #define PYOPENCL_DEFINE_CDOUBLE
 #pragma OPENCL EXTENSION cl_khr_fp64: enable
 
