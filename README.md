@@ -74,8 +74,8 @@ The Radial Symmetry and Small Angle Approx. checkboxes speed the program, so che
 4. Read the fit results from the terminal.  If you had a grid compression >1 (assuming you're using Fortran acceleration) and now you want more printable results, copy the fit results back into the GUI and Plot Residuals.
 
 Some comments:
-* Grid compression only works with fortran.
-* If the fit steps are each taking less than 10 seconds, there would probaly be very little additional time taken by increasing pixels by 40% or halving the grid compression.
+* Grid compression only works with reliably with fortran; it works with OpenCL if the number of points/pixels does not exceed OpenCL's capabilities.
+* If the fit steps are each taking less than 10 seconds, there would probaly be very little additional time taken by increasing pixels by 40% or halving the grid compression or z_scaling.
 
 
 
