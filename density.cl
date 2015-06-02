@@ -1,5 +1,5 @@
-\\This is an OpenCL implementation of the density functions in density_formula.py
-  No effort has been made to comment the code here; see density_formula.py if desired.\\
+// This is an OpenCL implementation of the density functions in density_formula.py
+// No effort has been made to comment the code here; see density_formula.py if desired.
 
 
 #define PYOPENCL_DEFINE_CDOUBLE
