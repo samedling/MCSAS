@@ -4,10 +4,10 @@ To Do:
 
 ## High Priority ##
 
-Add basic comments to the top of each file.
-Debug additional OpenCL shapes.
+Debug mask, OpenCL, non-square...center isn't centered.
 Debug update_interval.
 Move fitting code to fit.py.
+Add comments to README warning against letting background or length vary.
 
 ## Medium Priority ##
 
@@ -20,6 +20,7 @@ Comment & clean up code.
 Implement scale parameter.
 Add Abort button.
 Don't overwrite filenames.
+Have the center location be a fit parameter.
 
 ## Low Priority ##
 
