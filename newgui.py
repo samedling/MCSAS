@@ -611,7 +611,7 @@ def plot_exp_data():#threshold=1e-7,zero_value=1e-7):
            #print('{0}th percentile value is {1:0.4}.'.format(i,np.percentile(masked,i)))
         print('Recommended value for background noise parameter is {0:0.4}.'.format(np.percentile(masked,25)))
         if g.dictionary['grid_compression'] > 1:
-           newmask = fast_mask(cropped[0],cropped[1],g.dictionary['grid_compression'])
+           fast_mask(cropped[0],cropped[1],g.dictionary['grid_compression'])
            masked=cropped[0]*cropped[1]
            Intensity_plot(masked,"exp_data2",'After Cropping and Downsampling',1)
         else:
@@ -796,13 +796,17 @@ def plot_residuals():
    exp_data,mask=load_exp_image()
    if g.dictionary['grid_compression'] > 1:
       fast_mask(exp_data,mask,g.dictionary['grid_compression'])
-   calc_intensity=Average_Intensity(mask)
+   #calc_intensity=Average_Intensity(mask)
+   ##TODO: Add normalization?
+   calc_intensity = normalize(Detector_Intensity(Points_For_Calculation(),mask),mask,True)
    save(calc_intensity,"_calc")     #wrong suffix!!
-   err = mask*(exp_data - (calc_intensity + g.dictionary_SI['background']))
+   err = calc_intensity - exp_data
+   ##calc_intensity = normalize(Detector_Intensity(Points_For_Calculation(seed=random_seed),mask),mask,True)
+   #err = mask*(exp_data - (calc_intensity + g.dictionary_SI['background']))
    #calc_intensity += g.dictionary_SI'background'] - exp_data  #todo: might be faster
    #calc_intensity *= mask                                     #todo: might be faster
    save(err,"_guess_residuals")
-   plot_residuals=np.abs(err)
+   plot_residuals=np.abs(err)*mask
    print('{0}: Total error = {1:.4}; sum of squares = {2:.4}'.format(time.strftime("%X"),plot_residuals.sum(),np.square(err).sum()))
    if plot_all:
       Fit_plot(exp_data*mask,calc_intensity,plot_residuals)

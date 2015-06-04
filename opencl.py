@@ -77,6 +77,7 @@ class OpenCL:
       cl.enqueue_copy(self.queue,out,out_buffer)
       #return x_coords,y_coords,out
       out2d=np.zeros_like(mask)
+      #TODO: BUG HERE?
       for i in range(len(x_coords)):    #Converts 1D intensity back to 2D.
          out2d[x_coords[i],y_coords[i]] = out[i]
       return out2d

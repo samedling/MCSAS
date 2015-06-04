@@ -1,5 +1,9 @@
-#list of global variables
 
+# List of global variables
+# Separate file so it's usable by all files. 
+
+
+# Feel free to edit these settings:
 
 opencl_enabled = True
 f2py_enabled = True
@@ -8,6 +12,9 @@ accelerate_points = True   #In case there are bugs and you want to disable only 
 quiet = False
 verbose = False
 debug = False
+
+
+# You shouldn't need to edit anything below here.
 
 #default settings:
 dictionary = {'advanced':1, 'altitude':45, 'analytic': 2, 'ave_dist': 0.6, 'azimuth':45, 'bound': 1, 'circ_delta':5, 'comments':'',

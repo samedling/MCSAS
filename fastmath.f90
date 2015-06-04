@@ -41,8 +41,8 @@ subroutine sumintensity00(qsize,ehc,mask,x_pixels,y_pixels,points,npts,intensity
       do i=1,x_pixels
          if (mask(i,j) > 0) then
             Q = (/ i*qsize/x_pixels-0.5*qsize, j*qsize/y_pixels-0.5*qsize, &
-                2*ehc*sin(sqrt((i-0.5*x_pixels)**2+(j-0.5*y_pixels)**2)*qsize/(x_pixels*2*ehc))**2 /)
-                !!TODO: POSSIBLE FORMULA ERROR, CHECK X_PIXELS IN DENOMINATOR!!
+                2*ehc*sin(sqrt((i-0.5*x_pixels)**2+(j-0.5*y_pixels)**2)*qsize/(y_pixels*2*ehc))**2 /)
+                !!TODO: POSSIBLE FORMULA ERROR, CHECK PIXELS IN DENOMINATOR!!
             !intensity(i,j)= SUM(density(p)*COS(DOT_PRODUCT(Q,R(p))))**2 + SUM(density(p)*SIN(DOT_PRODUCT(Q,R(p))))**2
             temp_intensity = 0
             temp_intensity_2 = 0
@@ -86,8 +86,8 @@ subroutine test00(qsize,ehc,mask,x_pixels,y_pixels,points,npts,intensity)
       do i=1,x_pixels
          if (mask(i,j) > 0) then
             Q = (/ i*qsize/x_pixels-0.5*qsize, j*qsize/y_pixels-0.5*qsize, &
-                2*ehc*sin(sqrt((i-0.5*x_pixels)**2+(j-0.5*y_pixels)**2)*qsize/(x_pixels*2*ehc))**2 /)
-                !!TODO: POSSIBLE FORMULA ERROR, CHECK X_PIXELS IN DENOMINATOR!!
+                2*ehc*sin(sqrt((i-0.5*x_pixels)**2+(j-0.5*y_pixels)**2)*qsize/(y_pixels*2*ehc))**2 /)
+                !!TODO: POSSIBLE FORMULA ERROR, CHECK PIXELS IN DENOMINATOR!!
             !intensity(i,j)= SUM(density(p)*COS(DOT_PRODUCT(Q,R(p))))**2 + SUM(density(p)*SIN(DOT_PRODUCT(Q,R(p))))**2
             QdotR = DOT_PRODUCT(Q,points(1:3,p))
             temp_intensity(i,j) = temp_intensity(i,j) + points(4,p)*COS(QdotR)
@@ -133,8 +133,8 @@ subroutine sumintensity01(qsize,ehc,mask,x_pixels,y_pixels,points,npts,intensity
          if (mask(i,j) > 0) then
             Q = (/ i*qsize/x_pixels-0.5*qsize, j*qsize/y_pixels-0.5*qsize, 0.0d0 /)
             QP = (/ Q(1), Q(2), &
-                 2*ehc*sin(sqrt((i-0.5*x_pixels)**2+(j-0.5*y_pixels)**2)*qsize/(x_pixels*2*ehc))**2 /)
-                !!TODO: POSSIBLE FORMULA ERROR, CHECK X_PIXELS IN DENOMINATOR!!
+                 2*ehc*sin(sqrt((i-0.5*x_pixels)**2+(j-0.5*y_pixels)**2)*qsize/(y_pixels*2*ehc))**2 /)
+                !!TODO: POSSIBLE FORMULA ERROR, CHECK PIXELS IN DENOMINATOR!!
             !intensity(i,j)= SUM(density(p)*COS(DOT_PRODUCT(Q,R(p))))**2 + SUM(density(p)*SIN(DOT_PRODUCT(QP,R(p))))**2
             temp_intensity = 0
             temp_intensity_2 = 0
@@ -172,8 +172,8 @@ subroutine sumintensity10(qsize,ehc,mask,x_pixels,y_pixels,points,npts,intensity
       do i=1,x_pixels
          if (mask(i,j) > 0) then
             Q = (/ i*qsize/x_pixels-0.5*qsize, j*qsize/y_pixels-0.5*qsize, &
-                2*ehc*sin(sqrt((i-0.5*x_pixels)**2+(j-0.5*y_pixels)**2)*qsize/(x_pixels*2*ehc))**2 /)
-                !!TODO: POSSIBLE FORMULA ERROR, CHECK X_PIXELS IN DENOMINATOR!!
+                2*ehc*sin(sqrt((i-0.5*x_pixels)**2+(j-0.5*y_pixels)**2)*qsize/(y_pixels*2*ehc))**2 /)
+                !!TODO: POSSIBLE FORMULA ERROR, CHECK PIXELS IN DENOMINATOR!!
             temp_intensity = 0
             do p=1,npts
                !temp_intensity = temp_intensity + (density(p)*COS(DOT_PRODUCT(Q,R)))**2
