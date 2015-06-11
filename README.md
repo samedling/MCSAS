@@ -6,7 +6,7 @@ Method 1:
 
  * Install by running `git clone https://github.com/samedling/MCSAS.git` to download the entire repository.
  
- * For future updates, run `git pull origin master` from the MCSAS folder.
+ * For future updates, run `git pull origin master` from the MCSAS folder.  You may also need to manually remove your old fastmath.so file.
  
 Method 2:
 
@@ -15,7 +15,7 @@ Method 2:
 
 There are two optional but recommended ways of speeding up the code:
 
-1. (Strongly recommended:) Install PyOpenCL following the directions at http://wiki.tiker.net/PyOpenCL/Installation and then the first time your run it, it will ask you which platform and device you want to use.  Try the GPU first; if it doesn't work, use the CPU.  On my dual core CPU, I obtained a 25x speedup (and during fitting enabled another 5x speedup for a total of ~125x); quad core CPUs should be nearly twice as fast and GPUs should be even faster!
+ 1. (Strongly recommended:) Install PyOpenCL following the directions at http://wiki.tiker.net/PyOpenCL/Installation and then the first time your run it, it will ask you which platform and device you want to use.  Try the GPU first; if it doesn't work, use the CPU.  On my dual core CPU, I obtained a 25x speedup (and during fitting enabled another 5x speedup for a total of ~125x); quad core CPUs should be nearly twice as fast and GPUs should be even faster!
  
  2. F2Py acceleration should work automatically on OS X or Linux.  If not, or if you want to make sure you get every bit of performance you can and you have gfortran installed, run `make` to compile the Fortran code (or if you have ifort installed, edit the makefile before running `make`).  I've found this useful even if you are running OpenCL on the CPU (it might be unnecessary if running OpenCL on the GPU).  On my dual core CPU, I obtained an 8x speedup (and during fitting another 10x speedup for ~80x); quad core CPUs likely not much faster.  There is a small benefit to having this in addition to OpenCL.
 

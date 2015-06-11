@@ -38,7 +38,7 @@ if g.opencl_enabled:
       g.opencl_enabled = False
 if g.f2py_enabled:
    try:
-      if os.path.isfile('fastmath.so'):
+      if os.path.isfile('fastmath.so'): #TODO: This won't detect updates.
          import fastmath
       elif sys.platform == 'darwin':
          os.system('cp fastmath-OSX10.10_C2DP8700.so fastmath.so')
@@ -112,7 +112,8 @@ MC_num_and_name = np.array([["Analytic Model Only",0],
                         ["N-gon Truncated Cone",12],
                         ["Sine Shaped Oscillation",13],
                         ["Double Cone",14],
-                        ["Eliptical Cylinder",15]
+                        ["Eliptical Cylinder",15],
+                        ["Asym Hex Pyramid",16]
                         ])
 MC_num_and_name_dict = {x[0]:x[1] for x in MC_num_and_name} #This is needed, so that when an option is chosen, we can find the shape number.
 

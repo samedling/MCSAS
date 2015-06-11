@@ -314,12 +314,12 @@ subroutine d6hexprism(radius_1,rho_1,points,npts)
    real*4, dimension(4,npts), intent(inout) :: points
    integer*4, intent(in) :: npts
    real*4, dimension(3) :: coords
-   real*4, parameter :: sqrt3over2 = SQRT(3.)/2.
+   real*4, parameter :: sqrt3 = SQRT(3.)
    !$OMP PARALLEL DO
    do i=1,npts
       coords = points(1:3,i)/radius_1
-      if ((coords(2)**2>0.75) .OR. (coords(2)+(coords(1)-1)*sqrt3over2 > 0) .OR. (coords(2)+(coords(1)+1)*sqrt3over2 < 0) &
-          .OR. (coords(2)-(coords(1)-1)*sqrt3over2 < 0) .OR. (coords(2)-(coords(1)+1)*sqrt3over2 > 0)) then
+      if ((coords(2)**2>0.75) .OR. (coords(2)+(coords(1)-1)*sqrt3 > 0) .OR. (coords(2)+(coords(1)+1)*sqrt3 < 0) &
+          .OR. (coords(2)-(coords(1)-1)*sqrt3 < 0) .OR. (coords(2)-(coords(1)+1)*sqrt3 > 0)) then
          points(4,i) = 0
       else
          points(4,i) = rho_1
@@ -405,6 +405,28 @@ subroutine d15elipticalcylinder(radius_1,radius_2,rho_1,points,npts)
    !OMP END PARALLEL DO
    return
 end subroutine d15elipticalcylinder
+
+subroutine d16asymmhexpyr(radius_1,radius_2,rho_1,z_dim,points,npts)
+   real*4, intent(in) :: radius_1,radius_2,rho_1,z_dim
+   real*4, dimension(4,npts), intent(inout) :: points
+   integer*4, intent(in) :: npts
+   real*4 :: x,y,scale_by
+   real*4, parameter :: sqrt3 = SQRT(3.)
+   !$OMP PARALLEL DO
+   do i=1,npts
+      scale_by = 2.*z_dim/(z_dim-2.*points(3,i))*MAX(1.,(radius_1+radius_2)/radius_1)/radius_1
+      x = points(1,i)*scale_by
+      y = points(2,i)*scale_by
+      if ((ABS(y) > sqrt3/2.) .OR. (ABS(y) > (-sqrt3*(ABS(x)-radius_2/radius_1)+sqrt3))) then
+         points(4,i) = 0
+      else
+         points(4,i) = rho_1
+      end if
+   end do
+   !OMP END PARALLEL DO
+   return
+end subroutine d16asymmhexpyr
+
 
 !Template:
 !subroutine d#name(...,points,npts)

@@ -18,7 +18,7 @@ def Points_For_Calculation(seed=0):
                     for z_coord in np.arange(-z_dim/2, z_dim/2, ave_dist*z_scale) for y_coord in np.arange(-y_dim/2, y_dim/2, ave_dist) for x_coord in np.arange(-x_dim/2, x_dim/2, ave_dist)])
 
     #Fortran implementation about 8x faster than new python implementation.
-    if g.accelerate_points and g.f2py_enabled and RandomPoints.shape[0] > 100000 and g.dictionary_SI['shape'] in (1,2,3,4,5,6,7,11,13,14,15):
+    if g.accelerate_points and g.f2py_enabled and RandomPoints.shape[0] > 100000 and g.dictionary_SI['shape'] in (1,2,3,4,5,6,7,11,13,14,15,16):
      try:
         if g.debug:
             print('{0}: Using Fortran to calculate densities.'.format(time.strftime("%X")))
@@ -45,6 +45,8 @@ def Points_For_Calculation(seed=0):
             fastmath.density.d14doublecone(g.dictionary_SI['radius_1'],g.dictionary_SI['radius_2'],g.dictionary_SI['rho_1'],g.dictionary_SI['z_dim'],densities)
         elif g.dictionary_SI['shape'] == 15:
             fastmath.density.d15elipticalcylinder(g.dictionary_SI['radius_1'],g.dictionary_SI['radius_2'],g.dictionary_SI['rho_1'],densities)
+        elif g.dictionary_SI['shape'] == 16:
+            fastmath.density.d16asymmhexpyr(g.dictionary_SI['radius_1'],g.dictionary_SI['radius_2'],g.dictionary_SI['rho_1'],g.dictionary_SI['z_dim'],densities)
         densities = densities.T
         outside = [i for i in range(densities.shape[0]) if not densities[i,3]]
         points_inside = np.delete(densities,outside,axis=0)
