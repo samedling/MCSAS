@@ -1,44 +1,52 @@
 Recently Done (commit message):
 
-
 To Do:
 
-Points.ravel might be faster than Points.T for passing into fortran subroutines; no change should be needed to fortran code
-   another possibility is swapaxes?
+## High Priority ##
 
+Debug update_interval.
+Add comments to README warning against letting background or length vary.
+
+## Medium Priority ##
+
+Move other functions (sequence,make_intensity, etc.) somewhere??
+Rename newgui.py to mcsas.py or gui.py or something.
+
+Better downsampling & cropping of exp_data (only crop once).
+Create test cases (which should also be timed).
+Comment & clean up code.
 Implement scale parameter.
-Variable to enlarge mask.
+Add Abort button.
+    Try threads, see http://stupidpythonideas.blogspot.com.au/2013/10/why-your-gui-app-freezes.html
+    Or http://stackoverflow.com/questions/25828659/tkinter-gui-freezes-when-using-multiprocessing-process
+    Or http://stackoverflow.com/questions/10847626/program-freezing-during-the-execution-of-a-function-in-tkinter
+Don't overwrite filenames.
+Have the center location be a fit parameter.
+Move fitting code to fit.py.
+
+## Low Priority ##
+
+Enable horizontal multiplot GUI flag
 Add separate filenames for fit_results.
-
 Difference plot should always be linear (not log)?
-Bounds for variables (specifically rho <1000, maybe radius < 50nm).
-   Easy opton: add test in residuals; if parameter too far outside range, reset it to it's original value and fit without it, then allow it to vary again?
-   Hard option: implement a method down below
-
 Add initial messages to fitlog (geometry,cropping,downsampling)
 Choose dictionary file to load from?
 Better to calculate residuals from already run calculations.
 Save and load from files?
 Enable specifying random seed?
-
-
-Preconditioning?
+Preconditioning:
    radius of curvature depends on angle
-
-Add ability for not-square image sections.
-Add ability to change sampling frequency (pixel distance) as a function of position.
-
-check parameters list for duplicates
-
-Add additional variables used by Points_For_Calculation: ave_dist, z_scale?
-
-Is normalization wrong due to mask?
-
-Use FFT or derivative to find mask and denoise.
+Add ability to change sampling frequency (pixel distance) as a function of position even for non-experimental data.
+Check parameters list for duplicates
 Do not run Fit if exp_data center is "0 0", or at least do something intelligent.
+Add additional variables used by Points_For_Calculation: ave_dist, z_scale?
+Add ability to set number of cores:
+    `use omp_lib` in each subroutine + `call OMP_SET_NUM_THREADS(n)`
 
-Constrained fitting: https://github.com/lmfit/lmfit-py or http://cars9.uchicago.edu/software/python/lmfit/
 
-Alternate way to only fit a few parameters: http://stackoverflow.com/questions/12208634/fitting-only-one-paramter-of-a-function-with-many-parameters-in-python
-
-Geodesic fitting: http://www.physics.byu.edu/faculty/transtrum/ 
+Bounds for variables (specifically rho <1000, maybe radius < 50nm).
+   Easy option: add test in residuals; if parameter too far outside range, reset it to it's original value and fit without it, then allow it to vary again?
+   Hard option: implement a method down below
+      Constrained fitting: https://github.com/lmfit/lmfit-py or http://cars9.uchicago.edu/software/python/lmfit/
+      Alternate way to only fit a few parameters: http://stackoverflow.com/questions/12208634/fitting-only-one-paramter-of-a-function-with-many-parameters-in-python
+      Geodesic fitting: http://www.physics.byu.edu/faculty/transtrum/ 

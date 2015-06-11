@@ -10,11 +10,12 @@ Make sure you have the latest version.
    
  * Or run `git clone https://github.com/samedling/MCSAS.git` to download the entire repository.
 
-There are two ways of speeding up the code by 5-25x on a dual core machine (probably 10-50x or more on a modern quad core machine):
 
- 1. (Recommended:) Install PyOpenCL following the directions at http://wiki.tiker.net/PyOpenCL/Installation and then the first time your run it, it will ask you which platform and device you want to use.  Try the GPU first; if it doesn't work, use the CPU.
+There are two optional but recommended ways of speeding up the code:
+
+1. (Strongly recommended:) Install PyOpenCL following the directions at http://wiki.tiker.net/PyOpenCL/Installation and then the first time your run it, it will ask you which platform and device you want to use.  Try the GPU first; if it doesn't work, use the CPU.  On my dual core CPU, I obtained a 25x speedup (and during fitting enabled another 5x speedup for a total of ~125x); quad core CPUs should be nearly twice as fast and GPUs should be even faster!
  
- 2. Alternatively, if you have gfortran installed, run `make` to compile the Fortran code; if you have ifort installed, edit the makefile before running `make`. Or, if you are running Ubuntu or OS X, try copying the relevant fastmath-<OS>_<CPU>.so file to fastmath.so.
+ 2. In addition, if you have gfortran installed, run `make` to compile the Fortran code; if you have ifort installed, edit the makefile before running `make`.  I've found this useful even if you are running OpenCL on the CPU (it might be unnecessary if running OpenCL on the GPU).  On my dual core CPU, I obtained an 8x speedup (and during fitting another 10x speedup for ~80x); quad core CPUs likely not much faster.  There is a small benefit to having this in addition to OpenCL.
 
 Run `python newgui.py` on the command line or open it in Canopy and click run.  (Note: you may discover running `nice python newgui.py` results in your system being a lot more responsive.)
 
@@ -40,6 +41,8 @@ OS X and Windows: You need to close all the old plots before you can run things 
 
 OS X/EPD/Tkinter: Make sure you have Canopy.  EPD might tell you it's updated everything, but it's still not the same as Canopy.
 
+If you receive compiler OpenCL compiler warnings when starting the program it's probably due to your OpenCL device not supporting 64-bit floating point numbers; it should be fine, but if you get errors later, try using a different OpenCL device.
+
 Linux/OpenCL: apt-get on Ubuntu wasn't helpful to me; follow the directions linked above for more success.
 
 PIL: On older systems you may need to manually remove PIL and install Pillow (`sudo pip uninstall PIL` and `sudo pip install Pillow`); newer systems should simply come with Pillow.  Otherwise Image won't be able to read the funny SAXS TIF files.
@@ -48,6 +51,7 @@ Scientific Linux/F2PY: Make sure you are using the version of F2PY which matches
 
 Fortran/Hyperthreading: If you have a Core i7 processor, (or other CPU with hyperthreading) performance may be slightly improved by adding `export OMP_NUM_THREADS=<n>` to your .bash_profile (where n = the number of physical cores).
 
+Due to the large number of shapes, it's possible some of the sped-up versions of these have bugs.  If you find that the shapes don't look right, edit the global_vars.py file so `accelerate_points = False` to disable the erroneous speedup.
 
 ## Running the Program ##
 
@@ -70,8 +74,8 @@ The Radial Symmetry and Small Angle Approx. checkboxes speed the program, so che
 4. Read the fit results from the terminal.  If you had a grid compression >1 (assuming you're using Fortran acceleration) and now you want more printable results, copy the fit results back into the GUI and Plot Residuals.
 
 Some comments:
-* Grid compression only works with fortran.
-* If the fit steps are each taking less than 10 seconds, there would probaly be very little additional time taken by increasing pixels by 40% or halving the grid compression.
+* Grid compression only works with reliably with fortran; it works with OpenCL if the number of points/pixels does not exceed OpenCL's capabilities.
+* If the fit steps are each taking less than 10 seconds, there would probaly be very little additional time taken by increasing pixels by 40% or halving the grid compression or z_scaling.
 
 
 
@@ -91,6 +95,8 @@ First, make sure you have the most recent version.
 3. Go to the beginning of the Fit_Parameter class definition
    In the elif block (currently around line 450), add a pair of lines with the number and the parameters from step 1.
    Save and close the file.
+   
+Do not add to the middle of the list as this will cause errors when Fortran or OpenCL are enabled.
 
 ### To add an analytic model: ###
 
