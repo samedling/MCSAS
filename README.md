@@ -2,22 +2,25 @@
 
 Download from https://www.enthought.com/products/canopy either the free or academic version of Enthought Canopy.  Your Python version must be 2.7 or newer.
 
-Make sure you have the latest version.
+Method 1:
 
- * Go to https://github.com/samedling/MCSAS and click Download ZIP in the lower right.
+ * Install by running `git clone https://github.com/samedling/MCSAS.git` to download the entire repository.
+ 
+ * For future updates, run `git pull origin master` from the MCSAS folder.
+ 
+Method 2:
 
- * Or a current zipfile may be at https://drive.google.com/open?id=0B8EbmzXGZtaZV3MxUlhSUjczQm8
-   
- * Or run `git clone https://github.com/samedling/MCSAS.git` to download the entire repository.
+ * Go to https://github.com/samedling/MCSAS and click Download ZIP in the lower right to install.  Update the same way.  
 
 
 There are two optional but recommended ways of speeding up the code:
 
 1. (Strongly recommended:) Install PyOpenCL following the directions at http://wiki.tiker.net/PyOpenCL/Installation and then the first time your run it, it will ask you which platform and device you want to use.  Try the GPU first; if it doesn't work, use the CPU.  On my dual core CPU, I obtained a 25x speedup (and during fitting enabled another 5x speedup for a total of ~125x); quad core CPUs should be nearly twice as fast and GPUs should be even faster!
  
- 2. In addition, if you have gfortran installed, run `make` to compile the Fortran code; if you have ifort installed, edit the makefile before running `make`.  I've found this useful even if you are running OpenCL on the CPU (it might be unnecessary if running OpenCL on the GPU).  On my dual core CPU, I obtained an 8x speedup (and during fitting another 10x speedup for ~80x); quad core CPUs likely not much faster.  There is a small benefit to having this in addition to OpenCL.
+ 2. F2Py acceleration should work automatically on OS X or Linux.  If not, or if you want to make sure you get every bit of performance you can and you have gfortran installed, run `make` to compile the Fortran code (or if you have ifort installed, edit the makefile before running `make`).  I've found this useful even if you are running OpenCL on the CPU (it might be unnecessary if running OpenCL on the GPU).  On my dual core CPU, I obtained an 8x speedup (and during fitting another 10x speedup for ~80x); quad core CPUs likely not much faster.  There is a small benefit to having this in addition to OpenCL.
 
 Run `python newgui.py` on the command line or open it in Canopy and click run.  (Note: you may discover running `nice python newgui.py` results in your system being a lot more responsive.)
+
 
 
 ### OS X Fortran Installation ###
