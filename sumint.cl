@@ -1,6 +1,6 @@
 // This file contains the OpenCL code for much faster calculations of the intensity.
 // Separate kernels exist both with and without symmetry and the small angle approximation, as well as those without any points masked.
-// The first number in the title indicates if it's summetric (1=symmetric,0=asymmetric).
+// The first number in the title indicates if it is symmetric (1=symmetric,0=asymmetric).
 // The second number in the title indicates if the small-angle approximation is used.
 
 #define PYOPENCL_DEFINE_CDOUBLE
@@ -82,8 +82,8 @@ __kernel void sumint00mask (
    int n = get_global_id(0);
    int i = xval[n];
    int j = yval[n];
-   float Q[3] = { i*qsize/y_pixels-0.5*qsize, j*qsize/x_pixels-0.5*qsize,
-        2*ehc*pow(sin(sqrt(pow((i-0.5*y_pixels),2)+pow(j-0.5*x_pixels,2))*qsize/(x_pixels*2*ehc)),2) };
+   float Q[3] = { i*qsize/x_pixels-0.5*qsize, j*qsize/y_pixels-0.5*qsize,
+        2*ehc*pow(sin(sqrt(pow((i-0.5*x_pixels),2)+pow(j-0.5*y_pixels,2))*qsize/(y_pixels*2*ehc)),2) };
    temp_intensity = 0;
    temp_intensity_2 = 0;
    for ( int p = 0; p < npts; p++) {
@@ -105,8 +105,8 @@ __kernel void sumint10mask (
    int n = get_global_id(0);
    int i = xval[n];
    int j = yval[n];
-   float Q[3] = { i*qsize/y_pixels-0.5*qsize, j*qsize/y_pixels-0.5*qsize,
-        2*ehc*pow(sin(sqrt(pow((i-0.5*y_pixels),2)+pow(j-0.5*x_pixels,2))*qsize/(x_pixels*2*ehc)),2) };
+   float Q[3] = { i*qsize/x_pixels-0.5*qsize, j*qsize/y_pixels-0.5*qsize,
+        2*ehc*pow(sin(sqrt(pow((i-0.5*x_pixels),2)+pow(j-0.5*y_pixels,2))*qsize/(y_pixels*2*ehc)),2) };
    temp_intensity = 0;
    for ( int p = 0; p < npts; p++) {
        float R[3] = {points[p][0],points[p][1],points[p][2]};
@@ -124,7 +124,7 @@ __kernel void sumint11mask (
    int n = get_global_id(0);
    int i = xval[n];
    int j = yval[n];
-   float Q[2] = { i*qsize/y_pixels-0.5*qsize, j*qsize/x_pixels-0.5*qsize};
+   float Q[2] = { i*qsize/x_pixels-0.5*qsize, j*qsize/y_pixels-0.5*qsize};
    for ( int p = 0; p < npts; p++) {
        float R[2] = {points[p][0],points[p][1]};
        temp_intensity += points[p][3]*cos(my_dot(Q,R,2));

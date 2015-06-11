@@ -106,6 +106,8 @@ if g.opencl_enabled:
       if not len(mask) or g.dictionary['grid_compression'] < 2:
          return g.opencl_sumint.sumint(qsize,ehc,x_pixels,y_pixels,Points,symmetric,Qz)
       else:
+         if g.dictionary['grid_compression'] < 5:
+            print('Grid compression of < 5 does not produce significant speedup when using OpenCL.  Using 0/1 or 5 or 10 is recommended.')
          return g.opencl_sumint.sumint_mask(qsize,ehc,mask,Points,symmetric,Qz)
 
 #for asymmetric objects, no small angle approximation
