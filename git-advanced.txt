@@ -32,6 +32,7 @@ To push the develop:
 
 merge code:
 `git checkout master`             #Switch to master branch
+`git pull origin master`          #Make sure master brach is up-to-date.
 `git branch`                      #Verify on master branch
 `git merge develop --no-ff`       #Merge while preserving commit history
 `git push --all` 
