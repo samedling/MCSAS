@@ -169,14 +169,14 @@ elif g.dictionary_SI['shape'] == 11:
 
 elif g.dictionary_SI['shape']==12:
     print "N-gon Truncated Cone"
-    #rho_2 is the number of sides
+    print("rho 2 is the number of sides")
     def density(coords):
-        angle_number = np.float(np.floor(np.angle(coords[0:1]+1j*coords[1:2])*g.dictionary_SI['rho_2']/(2*3.14159265)))
+        angle_number = np.float(np.floor(np.angle(coords[0:1]+1j*coords[1:2])*g.dictionary_SI['rho_2']/(2*np.pi)))
         zrad = coords[2:3]*(g.dictionary_SI['radius_2']-g.dictionary_SI['radius_1'])/g.dictionary_SI['z_dim']+(g.dictionary_SI['radius_2']+g.dictionary_SI['radius_1'])/2.
     
-        slope = (np.sin((angle_number+1)*2.*3.14159265/float(g.dictionary_SI['rho_2']))-np.sin((angle_number)*2.*3.14159265/float(g.dictionary_SI['rho_2'])))/(np.cos((angle_number+1)*2.*3.14159265/float(g.dictionary_SI['rho_2']))-np.cos((angle_number)*2.*3.14159265/float(g.dictionary_SI['rho_2'])))
+        slope = (np.sin((angle_number+1)*2.*np.pi/float(g.dictionary_SI['rho_2']))-np.sin((angle_number)*2.*np.pi/float(g.dictionary_SI['rho_2'])))/(np.cos((angle_number+1)*2.*np.pi/float(g.dictionary_SI['rho_2']))-np.cos((angle_number)*2.*np.pi/float(g.dictionary_SI['rho_2'])))
 
-        x_intercept = zrad*(slope*np.cos(angle_number*2*3.14159265/float(g.dictionary_SI['rho_2']))-np.sin(angle_number*2*3.14159265/float(g.dictionary_SI['rho_2'])))/(coords[1:2]/coords[0:1]-slope)
+        x_intercept = zrad*(slope*np.cos(angle_number*2*np.pi/float(g.dictionary_SI['rho_2']))-np.sin(angle_number*2*np.pi/float(g.dictionary_SI['rho_2'])))/(coords[1:2]/coords[0:1]-slope)
         y_intercept = x_intercept*coords[1:2]/coords[0:1]
         if x_intercept**2+y_intercept**2 > coords[0:1]**2+coords[1:2]**2:
             return g.dictionary_SI['rho_1']
@@ -205,12 +205,30 @@ elif g.dictionary_SI['shape'] == 15:
     print("Eliptical Cylinder")
     print("radius 1 is the x-axis; radius 2 is the y-axis.")
     def density(coords):
-        dist = np.sqrt(coords[0]**2/g.dictionary_SI['radius_1']**2 + coords[1]**2/g.dictionary_SI['radius_2']**2)
+        dist = coords[0]**2/g.dictionary_SI['radius_1']**2 + coords[1]**2/g.dictionary_SI['radius_2']**2
         if dist < 1:
             b=g.dictionary_SI['rho_1']
         else:
             b=0
         return b
+
+elif g.dictionary_SI['shape'] == 16:
+    print("Asymmetrical Hexagonal Pyramid")
+    print("radius 1 would be the distance from the center a point; radius 2 is the additional dstance to the furthest point (or closest if negative)")
+    print("minimum value for radius 2 is -0.5*abs(radius 1), or you just get a diamond")
+    def density(coords):
+        r1=g.dictionary_SI['radius_1']
+        r2=g.dictionary_SI['radius_2']
+        scale_by = 2*g.dictionary_SI['z_dim'] / (g.dictionary_SI['z_dim']-2*coords[2]) * max(1,(r1+r2)/r1)/r1      #first couple term term makes a single cone, second term scales width so even if enlarged it fits within random points box
+        x=coords[0]*scale_by
+        y=coords[1]*scale_by
+        offset = r2/r1
+        if np.abs(y) > np.sqrt(3)/2 or np.abs(y) > (-np.sqrt(3)*(np.abs(x)-offset)+np.sqrt(3)):
+            b=0
+        else:
+            b=g.dictionary_SI['rho_1']
+        return b
+
 
 
 

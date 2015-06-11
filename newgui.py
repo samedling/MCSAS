@@ -21,6 +21,9 @@ from scipy.optimize import leastsq
 
 import global_vars as g
 
+
+
+
 #Looks for fastmath.so to speed up intensity calculation.
 if g.opencl_enabled:
    try:
@@ -35,7 +38,14 @@ if g.opencl_enabled:
       g.opencl_enabled = False
 if g.f2py_enabled:
    try:
-      import fastmath
+      if os.path.isfile('fastmath.so'): #TODO: This won't detect updates.
+         import fastmath
+      elif sys.platform == 'darwin':
+         os.system('cp fastmath-OSX10.10_C2DP8700.so fastmath.so')
+         import fastmath
+      elif sys.platform == 'linux2':
+         os.system('cp fastmath_Ubuntu14.10_i7M640.so fastmath.so')
+         import fastmath
       print("Accelerating using f2py.")
    except ImportError:
       g.f2py_enabled = False
@@ -64,9 +74,9 @@ g.dictionary = {'advanced':1, 'altitude':45, 'analytic': 2, 'ave_dist': 0.6, 'az
 
 if os.name == 'nt':  #or sys.platform == 'win32'
    root_folder = os.path.dirname(sys.argv[0]) #Windows
-else: #os.name == 'posix' or sys.platform == 'linux2'
+else:
    root_folder = os.getcwd()  #Mac/Linux
-#Check for write access?
+#todo: Check for write access?
 
 #Windows: os.name='nt', sys.platform='win32'
 #Ubuntu: os.name='posix', sys.platform='linux2'
@@ -102,7 +112,8 @@ MC_num_and_name = np.array([["Analytic Model Only",0],
                         ["N-gon Truncated Cone",12],
                         ["Sine Shaped Oscillation",13],
                         ["Double Cone",14],
-                        ["Eliptical Cylinder",15]
+                        ["Eliptical Cylinder",15],
+                        ["Asym Hex Pyramid",16]
                         ])
 MC_num_and_name_dict = {x[0]:x[1] for x in MC_num_and_name} #This is needed, so that when an option is chosen, we can find the shape number.
 
