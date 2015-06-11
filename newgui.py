@@ -576,17 +576,21 @@ def normalize(data,mask=[],background=0):
    if not len(mask):
       mask = np.ones_like(data)
    if background:
-      norm_to = (1.0 - g.dictionary_SI['background']*np.sum(mask))  #TODO: returns BAD negative number if background_noise is too high.
+      norm_to = (1.0 - g.dictionary_SI['background']*np.sum(mask))
+      if norm_to < 0:   #THIS IS BAD
+          print("Background is too high!")
+          norm_to = 1.0
       if g.debug:
          print("Normalizing to {0} so will be normalized to 1 when background of {1} is added.".format(norm_to,g.dictionary_SI['background']))
       #total = np.sum(data*mask) + g.dictionary_SI['background']*np.sum(mask)
-      total = norm_to/np.sum(data*mask)
-      normalized = data*total + g.dictionary_SI['background']*mask
+      total = norm_to/np.sum(np.maximum(data*mask,np.zeros_like(data))) #maximum is to avoid counting negative points
+      #total = norm_to/np.sum(data*mask)
+      normalized = np.maximum(data*total*mask,np.zeros_like(data)) + g.dictionary_SI['background']*mask  #maximum zeros out negative points
       #data *= total                               #todo: might be faster
       #data += g.dictionary_SI['background']*mask  #todo: might be faster
    else:
-      total = 1.0/np.sum(data*mask)
-      normalized = data*total
+      total = 1.0/np.sum(np.maximum(data*mask,np.zeros_like(data)))
+      normalized = np.maximum(data*total*mask,np.zeros_like(data))
       #data *= total    #todo: should be a little faster
    if g.debug: 
       #print("Normalized so total value is {0} and lowest value is {1}.".format(np.sum(normalized),np.min(normalized)))
@@ -798,7 +802,6 @@ def plot_residuals():
    if g.dictionary['grid_compression'] > 1:
       fast_mask(exp_data,mask,g.dictionary['grid_compression'])
    #calc_intensity=Average_Intensity(mask)
-   ##TODO: Add normalization?
    calc_intensity = normalize(Detector_Intensity(Points_For_Calculation(),mask),mask,True)
    save(calc_intensity,"_calc")     #wrong suffix!!
    err = calc_intensity - exp_data
