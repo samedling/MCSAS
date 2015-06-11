@@ -171,12 +171,12 @@ elif g.dictionary_SI['shape']==12:
     print "N-gon Truncated Cone"
     #rho_2 is the number of sides
     def density(coords):
-        angle_number = np.float(np.floor(np.angle(coords[0:1]+1j*coords[1:2])*g.dictionary_SI['rho_2']/(2*3.14159265)))
+        angle_number = np.float(np.floor(np.angle(coords[0:1]+1j*coords[1:2])*g.dictionary_SI['rho_2']/(2*np.pi)))
         zrad = coords[2:3]*(g.dictionary_SI['radius_2']-g.dictionary_SI['radius_1'])/g.dictionary_SI['z_dim']+(g.dictionary_SI['radius_2']+g.dictionary_SI['radius_1'])/2.
     
-        slope = (np.sin((angle_number+1)*2.*3.14159265/float(g.dictionary_SI['rho_2']))-np.sin((angle_number)*2.*3.14159265/float(g.dictionary_SI['rho_2'])))/(np.cos((angle_number+1)*2.*3.14159265/float(g.dictionary_SI['rho_2']))-np.cos((angle_number)*2.*3.14159265/float(g.dictionary_SI['rho_2'])))
+        slope = (np.sin((angle_number+1)*2.*np.pi/float(g.dictionary_SI['rho_2']))-np.sin((angle_number)*2.*np.pi/float(g.dictionary_SI['rho_2'])))/(np.cos((angle_number+1)*2.*np.pi/float(g.dictionary_SI['rho_2']))-np.cos((angle_number)*2.*np.pi/float(g.dictionary_SI['rho_2'])))
 
-        x_intercept = zrad*(slope*np.cos(angle_number*2*3.14159265/float(g.dictionary_SI['rho_2']))-np.sin(angle_number*2*3.14159265/float(g.dictionary_SI['rho_2'])))/(coords[1:2]/coords[0:1]-slope)
+        x_intercept = zrad*(slope*np.cos(angle_number*2*np.pi/float(g.dictionary_SI['rho_2']))-np.sin(angle_number*2*np.pi/float(g.dictionary_SI['rho_2'])))/(coords[1:2]/coords[0:1]-slope)
         y_intercept = x_intercept*coords[1:2]/coords[0:1]
         if x_intercept**2+y_intercept**2 > coords[0:1]**2+coords[1:2]**2:
             return g.dictionary_SI['rho_1']
