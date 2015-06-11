@@ -390,6 +390,22 @@ subroutine d14doublecone(radius_1,radius_2,rho_1,z_dim,points,npts)
    !$OMP END PARALLEL DO
 end subroutine d14doublecone
 
+subroutine d15elipticalcylinder(radius_1,radius_2,rho_1,points,npts)
+   real*4, intent(in) :: radius_1,radius_2,rho_1
+   real*4, dimension(4,npts), intent(inout) :: points
+   integer*4, intent(in) :: npts
+   !$OMP PARALLEL DO
+   do i=1,npts
+      if (points(1,i)**2/radius_1**2+points(2,i)**2/radius_2**2 < 1) then
+         points(4,i) = rho_1
+      else
+         points(4,i) = 0
+      end if
+   end do
+   !OMP END PARALLEL DO
+   return
+end subroutine d15elipticalcylinder
+
 !Template:
 !subroutine d#name(...,points,npts)
 !   real*4, intent(in) :: ...

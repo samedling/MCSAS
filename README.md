@@ -13,9 +13,9 @@ Make sure you have the latest version.
 
 There are two optional but recommended ways of speeding up the code:
 
- 1. (Strongly recommended:) Install PyOpenCL following the directions at http://wiki.tiker.net/PyOpenCL/Installation and then the first time your run it, it will ask you which platform and device you want to use.  Try the GPU first; if it doesn't work, use the CPU.  On my dual core CPU, I obtained a 25x speedup (and during fitting enabled another 10x speedup for a total of ~250x); quad core CPUs should be nearly twice as fast and GPUs should be even faster!
+1. (Strongly recommended:) Install PyOpenCL following the directions at http://wiki.tiker.net/PyOpenCL/Installation and then the first time your run it, it will ask you which platform and device you want to use.  Try the GPU first; if it doesn't work, use the CPU.  On my dual core CPU, I obtained a 25x speedup (and during fitting enabled another 5x speedup for a total of ~125x); quad core CPUs should be nearly twice as fast and GPUs should be even faster!
  
- 2. In addition, if you have gfortran installed, run `make` to compile the Fortran code; if you have ifort installed, edit the makefile before running `make`. Or, if you are running Ubuntu or OS X, try copying the relevant fastmath-<OS>_<CPU>.so file to fastmath.so.  I've found this useful even if you are running OpenCL on the CPU (it might be unnecessary if running OpenCL on the GPU).  On my dual core CPU, I obtained an 8x speedup (and during fitting another 10x speedup for ~80x); quad core CPUs likely not much faster.  There is a small benefit to having this in addition to OpenCL.
+ 2. In addition, if you have gfortran installed, run `make` to compile the Fortran code; if you have ifort installed, edit the makefile before running `make`.  I've found this useful even if you are running OpenCL on the CPU (it might be unnecessary if running OpenCL on the GPU).  On my dual core CPU, I obtained an 8x speedup (and during fitting another 10x speedup for ~80x); quad core CPUs likely not much faster.  There is a small benefit to having this in addition to OpenCL.
 
 Run `python newgui.py` on the command line or open it in Canopy and click run.  (Note: you may discover running `nice python newgui.py` results in your system being a lot more responsive.)
 
@@ -95,6 +95,8 @@ First, make sure you have the most recent version.
 3. Go to the beginning of the Fit_Parameter class definition
    In the elif block (currently around line 450), add a pair of lines with the number and the parameters from step 1.
    Save and close the file.
+   
+Do not add to the middle of the list as this will cause errors when Fortran or OpenCL are enabled.
 
 ### To add an analytic model: ###
 

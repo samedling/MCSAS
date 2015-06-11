@@ -4,9 +4,7 @@ To Do:
 
 ## High Priority ##
 
-Debug mask, OpenCL, non-square...center isn't centered.
 Debug update_interval.
-Move fitting code to fit.py.
 Add comments to README warning against letting background or length vary.
 
 ## Medium Priority ##
@@ -19,8 +17,12 @@ Create test cases (which should also be timed).
 Comment & clean up code.
 Implement scale parameter.
 Add Abort button.
+    Try threads, see http://stupidpythonideas.blogspot.com.au/2013/10/why-your-gui-app-freezes.html
+    Or http://stackoverflow.com/questions/25828659/tkinter-gui-freezes-when-using-multiprocessing-process
+    Or http://stackoverflow.com/questions/10847626/program-freezing-during-the-execution-of-a-function-in-tkinter
 Don't overwrite filenames.
 Have the center location be a fit parameter.
+Move fitting code to fit.py.
 
 ## Low Priority ##
 

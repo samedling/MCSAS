@@ -101,7 +101,8 @@ MC_num_and_name = np.array([["Analytic Model Only",0],
                         ["Double Slit",11],
                         ["N-gon Truncated Cone",12],
                         ["Sine Shaped Oscillation",13],
-                        ["Double Cone",14]
+                        ["Double Cone",14],
+                        ["Eliptical Cylinder",15]
                         ])
 MC_num_and_name_dict = {x[0]:x[1] for x in MC_num_and_name} #This is needed, so that when an option is chosen, we can find the shape number.
 
@@ -470,8 +471,8 @@ class Fit_Parameters():
       elif shape in (5,14):   #Chopped Cone, Double Done
          self.density_params=('radius_1','radius_2','rho_1') #z_dim intrinsic too
       elif shape == 7:        #Rect. Prism
-         self.density_params=('radius_1','radius_2','rho_1')   #radius_1 only for scaling.
-      elif shape in (8,11):   #Bubbles, Double Slit
+         self.density_params=('radius_1','radius_2','rho_1')
+      elif shape in (8,11,15):   #Bubbles, Double Slit, Eliptical Cylinder
          self.density_params=('radius_1','radius_2','rho_1')
       elif shape in (9,12,13):#Chopped Cylinder, N-Shaped Chopped Cone, Sine
          self.density_params=('radius_1','radius_2','rho_1','rho_2')  #z_dim intrinsic too
@@ -1173,8 +1174,9 @@ if __name__ == "__main__":
    ROW += 1
    enter_num('max_iter', "Maximum Iterations (0=default)", ROW, COL)
    ROW += 1
-   enter_num('update_freq', "Update Interval", ROW, COL)   #TODO: debug
-   ROW += 1
+   if g.debug:
+      enter_num('update_freq', "Update Interval", ROW, COL)   #TODO: debug
+      ROW += 1
    enter_num('grid_compression', "Grid Compression (2, 5, or 10)", ROW, COL)
    ROW += 1
    tick('plot_fit_tick',"Plot Fit Results", ROW, COL)

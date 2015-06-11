@@ -201,3 +201,16 @@ elif g.dictionary_SI['shape'] == 14:
             b=0
         return b  
  
+elif g.dictionary_SI['shape'] == 15:
+    print("Eliptical Cylinder")
+    print("radius 1 is the semimajor, x-axis; radius 2 is the semiminor, y-axis.")
+    def density(coords):
+        dist = np.sqrt(coords[0]**2/g.dictionary_SI['radius_1']**2 + coords[1]**2/g.dictionary_SI['radius_2']**2)
+        if dist < 1:
+            b=g.dictionary_SI['rho_1']
+        else:
+            b=0
+        return b
+
+
+
