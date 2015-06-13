@@ -116,23 +116,46 @@ def Calculate_Intensity(Points,mask=[]):
    #print(points_inside[points_inside[:,2].argsort()][::100,2])
    length = z_list[-1]-z_list[0]
    #coherence_length = 5e-7
-   coherence_length = 2*np.pi/(g.dictionary_SI['EHC'] * 1.5e-4)
+   if not g.dictionary['d_lambda']:
+      coherence_length = 1
+   else:
+      coherence_length = 2*np.pi/(g.dictionary_SI['EHC'] * g.dictionary['d_lambda'])
    duplication = 10 #number of bunches per coherence_length
-   if length > coherence_length:
-      print("Object length ({0}) exceeds coherence length {1}...".format(length,coherence_length))
-      num_bunches = int(round(duplication*length/coherence_length))
+   num_bunches = int(round(duplication*length/coherence_length))
+   if num_bunches > duplication:    #if length > coherence_length:
+      print("Object length ({0}) exceeds coherence length ({1})...".format(length,coherence_length))
       print("Will divide into {0} sections.".format(num_bunches))
-      dividing_points = np.searchsorted(z_list,-length/2+(np.arange(num_bunches)+1)*coherence_length/10)
+      dividing_points = np.searchsorted(z_list,-length/2+(np.arange(num_bunches+1))*coherence_length/10)
+      dividing_points[0] = 0    #Not sure why this isn't already 0.
+      dividing_points[-1] = len(z_list)  #Should this be the last element or should I append?
       if g.debug:
          print("Dividing points are:")
          print(dividing_points)
       intensity = np.zeros((y_pixels,x_pixels),order='F')   #todo: might not need Fortran order
-      for i in range(len(dividing_points)-duplication):
+      #TODO: DO I NEED TO OFFSET Z IN SOME WAY??
+      for i in range(1,duplication):
          if g.debug:
-            print("Starting section {0} of {1}".format(i+1,len(dividing_points)-duplication))
-         intensity += Detector_Intensity(Points,mask)
+            print("Starting section {0} of {1}".format(i,len(dividing_points)+duplication-1))
+            print("{0} to {1}".format(dividing_points[0],dividing_points[i]))
+            print("{0} to {1}".format(z_list[dividing_points[0]],z_list[dividing_points[i]]))
+         intensity += Detector_Intensity(Points[dividing_points[0]:dividing_points[i],:],mask)
+      for i in range(len(dividing_points)-duplication):     #TODO: also do more at ends??
+         if g.debug:
+            print("Starting main section {0} of {1}".format(i+1+duplication,len(dividing_points)+duplication-1))
+            #print("Starting section {0} of {1}".format(i+1,len(dividing_points)-duplication))
+            print("{0} to {1}".format(dividing_points[i],dividing_points[i+duplication]))
+            print("{0} to {1}".format(z_list[dividing_points[i]],z_list[dividing_points[i+duplication]-1]))
+         intensity += Detector_Intensity(Points[dividing_points[i]:dividing_points[i+duplication],:],mask)
+      for i in range(duplication-1):
+         if g.debug:
+            print("Starting section {0} of {1}".format(i+1+len(dividing_points),len(dividing_points)+duplication-1))
+            print("{0} to {1}".format(dividing_points[len(dividing_points)-duplication+i],dividing_points[-1]))
+            print("{0} to {1}".format(z_list[dividing_points[len(dividing_points)-duplication+i]],z_list[-1]))
+         intensity += Detector_Intensity(Points[dividing_points[len(dividing_points)-duplication+i]:dividing_points[-1],:],mask)
       return intensity
    else:
+      if g.debug:
+         print("Object length ({0}) is less than coherence length ({1})...".format(length,coherence_length))
       return Detector_Intensity(Points,mask)
 
 if g.opencl_enabled:

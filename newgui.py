@@ -61,7 +61,7 @@ if g.debug:
 
 #These are the default settings
 g.dictionary = {'advanced':1, 'altitude':45, 'analytic': 2, 'ave_dist': 0.6, 'azimuth':45, 'bound': 1, 'circ_delta':5, 'comments':'',
-              'degrees': 1, 'energy_wavelength': 12, 'energy_wavelength_box': 0, 'gauss':0, 'log_scale': 1, 'maximum': 0.01, 'minimum': 1e-8,
+              'degrees': 1, 'energy_wavelength': 11, 'energy_wavelength_box': 0, 'gauss':0, 'log_scale': 1, 'maximum': 0.01, 'minimum': 1e-8, 'd_lambda': 2e-4,
               'num_plots': 1, 'pixels': (200,200), 'proportional_radius':0.5, 'QSize': 6,'Qz': 0, 'radius_1': 5.0, 'radius_2': 2.5, 'rho_1': 1.0, 'rho_2': -0.5,
               'save_img':1, 'save_name': 'save_name', 'scale': 1,'SD':1, 'seq_hide':0, 'shape': 2, 's_start': 0, 's_step': 2,
               's_stop': 1, 'subfolder':'subfolder', 's_var': 'x_theta', 'symmetric': 0,
@@ -962,10 +962,11 @@ if __name__ == "__main__":
    
    ROW+=1
    tick("symmetric", "Radial Symmetry", ROW,COL)
-   ROW+=1
-   #COL+=1
-   tick('Qz',"Small Angle Approx. (Qz=0)", ROW, COL)
-   #COL-=1
+   #ROW+=1
+   #tick('Qz',"Small Angle Approx. (Qz=0)", ROW, COL)
+   COL+=1
+   tick('Qz',"Small Angle Approx.", ROW, COL)
+   COL-=1
    
    ROW+=1
    Label(master, text = "Choose an Analytic Model").grid(row = ROW, column = COL, sticky = W)
@@ -995,7 +996,9 @@ if __name__ == "__main__":
    ROW+=1
    enter_num('energy_wavelength', "Energy/Wavelength", ROW, COL)
    ROW+=1
-   enter_num('QSize', "Q Range (nm^-1)\nof ENTIRE Detector", ROW, COL)
+   enter_num('d_lambda', "Wavelength Spread (2e-4)", ROW, COL)
+   ROW+=1
+   enter_num('QSize', "Detector Q Range (nm^-1)", ROW, COL)
    ROW+=1
    
    Label(master, text = "Angle of rotation", font = "Times 11 underline").grid(row = ROW, column = COL, sticky = W)
