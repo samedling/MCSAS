@@ -643,7 +643,7 @@ def residuals(param,exp_data,mask=[],random_seed=2015):
    y=range(exp_data.shape[1])
    if not len(mask):
       mask = np.ones(exp_data.shape)
-   calc_intensity = normalize(Detector_Intensity(Points_For_Calculation(seed=random_seed),mask),mask,True)
+   calc_intensity = normalize(Calculate_Intensity(Points_For_Calculation(seed=random_seed),mask),mask,True)
    #TODO: it shouldn't be able to set the background too high....???
    #TODO: remove +backgrund from next line??
    err = mask*(exp_data - (calc_intensity + g.dictionary_SI['background']))
@@ -813,10 +813,10 @@ def plot_residuals():
    if g.dictionary['grid_compression'] > 1:
       fast_mask(exp_data,mask,g.dictionary['grid_compression'])
    #calc_intensity=Average_Intensity(mask)
-   calc_intensity = normalize(Detector_Intensity(Points_For_Calculation(),mask),mask,True)
+   calc_intensity = normalize(Calculate_Intensity(Points_For_Calculation(),mask),mask,True)
    save(calc_intensity,"_calc")     #wrong suffix!!
    err = calc_intensity - exp_data
-   ##calc_intensity = normalize(Detector_Intensity(Points_For_Calculation(seed=random_seed),mask),mask,True)
+   ##calc_intensity = normalize(Calculate_Intensity(Points_For_Calculation(seed=random_seed),mask),mask,True)
    #err = mask*(exp_data - (calc_intensity + g.dictionary_SI['background']))
    #calc_intensity += g.dictionary_SI'background'] - exp_data  #todo: might be faster
    #calc_intensity *= mask                                     #todo: might be faster

@@ -108,6 +108,33 @@ def Points_For_Calculation(seed=0):
 symmetric = g.dictionary_SI['symmetric']
 Qz = g.dictionary_SI['Qz']
 
+def Calculate_Intensity(Points,mask=[]):
+   '''Runs Detector_Intensity, but can also handle objects longer than the coherence length.'''
+   x_pixels,y_pixels = [int(i) for i in g.dictionary_SI['pixels'].split()]
+   Points = Points[Points[:,2].argsort()]    #orders by z
+   z_list = Points[:,2]
+   #print(points_inside[points_inside[:,2].argsort()][::100,2])
+   length = z_list[-1]-z_list[0]
+   #coherence_length = 5e-7
+   coherence_length = 2*np.pi/(g.dictionary_SI['EHC'] * 1.5e-4)
+   duplication = 10 #number of bunches per coherence_length
+   if length > coherence_length:
+      print("Object length ({0}) exceeds coherence length {1}...".format(length,coherence_length))
+      num_bunches = int(round(duplication*length/coherence_length))
+      print("Will divide into {0} sections.".format(num_bunches))
+      dividing_points = np.searchsorted(z_list,-length/2+(np.arange(num_bunches)+1)*coherence_length/10)
+      if g.debug:
+         print("Dividing points are:")
+         print(dividing_points)
+      intensity = np.zeros((y_pixels,x_pixels),order='F')   #todo: might not need Fortran order
+      for i in range(len(dividing_points)-duplication):
+         if g.debug:
+            print("Starting section {0} of {1}".format(i+1,len(dividing_points)-duplication))
+         intensity += Detector_Intensity(Points,mask)
+      return intensity
+   else:
+      return Detector_Intensity(Points,mask)
+
 if g.opencl_enabled:
    def Detector_Intensity(Points,mask=[]):
       qsize=g.dictionary_SI['QSize']
@@ -130,36 +157,7 @@ elif symmetric == 0 and Qz == 0:
         if g.f2py_enabled:
             if not len(mask):
                 mask = np.ones((y_pixels,x_pixels))
-            if g.debug:
-                Points = Points[Points[:,2].argsort()]    #orders by z
-                z_list = Points[:,2]
-                #z_list = Points[Points[:,2].argsort()][:,2]
-                #print(points_inside[points_inside[:,2].argsort()][::100,2])
-                length = z_list[-1]-z_list[0]
-                coherence_length = 5e-7
-                #coherence_length = 2*np.pi/(g.dictionary_SI['EHC'] * 1.5e-4)
-                duplication = 10 #number of bunches per coherence_length
-                if length > coherence_length:
-                    print("Testing length coherence version...")
-                    print("length = {0}".format(length))
-                    print("coherence length = {0}".format(coherence_length))
-                    num_bunches = int(round(duplication*length/coherence_length))
-                    print("Will divide into {0}.".format(num_bunches))
-                    dividing_points = np.searchsorted(z_list,-length/2+(np.arange(num_bunches)+1)*coherence_length/10)
-                    print("Dividing points are:")
-                    print(dividing_points)
-                    #return fastmath.sumint.sumintcoherent2(QSize,EHC,mask,Points.T,duplication,dividing_points)
-                    intensity = np.zeros((y_pixels,x_pixels),order='F')
-                    for i in range(len(dividing_points)-duplication):
-                        print("Starting iteration {0} of {1}".format(i+1,len(dividing_points)-duplication))
-                        #intensity += fastmath.sumint.sumintensity00(QSize,EHC,mask,Points[dividing_points[i]:dividing_points[i+duplication],:].T) #todo: need to eliminate normalization to use
-                        fastmath.sumint.sumintensity00add(QSize,EHC,mask,Points[dividing_points[i]:dividing_points[i+duplication],:].T,intensity)
-                    return intensity
-                else:
-                    return fastmath.sumint.sumintensity00(QSize,EHC,mask,Points.T)
-            else:
-                return fastmath.sumint.sumintensity00(QSize,EHC,mask,Points.T)
-            #return fastmath.sumint.sumintensity00(QSize,EHC,mask,Points.T)
+            return fastmath.sumint.sumintensity00(QSize,EHC,mask,Points.T)
         else:
             Intensity = np.array([[np.sum(np.cos(np.sum(
                 [row*QSize/y_pixels-0.5*QSize, col*QSize/x_pixels-0.5*QSize, 2*EHC*np.sin((((row-0.5*y_pixels)**2 + (col-0.5*x_pixels)**2)**0.5)*QSize/x_pixels/2/EHC)**2]
@@ -249,9 +247,9 @@ def Average_Intensity(mask=[]):
 
         try:
             g.dictionary_SI['TEMP_VAR'] #This is here so it will only make the estimated time once.
-            ##Intensity = Detector_Intensity(Points_For_Calculation())  #Commented and separated so I can time these separately.
+            ##Intensity = Calculate_Intensity(Points_For_Calculation())  #Commented and separated so I can time these separately.
             Points = Points_For_Calculation()
-            Intensity = Detector_Intensity(Points,mask)
+            Intensity = Calculate_Intensity(Points,mask)
             if g.debug:
                print("FINISHED CALCULATION {0}: {1}".format(plot_number+1,time.strftime("%X")))
         except KeyError:
@@ -265,7 +263,7 @@ def Average_Intensity(mask=[]):
             hours, mins = divmod(est_time, 60)
             #print "Estimated time to finish all calculations: " + str(int(hours)) + " hours, " + str(int(mins)) + " minutes and " + str(int(secs)) + " seconds."
             g.dictionary_SI['TEMP_VAR'] = 0
-            Intensity = Detector_Intensity(Points,mask)
+            Intensity = Calculate_Intensity(Points,mask)
             if g.debug:
                print("FINISHED CALCULATION {0}: {1}".format(plot_number+1,time.strftime("%X")))
             else:
