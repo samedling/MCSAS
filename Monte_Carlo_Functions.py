@@ -85,8 +85,8 @@ def Points_For_Calculation(seed=0):
     #I am multiplying the rotation matricies together, then multiplying it by the coordinates for each point
     try:
        return np.asarray(points_inside.dot(np.transpose(rotz.dot(roty).dot(rotx))))
+       #return np.asarray(points_inside[points_inside[:,2].argsort()].dot(np.transpose(rotz.dot(roty).dot(rotx))))   #first orders list by z and then rotation matrices....backwards?
     except ValueError:
-       print RandomPoints.shape
        print points.shape
        print rotx.shape, roty.shape, rotz.shape
        print rotz.dot(roty).dot(rotx).shape
@@ -130,7 +130,36 @@ elif symmetric == 0 and Qz == 0:
         if g.f2py_enabled:
             if not len(mask):
                 mask = np.ones((y_pixels,x_pixels))
-            return fastmath.sumint.sumintensity00(QSize,EHC,mask,Points.T)
+            if g.debug:
+                Points = Points[Points[:,2].argsort()]    #orders by z
+                z_list = Points[:,2]
+                #z_list = Points[Points[:,2].argsort()][:,2]
+                #print(points_inside[points_inside[:,2].argsort()][::100,2])
+                length = z_list[-1]-z_list[0]
+                coherence_length = 5e-7
+                #coherence_length = 2*np.pi/(g.dictionary_SI['EHC'] * 1.5e-4)
+                duplication = 10 #number of bunches per coherence_length
+                if length > coherence_length:
+                    print("Testing length coherence version...")
+                    print("length = {0}".format(length))
+                    print("coherence length = {0}".format(coherence_length))
+                    num_bunches = int(round(duplication*length/coherence_length))
+                    print("Will divide into {0}.".format(num_bunches))
+                    dividing_points = np.searchsorted(z_list,-length/2+(np.arange(num_bunches)+1)*coherence_length/10)
+                    print("Dividing points are:")
+                    print(dividing_points)
+                    #return fastmath.sumint.sumintcoherent2(QSize,EHC,mask,Points.T,duplication,dividing_points)
+                    intensity = np.zeros((y_pixels,x_pixels),order='F')
+                    for i in range(len(dividing_points)-duplication):
+                        print("Starting iteration {0} of {1}".format(i+1,len(dividing_points)-duplication))
+                        #intensity += fastmath.sumint.sumintensity00(QSize,EHC,mask,Points[dividing_points[i]:dividing_points[i+duplication],:].T) #todo: need to eliminate normalization to use
+                        fastmath.sumint.sumintensity00add(QSize,EHC,mask,Points[dividing_points[i]:dividing_points[i+duplication],:].T,intensity)
+                    return intensity
+                else:
+                    return fastmath.sumint.sumintensity00(QSize,EHC,mask,Points.T)
+            else:
+                return fastmath.sumint.sumintensity00(QSize,EHC,mask,Points.T)
+            #return fastmath.sumint.sumintensity00(QSize,EHC,mask,Points.T)
         else:
             Intensity = np.array([[np.sum(np.cos(np.sum(
                 [row*QSize/y_pixels-0.5*QSize, col*QSize/x_pixels-0.5*QSize, 2*EHC*np.sin((((row-0.5*y_pixels)**2 + (col-0.5*x_pixels)**2)**0.5)*QSize/x_pixels/2/EHC)**2]
