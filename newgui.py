@@ -137,13 +137,22 @@ def get_numbers_from_gui():
     #Here I get all parameters from the GUI and put them into g.dictionary
     for x in g.dictionary:
        if x=='comments':
-          g.dictionary[x] = g.dictionary_in[x].get(1.0,END).rstrip()
+          try:
+             g.dictionary[x] = g.dictionary_in[x].get(1.0,END).rstrip()
+          except AttributeError: #'int' object has no attribute 'get'...for when testing and there's no actual GUI
+             g.dictionary[x] = g.dictionary_in[x]
        elif x=='advanced' or x== 'seq_hide':
           g.dictionary[x] = g.dictionary[x]
        elif x=='shape':
-          g.dictionary[x] = MC_num_and_name_dict[g.dictionary_in['shape'].get()]
+          try:
+             g.dictionary[x] = MC_num_and_name_dict[g.dictionary_in['shape'].get()]
+          except AttributeError: #'int' object has no attribute 'get'...for when testing and there's no actual GUI
+             g.dictionary[x] = g.dictionary_in['shape']
        elif x=='analytic':
-          g.dictionary[x] = Analytic_dict[g.dictionary_in['analytic'].get()]
+          try:
+             g.dictionary[x] = Analytic_dict[g.dictionary_in['analytic'].get()]
+          except AttributeError: #'int' object has no attribute 'get'...for when testing and there's no actual GUI
+             g.dictionary[x] = g.dictionary_in['analytic']
        else:
           try:
              g.dictionary[x] = g.dictionary_in[x].get() 

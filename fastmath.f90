@@ -200,18 +200,22 @@ subroutine sumintensity11(qsize,mask,x_pixels,y_pixels,points,npts,intensity)
 end subroutine sumintensity11
 
 
-subroutine sumintensity00add(qsize,ehc,mask,x_pixels,y_pixels,points,npts,intensity)
+subroutine sumintcoherent(qsize,ehc,mask,x_pixels,y_pixels,points,npts,intensity)
    real*8, intent(in) :: qsize
    integer*4, intent(in) :: x_pixels,y_pixels
    real*8, intent(in) :: ehc
    integer*4, intent(in) :: npts
    real*4, dimension(4,npts), intent(in) :: points
    real*4, dimension(x_pixels,y_pixels), intent(in) :: mask
-   real*8, dimension(x_pixels,y_pixels), intent(inout) :: intensity
-   real*8, dimension(3) :: Q
+   real*8, dimension(x_pixels,y_pixels), intent(out) :: intensity
+   real*8, dimension(3) :: Q,r
    real*8 :: temp_intensity,temp_intensity_2,QdotR
-   integer*4 :: p
-   !'asymmetry'; no small angle approximation
+   real*8, parameter :: pi = 4.0*ATAN(1.0)
+   real*8 :: coherence_length = 500e-9
+   integer*4 :: p1,p2!,coherence_points
+   !This version uses no symmetry but doesn't use the trigonometric trick from Sjoberg.
+   !Otherwise 'asymmetry'; no small angle approximation
+   !coherence_length = 2*pi / (ehc * 1.5e-4)      !coherence_lengh = lambda / dlambda; 2pi/ehc = wavelength
    !$OMP PARALLEL DO PRIVATE(Q,QdotR,temp_intensity,temp_intensity_2) SHARED(mask,points,intensity)
    do j=1,y_pixels
       do i=1,x_pixels
@@ -221,13 +225,19 @@ subroutine sumintensity00add(qsize,ehc,mask,x_pixels,y_pixels,points,npts,intens
                 !!TODO: POSSIBLE FORMULA ERROR, CHECK PIXELS IN DENOMINATOR!!
             !intensity(i,j)= SUM(density(p)*COS(DOT_PRODUCT(Q,R(p))))**2 + SUM(density(p)*SIN(DOT_PRODUCT(Q,R(p))))**2
             temp_intensity = 0
-            temp_intensity_2 = 0
-            do p=1,npts
-               QdotR = DOT_PRODUCT(Q,points(1:3,p))
-               temp_intensity = temp_intensity + points(4,p)*COS(QdotR)
-               temp_intensity_2 = temp_intensity_2 + points(4,p)*SIN(QdotR)
+            do p1=1,npts
+               !do p2=MAX(0,p1-coherence_points),MIN(npts,p1+coherence_points)
+               do p2=1,npts
+                  r = points(1:3,p1)-points(1:3,p2)
+                  if (SUM(r**2) > coherence_length**2) then
+                     QdotR = DOT_PRODUCT(Q,r)
+                  !if ((points(1:3,p1)-points(1:3,p2))**2 > coherence_length**2) then
+                     !QdotR = DOT_PRODUCT(Q,points(1:3,p1)-points(1:3,p2))
+                     temp_intensity = temp_intensity + points(4,p1)*points(4,p2)*COS(QdotR)
+                  end if
+               end do
             end do
-            intensity(i,j) = intensity(i,j) + temp_intensity**2 + temp_intensity_2**2
+            intensity(i,j) = temp_intensity
          else
             intensity(i,j) = 0
          end if
@@ -235,7 +245,7 @@ subroutine sumintensity00add(qsize,ehc,mask,x_pixels,y_pixels,points,npts,intens
    end do
    !$OMP END PARALLEL DO
    return
-end subroutine sumintensity00add
+end subroutine sumintcoherent
 
 
 end module sumint

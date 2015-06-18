@@ -4,6 +4,7 @@ To Do:
 
 ## High Priority ##
 
+change load_functions so functions are defined once (enabling calling from non-GUI as well as separate files for things)
 Debug update_interval.
 Add comments to README warning against letting background or length vary.
 
