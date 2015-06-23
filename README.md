@@ -79,7 +79,7 @@ The Radial Symmetry and Small Angle Approx. checkboxes speed the program, so che
 Some comments:
 * Grid compression only works with reliably with fortran; it works with OpenCL if the number of points/pixels does not exceed OpenCL's capabilities.
 * If the fit steps are each taking less than 10 seconds, there would probaly be very little additional time taken by increasing pixels by 40% or halving the grid compression or z_scaling.
-
+* Be careful when letting the background vary.  If the background gets set too high by the computer, it cannot normalize properly and all bets are off.
 
 
 ## Adding Models ##

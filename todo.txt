@@ -5,11 +5,20 @@ To Do:
 ## High Priority ##
 
 change load_functions so functions are defined once (enabling calling from non-GUI as well as separate files for things)
-Debug update_interval.
-Add comments to README warning against letting background or length vary.
+   Monte_Carlo_Functions
+   Plotting_Functions
+   density_formula
+   analytic_formula
+check coherence length code for known cases
+Add version numbers to fastmath to test to see if it needs to be recopied.
+
+Speedtest different symmetry / small angle checkboxes
+
+Vary z_scaling as length changes to keep number of points constant or add warning to README about letting length vary.
 
 ## Medium Priority ##
 
+Debug update_interval.
 Move other functions (sequence,make_intensity, etc.) somewhere??
 Rename newgui.py to mcsas.py or gui.py or something.
 

@@ -19,6 +19,16 @@ Other Useful Git Commands:
 
 # Advanced Git Use #
 
+## Viewing Previous Files ##
+
+`git show <hex_number>:./<file>     #Shows contents of file from commit.  Redirect to new file if desired.
+
+`git checkout <hex_number>`         #Changes everything back to how it was after specified commit.
+`git checkout <branch_name>`        #Returns to current contents.
+
+`git checkout <hex_number> <file>`  #Changes single file back to how it was.
+`git checkout HEAD <file>`          #Returns to current contents for single file.
+
 ## Branches ##
 
 `git branch -a`                   #Lists all branches
