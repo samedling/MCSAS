@@ -9,9 +9,9 @@ opencl_enabled = True
 f2py_enabled = True
 accelerate_points = True   #In case there are bugs and you want to disable only this portion of the acceleration.
 
-quiet = False
-verbose = False
-debug = False
+quiet = False     #For temporary suppression of output.
+verbose = 2       #Scale 0 to 10
+debug = True
 
 
 # You shouldn't need to edit anything below here.
@@ -27,25 +27,20 @@ dictionary = {'advanced':1, 'altitude':45, 'analytic': 2, 'ave_dist': 0.6, 'azim
               'fit_radius_1': 1, 'fit_radius_2': 0, 'fit_rho_1': 1, 'fit_rho_2': 0, 'fit_z_dim': 1, 'fit_x_theta': 1, 'fit_y_theta': 1, 'fit_z_theta': 1, 'fit_background': 1, 'fit_other': 0
               }
 
+
 if debug:
    print("Debug mode is on.")
    quiet = False
-   verbose = True
+   verbose = 10   #Set verbose flag to maximum.
 
 def vprint(x,level=1):
-   try:
-      if verbose >= level:
-         print(x)
-   except:
-      return
+   if debug or (verbose >= level and not quiet):
+      print(x)
    return
 
-def dprint(x,level=2):
-   try:
-      if verbose >= level:
-         print(x)
-   except:
-      return
+def dprint(x,level=8):
+   if debug or (verbose >= level and not quiet):
+      print(x)
    return
 
 def lprint(text,filename=0):
@@ -54,5 +49,7 @@ def lprint(text,filename=0):
    if filename:
       with open(filename,'a') as log:
          log.write(text)
+
+
 
 
