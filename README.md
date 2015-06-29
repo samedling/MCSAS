@@ -56,6 +56,8 @@ Fortran/Hyperthreading: If you have a Core i7 processor, (or other CPU with hype
 
 Due to the large number of shapes, it's possible some of the sped-up versions of these have bugs.  If you find that the shapes don't look right, edit the global_vars.py file so `accelerate_points = False` to disable the erroneous speedup.
 
+
+
 ## Running the Program ##
 
 ### Individual Monte Carlo Calculations ###
@@ -80,7 +82,7 @@ Some comments:
 * Grid compression only works with reliably with fortran; it works with OpenCL if the number of points/pixels does not exceed OpenCL's capabilities.
 * If the fit steps are each taking less than 10 seconds, there would probaly be very little additional time taken by increasing pixels by 40% or halving the grid compression or z_scaling.
 * Be careful when letting the background vary.  If the background gets set too high by the computer, it cannot normalize properly and all bets are off.
-
+* With Fortran, checking the radial symmetry box takes ~30% less time to run.  With Python, checking the radial symmetry box takes ~50% less time to run.
 
 ## Adding Models ##
 

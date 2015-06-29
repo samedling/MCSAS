@@ -4,18 +4,17 @@ To Do:
 
 ## High Priority ##
 
-Delete load_functions and all references
 Make & test command line version
 Check coherence length code for known cases
-Add version numbers to fastmath to test to see if it needs to be recopied. how?!
-Speedtest different symmetry / small angle checkboxes.
+Speedtest different symmetry / small angle checkboxes for OpenCL; add results to README; delete Small Angle Approximation if uesless.
 Have fitting save random points.
-
 Vary z_scaling as length changes to keep number of points constant or add warning to README about letting length vary.
 
 ## Medium Priority ##
 
 Check sphere analytic model.
+When fitting, improved error handling for OpenCL grid compression.
+When fitting, improve error handling of random "ValueError: matrices are not aligned" which occurs during points_inside.dot(np.transpose(rotz.dot(roty).dot(rotx))).
 
 Debug update_interval.
 Move other functions (sequence,make_intensity, etc.) somewhere??

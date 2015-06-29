@@ -162,7 +162,7 @@ if g.opencl_enabled:
       qsize=g.dictionary_SI['QSize']
       ehc=g.dictionary_SI['EHC']
       x_pixels,y_pixels = [int(i) for i in g.dictionary_SI['pixels'].split()]
-      g.dprint("Shape {0}".format(g.dictionary['shape']))
+      #g.dprint("Shape {0}".format(g.dictionary['shape']))
       if symmetric:
          g.dprint("Using symmetry.")
       if Qz:
@@ -193,7 +193,7 @@ elif g.f2py_enabled:
       elif Qz == 0:
          return fastmath.sumint.sumintensity10(QSize,EHC,mask,Points.T)
       else:
-         return fastmath.sumint.sumintensity11(QSize,EHC,mask,Points.T)
+         return fastmath.sumint.sumintensity11(QSize,mask,Points.T)
 
 else:   #python only
    def Detector_Intensity(Points,mask=[]):
