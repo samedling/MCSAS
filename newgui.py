@@ -22,8 +22,6 @@ from scipy.optimize import leastsq
 import global_vars as g
 
 
-
-
 #Looks for fastmath.so to speed up intensity calculation.
 if g.opencl_enabled:
    try:
@@ -38,17 +36,29 @@ if g.opencl_enabled:
       g.opencl_enabled = False
 if g.f2py_enabled:
    try:
-      if os.path.isfile('fastmath.so'): #TODO: This won't detect updates.
+      if os.path.isfile('fastmath.so'):
          import fastmath
       elif sys.platform == 'darwin':
          os.system('cp fastmath-OSX10.10_C2DP8700.so fastmath.so')
          import fastmath
       elif sys.platform == 'linux2':
-         os.system('cp fastmath_Ubuntu14.10_i7M640.so fastmath.so')
+         os.system('cp fastmath-Ubuntu14.10_i7M640.so fastmath.so')
          import fastmath
       print("Accelerating using f2py.")
    except ImportError:
       g.f2py_enabled = False
+   #try:
+   #   fastmath.module.new_function(<vars>)     #Update this line to check for updates for f2py binary.
+   #except AttributeError:
+   #   print('Existing f2py binary was out of date; newer version copied.')
+   #   vprint('If you ran `make` yourself, run it again for optimal performance.')
+   #   if sys.platform == 'darwin':
+   #      os.system('cp fastmath-OSX10.10_C2DP8700.so fastmath.so')
+   #      import fastmath
+   #   elif sys.platform == 'linux2':
+   #      os.system('cp fastmath-Ubuntu14.10_i7M640.so fastmath.so')
+   #      import fastmath
+   #   print("Accelerating using f2py.")
 if not g.f2py_enabled and not g.opencl_enabled:
    print("Could not accelerate using either OpenCL or f2py.")
    print("See README for how to install either OpenCL or f2py.")
@@ -56,7 +66,6 @@ if not g.f2py_enabled and not g.opencl_enabled:
 
 if g.debug:
    np.random.seed([2015])     #Locks random seed to allow for speedtesting.
-   g.verbose = True
 
 
 #These are the default settings
@@ -95,6 +104,16 @@ except:
 g.dictionary = {x:g.dictionary[x] for x in g.dictionary} #This contains the unaltered parameters
 g.dictionary_in = {a:g.dictionary[x] for x in g.dictionary for a in [x, x+'2']} #This contains raw data from the GUI. The +'2' is so that i can control checkboxes
 g.dictionary_SI = {x:g.dictionary[x] for x in g.dictionary} #this g.dictionary has the parameters after they have been converted to SI units
+
+#from Monte_Carlo_Functions import *
+#from Plotting_Functions import *
+#from density_formula import *
+#from analytic_formula import *
+
+execfile(root_folder+"/Monte_Carlo_Functions.py",globals())
+execfile(root_folder+"/Plotting_Functions.py", globals())
+execfile(root_folder+"/density_formula.py", globals())
+execfile(root_folder+"/analytic_formula.py", globals())
 
 #This is the list of all the Monte Carlo Models that you choose from.
 MC_num_and_name = np.array([["Analytic Model Only",0],
@@ -137,19 +156,27 @@ def get_numbers_from_gui():
     #Here I get all parameters from the GUI and put them into g.dictionary
     for x in g.dictionary:
        if x=='comments':
-          g.dictionary[x] = g.dictionary_in[x].get(1.0,END).rstrip()
+          try:
+             g.dictionary[x] = g.dictionary_in[x].get(1.0,END).rstrip()
+          except AttributeError: #'int' object has no attribute 'get'...for when testing and there's no actual GUI
+             g.dictionary[x] = g.dictionary_in[x]
        elif x=='advanced' or x== 'seq_hide':
           g.dictionary[x] = g.dictionary[x]
        elif x=='shape':
-          g.dictionary[x] = MC_num_and_name_dict[g.dictionary_in['shape'].get()]
+          try:
+             g.dictionary[x] = MC_num_and_name_dict[g.dictionary_in['shape'].get()]
+          except AttributeError: #'int' object has no attribute 'get'...for when testing and there's no actual GUI
+             g.dictionary[x] = g.dictionary_in['shape']
        elif x=='analytic':
-          g.dictionary[x] = Analytic_dict[g.dictionary_in['analytic'].get()]
+          try:
+             g.dictionary[x] = Analytic_dict[g.dictionary_in['analytic'].get()]
+          except AttributeError: #'int' object has no attribute 'get'...for when testing and there's no actual GUI
+             g.dictionary[x] = g.dictionary_in['analytic']
        else:
           try:
              g.dictionary[x] = g.dictionary_in[x].get() 
           except AttributeError:
-             if g.debug:
-                print("{0} could not be imported from GUI.".format(x))
+             g.dprint("{0} could not be imported from GUI.".format(x))
     
     for x in g.dictionary:
         try:
@@ -202,12 +229,6 @@ def get_numbers_from_gui():
     with open(g.dictionary_SI['path_to_subfolder']+"default.txt", 'wb') as f:
        pickle.dump(g.dictionary, f) #saving a copy in the subfolder for reference.
 
-
-def load_functions(): #This loads the functions from the other files. It needs to be dynamic, hence I cannot use import.
-   execfile(root_folder+"/Monte_Carlo_Functions.py",globals())
-   execfile(root_folder+"/Plotting_Functions.py", globals())
-   execfile(root_folder+"/density_formula.py", globals())
-   execfile(root_folder+"/analytic_formula.py", globals())
 
 def change_units(number): #Used for sequences. A value is converted to SI units.
         for x in g.dictionary_SI:
@@ -297,7 +318,6 @@ def show_sequence_variables(): #Common Variables button, displays ALLVARIABLES, 
 def plot_points(): #This runs the Real Space to plot the points in Real Space
     get_numbers_from_gui()
     save_vars_to_file("Plot Points")
-    load_functions()
     if g.dictionary['seq_hide'] == 1:
        if g.dictionary['gauss']==0:
           current_value = g.dictionary['s_start']
@@ -310,7 +330,6 @@ def plot_points(): #This runs the Real Space to plot the points in Real Space
 
 def view_intensity(): #This allows you to view a premade intensity
     get_numbers_from_gui()
-    load_functions()
     radial_intensity = pylab.loadtxt(g.dictionary_SI['path_to_subfolder']+"radial_intensity.csv", delimiter=",")
     radial_intensity_plot(radial_intensity, "radial", g.dictionary_SI['title'], 0)
     Intensity = pylab.loadtxt(g.dictionary_SI['path_to_subfolder']+"intensity.csv", delimiter=",")
@@ -322,7 +341,6 @@ def make_intensity(): #This makes an intensity
     global sim_info
     get_numbers_from_gui()
     save_vars_to_file("Monte Carlo Intensity")
-    load_functions()
     Intensity = Average_Intensity()
     save(Intensity, "intensity")
     radial_intensity = radial(Intensity)
@@ -336,7 +354,6 @@ def sequence(): #This makes a sequence of intensities
     global sim_info
     get_numbers_from_gui()
     save_vars_to_file("Monte Carlo Sequence")
-    load_functions()
     for frame_num in range(int(g.dictionary['s_step'])):
        sim_info = open(g.dictionary_SI['path_to_subfolder']+"simulation_infomation.txt","a")
        sim_info.write("\nFrame " + str(frame_num+1) + " of " + str(int(g.dictionary['s_step'])))
@@ -378,7 +395,6 @@ def sequence(): #This makes a sequence of intensities
 def theory_plot(): #This plots an analytic model
    get_numbers_from_gui()
    save_vars_to_file("Analytic Intensity")
-   load_functions()
    Intensity = theory_csv()
    save(Intensity, "intensity")
    radial_intensity = radial(Intensity)
@@ -394,7 +410,6 @@ def theory_seq(): #This plots a sequence created with the analytic model
     global sim_info
     get_numbers_from_gui()
     save_vars_to_file("Analytic Sequence")
-    load_functions()
     for frame_num in range(int(g.dictionary['s_step'])):
        sim_info = open(g.dictionary_SI['path_to_subfolder']+"simulation_infomation.txt","a")
        sim_info.write("\nFrame " + str(frame_num+1) + " of " + str(int(g.dictionary['s_step'])))
@@ -436,7 +451,6 @@ def theory_seq(): #This plots a sequence created with the analytic model
 
 def circ(): #This plots a the angle at a fixed radius
    get_numbers_from_gui()
-   load_functions()
    Intensity = np.asarray(pylab.loadtxt(g.dictionary_SI['path_to_subfolder']+"intensity.csv", delimiter=","))
    data = plotting_circle(Intensity)
    radial_intensity_plot(data, "theta"+str(g.dictionary['radius_2']), g.dictionary['title']+" "+str(g.dictionary['radius_2']), 0)
@@ -591,8 +605,7 @@ def normalize(data,mask=[],background=0):
       if norm_to < 0:   #THIS IS BAD
           print("Background is too high!")
           norm_to = 1.0
-      if g.debug:
-         print("Normalizing to {0} so will be normalized to 1 when background of {1} is added.".format(norm_to,g.dictionary_SI['background']))
+      g.dprint("Normalizing to {0} so will be normalized to 1 when background of {1} is added.".format(norm_to,g.dictionary_SI['background']))
       #total = np.sum(data*mask) + g.dictionary_SI['background']*np.sum(mask)
       total = norm_to/np.sum(np.maximum(data*mask,np.zeros_like(data))) #maximum is to avoid counting negative points
       #total = norm_to/np.sum(data*mask)
@@ -603,15 +616,13 @@ def normalize(data,mask=[],background=0):
       total = 1.0/np.sum(np.maximum(data*mask,np.zeros_like(data)))
       normalized = np.maximum(data*total*mask,np.zeros_like(data))
       #data *= total    #todo: should be a little faster
-   if g.debug: 
-      #print("Normalized so total value is {0} and lowest value is {1}.".format(np.sum(normalized),np.min(normalized)))
-      print("Normalized so total value is {0} and lowest value is {1}.".format(np.sum(normalized*mask),np.min(normalized)))
+   #gprint("Normalized so total value is {0} and lowest value is {1}.".format(np.sum(normalized),np.min(normalized)))
+   g.dprint("Normalized so total value is {0} and lowest value is {1}.".format(np.sum(normalized*mask),np.min(normalized)))
    return normalized
 
 def plot_exp_data():#threshold=1e-7,zero_value=1e-7):
     '''Plots experimental data, using center and crop parameters if nonzero.  Also shows the effect of grid compression if enabled.'''
     get_numbers_from_gui()
-    load_functions()    #Needed for plotting routines.
     if g.dictionary['center'] == "0 0":
         image=load_exp_image(preview=True)
         print('Original image size is {0} x {1} pixels.'.format(image.shape[0],image.shape[1]))
@@ -676,7 +687,6 @@ def perform_fit():  #Gets run when you press the Button.
    '''Loads experimental data from filename, fits the data using current g.dictionary as initial guesses, leaves final parameters in g.dictionary.'''
    global parameters
    get_numbers_from_gui()
-   load_functions()
    filename = g.dictionary['fit_file']
    max_iter = g.dictionary['max_iter']
    update_freq = g.dictionary['update_freq']
@@ -804,7 +814,6 @@ def plot_residuals():
    '''Loads exp data, calculates intensity, and plots the difference [as well as 2 original plots].'''
    plot_all=g.dictionary['plot_fit_tick']
    get_numbers_from_gui()
-   load_functions()
    filename = g.dictionary['fit_file']
    if not g.f2py_enabled and not g.opencl_enabled:
       print('Acceleration is NOT enabled!')
