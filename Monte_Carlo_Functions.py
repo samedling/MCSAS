@@ -152,7 +152,8 @@ def Calculate_Intensity(Points,mask=[]):
          intensity += Detector_Intensity(Points[dividing_points[len(dividing_points)-duplication+i]:dividing_points[-1],:],mask)
       return intensity
    else:
-      g.vprint("Object length ({0}) is less than coherence length ({1})...".format(length,coherence_length))
+      if coherence_length < 1:
+         g.vprint("Object length ({0}) is less than coherence length ({1})...".format(length,coherence_length))
       return Detector_Intensity(Points,mask)
 
 if g.opencl_enabled:

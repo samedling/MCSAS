@@ -116,6 +116,7 @@ execfile(root_folder+"/density_formula.py", globals())
 execfile(root_folder+"/analytic_formula.py", globals())
 
 #This is the list of all the Monte Carlo Models that you choose from.
+##TODO: move this to the same file as the Monte Carlo Models (density_formula.py)
 MC_num_and_name = np.array([["Analytic Model Only",0],
                         ["Sphere",1],
                         ["Cylinder",2],
@@ -137,6 +138,7 @@ MC_num_and_name = np.array([["Analytic Model Only",0],
 MC_num_and_name_dict = {x[0]:x[1] for x in MC_num_and_name} #This is needed, so that when an option is chosen, we can find the shape number.
 
 #This is the list of all the analytic models that you choose from.
+##TODO: move this to the same file as the Analytic Models (analytic_formula.py)
 Analytic_options = np.array([["None",0],
                         ["Sphere",1],
                         ["Cylinder",2],

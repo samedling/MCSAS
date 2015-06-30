@@ -4,11 +4,12 @@ To Do:
 
 ## High Priority ##
 
-Debug update_interval.
-Add key to top right of 1D plot.
 Make & test command line version
 Check coherence length code for known cases
-Speedtest different symmetry / small angle checkboxes for OpenCL; add results to README; delete Small Angle Approximation if uesless.
+
+Debug update_interval.
+Add key to top right of 1D plot.
+Delete Small Angle Approximation checkbox and relevant code.
 Have fitting save random points.
 Vary z_scaling as length changes to keep number of points constant or add warning to README about letting length vary.
 
