@@ -125,7 +125,7 @@ def Calculate_Intensity(Points,mask=[]):
    if num_bunches > duplication:    #if length > coherence_length:
       print("Object length ({0}) exceeds coherence length ({1})...".format(length,coherence_length))
       print("Will divide into {0} sections.".format(num_bunches))
-      dividing_points = np.searchsorted(z_list,-length/2+(np.arange(num_bunches+1))*coherence_length/10)
+      dividing_points = np.searchsorted(z_list,-length/2+(np.arange(num_bunches+1))*coherence_length/duplication)
       dividing_points[0] = 0    #Not sure why this isn't already 0.
       dividing_points[-1] = len(z_list)  #Should this be the last element or should I append?
       if g.debug:

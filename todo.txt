@@ -6,6 +6,7 @@ To Do:
 
 Debug update_interval.
 Add comments to README warning against letting background or length vary.
+Add key to top right of 1D plot.
 
 ## Medium Priority ##
 
