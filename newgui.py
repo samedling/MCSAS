@@ -192,6 +192,10 @@ def get_numbers_from_gui():
        os.makedirs(root_folder+'/'+g.dictionary_SI['subfolder'])
        time.sleep(2) #Making the subfolder takes a few seconds, so we need to delay the program, otherwise it will try save things into the folder before it is made.
 
+    make_SI_dict()
+
+
+def make_SI_dict():
     g.dictionary_SI = {x: g.dictionary[x] for x in g.dictionary}
     g.dictionary_SI['path_to_subfolder'] = os.path.join(root_folder,g.dictionary['subfolder'],g.dictionary['save_name']) #This is for convienience
 

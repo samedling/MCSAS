@@ -159,87 +159,59 @@ def Calculate_Intensity(Points,mask=[]):
 if g.opencl_enabled:
    def Detector_Intensity(Points,mask=[]):
       symmetric = g.dictionary_SI['symmetric']
-      Qz = g.dictionary_SI['Qz']
       qsize=g.dictionary_SI['QSize']
       ehc=g.dictionary_SI['EHC']
       x_pixels,y_pixels = [int(i) for i in g.dictionary_SI['pixels'].split()]
       #g.dprint("Shape {0}".format(g.dictionary['shape']))
       if symmetric:
          g.dprint("Using symmetry.")
-      if Qz:
-         g.dprint("Using small angle approximation.")
       if not len(mask) or g.dictionary['grid_compression'] < 2:
-         return g.opencl_sumint.sumint(qsize,ehc,x_pixels,y_pixels,Points,symmetric,Qz)
+         return g.opencl_sumint.sumint(qsize,ehc,x_pixels,y_pixels,Points,symmetric)
       else:
          if g.dictionary['grid_compression'] < 5:
             print('Grid compression of < 5 does not produce significant speedup when using OpenCL.  Using 0/1 or 5 or 10 is recommended.')
-         return g.opencl_sumint.sumint_mask(qsize,ehc,mask,Points,symmetric,Qz)
+         return g.opencl_sumint.sumint_mask(qsize,ehc,mask,Points,symmetric)
 
 elif g.f2py_enabled:
    def Detector_Intensity(Points,mask=[]):
       symmetric = g.dictionary_SI['symmetric']
-      Qz = g.dictionary_SI['Qz']
       QSize = g.dictionary_SI['QSize']
       x_pixels,y_pixels = [int(i) for i in g.dictionary_SI['pixels'].split()]
       EHC = g.dictionary_SI['EHC']
-      g.dprint("Shape {0}".format(g.dictionary['shape']))
-      if symmetric:
-         g.dprint("Using symmetry.")
-      if Qz:
-         g.dprint("Using small angle approximation.")
+      #g.dprint("Shape {0}".format(g.dictionary['shape']))
       if not len(mask):
          mask = np.ones((y_pixels,x_pixels))
-      if symmetric == 0:
-         return fastmath.sumint.sumintensity00(QSize,EHC,mask,Points.T)
-      elif Qz == 0:
-         return fastmath.sumint.sumintensity10(QSize,EHC,mask,Points.T)
+      if symmetric:
+         g.dprint("Using symmetry.")
+         return fastmath.sumint.symmetric(QSize,mask,Points.T)
       else:
-         return fastmath.sumint.sumintensity11(QSize,mask,Points.T)
+         return fastmath.sumint.asymmetric(QSize,EHC,mask,Points.T)
 
 else:   #python only
    def Detector_Intensity(Points,mask=[]):
       symmetric = g.dictionary_SI['symmetric']
-      Qz = g.dictionary_SI['Qz']
       QSize = g.dictionary_SI['QSize']
       x_pixels,y_pixels = [int(i) for i in g.dictionary_SI['pixels'].split()]
       EHC = g.dictionary_SI['EHC']
-      g.dprint("Shape {0}".format(g.dictionary['shape']))
+      #g.dprint("Shape {0}".format(g.dictionary['shape']))
       if symmetric:
          g.dprint("Using symmetry.")
-      if Qz:
-         g.dprint("Using small angle approximation.")
-      if symmetric == 0 and Qz == 0:
-           Intensity = np.array([[np.sum(np.cos(np.sum(
-              [row*QSize/y_pixels-0.5*QSize, col*QSize/x_pixels-0.5*QSize, 2*EHC*np.sin((((row-0.5*y_pixels)**2 + (col-0.5*x_pixels)**2)**0.5)*QSize/x_pixels/2/EHC)**2]
+         Intensity = np.array([[np.sum(np.cos(np.sum(
+               [row*QSize/y_pixels-0.5*QSize, col*QSize/x_pixels-0.5*QSize, 2*EHC*np.sin((((row-0.5*y_pixels)**2 + (col-0.5*x_pixels)**2)**0.5)*QSize/x_pixels/2/EHC)**2]
+               *Points[:,0:3],axis =1))*np.transpose(Points[:,3:4]))**2
+                         for col in range(int(x_pixels))] for row in range(int(y_pixels))])
+         return Intensity/np.sum(Intensity)
+      else:
+         Intensity = np.array([[np.sum(np.cos(np.sum(
+            [row*QSize/y_pixels-0.5*QSize, col*QSize/x_pixels-0.5*QSize, 2*EHC*np.sin((((row-0.5*y_pixels)**2 + (col-0.5*x_pixels)**2)**0.5)*QSize/x_pixels/2/EHC)**2]
               *Points[:,0:3], axis = 1))*np.transpose(Points[:,3:4]))**2
                         +np.sum(np.sin(np.sum(
                             [row*QSize/y_pixels-0.5*QSize, col*QSize/x_pixels-0.5*QSize, 2*EHC*np.sin((((row-0.5*y_pixels)**2 + (col-0.5*x_pixels)**2)**0.5)*QSize/x_pixels/2/EHC)**2]
                             *Points[:,0:3], axis = 1))*np.transpose(Points[:,3:4]))**2
                         for col in range(int(x_pixels))] for row in range(int(y_pixels))])
-           return Intensity/np.sum(Intensity)
-      elif symmetric == 0 and Qz == 1:
-           Intensity = np.array([[np.sum(np.cos(np.sum(
-               [row*QSize/y_pixels-0.5*QSize, col*QSize/x_pixels-0.5*QSize, 0]
-               *Points[:,0:3], axis = 1))*np.transpose(Points[:,3:4]))**2
-                         +np.sum(np.sin(np.sum(
-                             [row*QSize/y_pixels-0.5*QSize, col*QSize/x_pixels-0.5*QSize, 2*EHC*np.sin((((row-0.5*y_pixels)**2 + (col-0.5*x_pixels)**2)**0.5)*QSize/x_pixels/2/EHC)**2]
-                             *Points[:,0:3], axis = 1))*np.transpose(Points[:,3:4]))**2
-                         for col in range(int(x_pixels))] for row in range(int(y_pixels))])
-           return Intensity/np.sum(Intensity)
-      elif symmetric == 1 and Qz == 0:
-           Intensity = np.array([[np.sum(np.cos(np.sum(
-               [row*QSize/y_pixels-0.5*QSize, col*QSize/x_pixels-0.5*QSize, 2*EHC*np.sin((((row-0.5*y_pixels)**2 + (col-0.5*x_pixels)**2)**0.5)*QSize/x_pixels/2/EHC)**2]
-               *Points[:,0:3],axis =1))*np.transpose(Points[:,3:4]))**2
-                         for col in range(int(x_pixels))] for row in range(int(y_pixels))])
-           return Intensity/np.sum(Intensity)
-      else:         #1,1
-           Intensity = np.array([[np.sum(np.cos(np.sum(
-               [row*QSize/y_pixels-0.5*QSize, col*QSize/x_pixels-0.5*QSize, 0.]
-               *Points[:,0:3],axis =1))*np.transpose(Points[:,3:4]))**2
-                         for col in range(int(x_pixels))] for row in range(int(y_pixels))])
-           return Intensity/np.sum(Intensity)
+         return Intensity/np.sum(Intensity)
 
-      
+
 
 ##for asymmetric objects, no small angle approximation
 #elif symmetric == 0 and Qz == 0:
