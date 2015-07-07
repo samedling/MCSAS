@@ -598,7 +598,7 @@ if __name__ == "__main__":
    Label(master, text = "Model Type", font = "Times 16 bold").grid(row = ROW, column = COL, sticky = W)
    ROW+=1
    
-   Label(master, text = "Choose a Monte Carlo Model").grid(row = ROW, column = COL, sticky = W)
+   Label(master, text = "Monte Carlo Model: ").grid(row = ROW, column = COL, sticky = W)
    g.dictionary_in['shape'] = StringVar(master)
    g.dictionary_in['shape'].set(MC_num_and_name[g.dictionary['shape']][0])
    OptionMenu(master, g.dictionary_in['shape'], *MC_num_and_name[:,0]).grid(row = ROW, column = COL+1)
@@ -607,12 +607,12 @@ if __name__ == "__main__":
    tick("symmetric", "Radial Symmetry", ROW,COL)
    #ROW+=1
    #tick('Qz',"Small Angle Approx. (Qz=0)", ROW, COL)
-   COL+=1
-   tick('Qz',"Small Angle Approx.", ROW, COL)
-   COL-=1
+   #COL+=1
+   #tick('Qz',"Small Angle Approx.", ROW, COL)
+   #COL-=1
    
    ROW+=1
-   Label(master, text = "Choose an Analytic Model").grid(row = ROW, column = COL, sticky = W)
+   Label(master, text = "Analytic Model: ").grid(row = ROW, column = COL, sticky = W)
    g.dictionary_in['analytic'] = StringVar(master)
    g.dictionary_in['analytic'].set(Analytic_options[g.dictionary['analytic']][0])
    OptionMenu(master, g.dictionary_in['analytic'], *Analytic_options[:,0]).grid(row = ROW, column = COL+1)
@@ -620,9 +620,10 @@ if __name__ == "__main__":
    ### Parameters ###
    
    ROW+=1
-   Label(master, text = "Parameters", font = "Times 16 bold").grid(row = ROW, column = COL, sticky = W)
-   ROW+=1
    enter_num('num_plots', "Number of Plots to Average", ROW, COL)
+
+   ROW+=1
+   Label(master, text = "Parameters", font = "Times 16 bold").grid(row = ROW, column = COL, sticky = W)
    ROW+=1
    enter_num('radius_1', "Radius 1 (nm)", ROW, COL)
    ROW+=1
@@ -786,6 +787,10 @@ if __name__ == "__main__":
 
 
    ### Fitting Options ###
+
+   Button(master, text='Fitting Options', command=select_fit_parameters, font = "Times 16 bold").grid(row=ROW, column = COL, sticky=W, pady=4)
+   ROW+=1
+
 
    Label(master, text="Fitting Options", font = "Times 16 bold").grid(row= ROW, column=COL, sticky = W)
    ROW += 1

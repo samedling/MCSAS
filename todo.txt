@@ -4,6 +4,7 @@ To Do:
 
 ## High Priority ##
 
+
 Make & test command line version
 Check coherence length code for known cases
 
@@ -12,10 +13,16 @@ Add key to top right of 1D plot.
 Delete Small Angle Approximation checkbox and relevant code.
 Have fitting save random points.
 Vary z_scaling as length changes to keep number of points constant or add warning to README about letting length vary.
+Don't overwrite old defaults when there are new ones.
 
 ## Medium Priority ##
 
+Move Common Variables box to next to parameters and have it tell you what's what.
+Grey out (or disappear) parameters when different models are chosen (or symmetry).
 Add simple Save Setting button to GUI.
+Change Sequence & Advanced Output Options to popups?
+Move Number of Pixels and Bounds to not Advanced.
+New section for plot a ring?
 Autodetect if defaults.txt is out-of-date??
 Check sphere analytic model.
 When fitting, improved error handling for OpenCL grid compression.

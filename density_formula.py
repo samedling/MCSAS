@@ -118,6 +118,22 @@ def d16asymmhexpyr(coords):
             densities[i] = g.dictionary['rho_1']
     return densities
 
+def d17choppedcoreshell(coords):
+   r1 = g.dictionary_SI['radius_1']
+   r2 = g.dictionary_SI['radius_2']
+   rho1 = g.dictionary_SI['rho_1']
+   rho2 = g.dictionary_SI['rho_2']
+   length = g.dictionary_SI['length']
+   n_gaps = 2
+   gap_l = 2e-8
+   piece_l = length-n_gaps*gap_l
+   if n_gaps%2:   #odd number of gaps
+      return [rho2 if r2<np.sqrt(np.sum(coords[i,0:2]**2))<r1 and (np.abs(coords[i,2])-piece_l/2)%(piece_l+gap_l) > gap_l else rho1 if np.sqrt(np.sum(coords[i,0:2]**2))<r1 and (np.abs(coords[i,2])-piece_l/2)%(piece_l+gap_l) > gap_l else 0 for i in range(coords.shape[0])]
+   else:          #even number of gaps
+      return [rho2 if r2<np.sqrt(np.sum(coords[i,0:2]**2))<r1 and (np.abs(coords[i,2])-gap_l/2)%(piece_l+gap_l) < piece_l else rho1 if np.sqrt(np.sum(coords[i,0:2]**2))<r1 and (np.abs(coords[i,2])-gap_l/2)%(piece_l+gap_l) < piece_l else 0 for i in range(coords.shape[0])]
+
+
+
 #def density_template(coords):
     #densities = np.empty(coords.shape[0])   #creates empty density array
     #for i in range(coords.shape[0]):        #iterates through all coordinates
