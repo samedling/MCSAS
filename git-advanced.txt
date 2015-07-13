@@ -29,6 +29,8 @@ Other Useful Git Commands:
 `git checkout <hex_number> <file>`  #Changes single file back to how it was.
 `git checkout HEAD <file>`          #Returns to current contents for single file.
 
+`git reset --hard HEAD`             #Returns all files to status from last commit.  Can't undo.
+
 ## Branches ##
 
 `git branch -a`                   #Lists all branches
