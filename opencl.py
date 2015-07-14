@@ -36,10 +36,8 @@ class OpenCL:
 
       if sym == 0:
          self.program.sumint00(self.queue,out.shape,None,np.float32(qsize),np.float32(ehc),np.int32(x_pixels),np.int32(y_pixels),buf_points,np.int32(npts),out_buffer)
-      elif small == 0:
+      else:#if small == 0:
          self.program.sumint10(self.queue,out.shape,None,np.float32(qsize),np.float32(ehc),np.int32(x_pixels),np.int32(y_pixels),buf_points,np.int32(npts),out_buffer)
-      else:
-         self.program.sumint11(self.queue,out.shape,None,np.float32(qsize),np.int32(x_pixels),np.int32(y_pixels),buf_points,np.int32(npts),out_buffer)
       #cl.enqueue_read_buffer(self.queue,out_buffer,out).wait()
       cl.enqueue_copy(self.queue,out,out_buffer)
       return out.reshape(y_pixels,-1)    #Converts 1D intensity back to 2D.
@@ -59,10 +57,8 @@ class OpenCL:
       try:
          if sym == 0:
             self.program.sumint00mask(self.queue,out.shape,None,np.float32(qsize),np.float32(ehc),np.int32(x_pixels),np.int32(y_pixels),buf_x,buf_y,buf_points,np.int32(npts),out_buffer)
-         elif small == 0:
+         else:#if small == 0:
             self.program.sumint10mask(self.queue,out.shape,None,np.float32(qsize),np.float32(ehc),np.int32(x_pixels),np.int32(y_pixels),buf_x,buf_y,buf_points,np.int32(npts),out_buffer)
-         else:
-            self.program.sumint11mask(self.queue,out.shape,None,np.float32(qsize),np.int32(x_pixels),np.int32(y_pixels),buf_x,buf_y,buf_points,np.int32(npts),out_buffer)
       except:
          print("Runtime Error. Too many pixels being calculated for OpenCL to work with grid compression.")
          print("Either disable grid compression entirely or decrease number of pixels or increase grid compression.")

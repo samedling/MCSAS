@@ -55,22 +55,6 @@ __kernel void sumint10 (
    intensity[n] = pow(temp_intensity,2);
 }
 
-__kernel void sumint11 (
-   const float qsize, const int x_pixels, const int y_pixels,
-   __global const float4* points, const int npts, __global float* intensity)
-{
-// For symmetry and small angle approximation
-   float temp_intensity = 0;
-   int n = get_global_id(0);
-   int i = n/x_pixels;
-   int j = n%x_pixels;
-   float Q[2] = { i*qsize/y_pixels-0.5*qsize, j*qsize/x_pixels-0.5*qsize};
-   for ( int p = 0; p < npts; p++) {
-       float R[2] = {points[p][0],points[p][1]};
-       temp_intensity += points[p][3]*cos(my_dot(Q,R,2));
-   }
-   intensity[n] = pow(temp_intensity,2);
-}
 
 //Pass in separate x and y arrays.//
 __kernel void sumint00mask (
@@ -115,19 +99,3 @@ __kernel void sumint10mask (
    intensity[n] = pow(temp_intensity,2);
 }
 
-__kernel void sumint11mask (
-   const float qsize, const int x_pixels, const int y_pixels, __constant int* xval, __constant int* yval,
-   __global const float4* points, const int npts, __global float* intensity)
-{
-// For symmetry and small angle approximation
-   float temp_intensity = 0;
-   int n = get_global_id(0);
-   int i = xval[n];
-   int j = yval[n];
-   float Q[2] = { i*qsize/x_pixels-0.5*qsize, j*qsize/y_pixels-0.5*qsize};
-   for ( int p = 0; p < npts; p++) {
-       float R[2] = {points[p][0],points[p][1]};
-       temp_intensity += points[p][3]*cos(my_dot(Q,R,2));
-   }
-   intensity[n] = pow(temp_intensity,2);
-}
