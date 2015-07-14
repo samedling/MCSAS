@@ -51,7 +51,7 @@ if g.f2py_enabled:
    #   fastmath.module.new_function(<vars>)     #Update this line to check for updates for f2py binary.
    #except AttributeError:
    #   print('Existing f2py binary was out of date; newer version copied.')
-   #   vprint('If you ran `make` yourself, run it again for optimal performance.')
+   #   g.vprint('If you ran `make` yourself, run it again for optimal performance.')
    #   if sys.platform == 'darwin':
    #      os.system('cp fastmath-OSX10.10_C2DP8700.so fastmath.so')
    #      import fastmath
@@ -72,7 +72,7 @@ if g.debug:
 g.dictionary = {'advanced':1, 'altitude':45, 'analytic': 2, 'ave_dist': 0.6, 'azimuth':45, 'bound': 1, 'circ_delta':5, 'comments':'',
               'degrees': 1, 'energy_wavelength': 11, 'energy_wavelength_box': 0, 'gauss':0, 'log_scale': 1, 'maximum': 0.01, 'minimum': 1e-8, 'd_lambda': 2e-4,
               'num_plots': 1, 'pixels': (200,200), 'proportional_radius':0.5, 'QSize': 6,'Qz': 0, 'radius_1': 5.0, 'radius_2': 2.5, 'rho_1': 1.0, 'rho_2': -0.5,
-              'save_img':1, 'save_name': 'save_name', 'scale': 1,'SD':1, 'seq_hide':0, 'shape': 2, 's_start': 0, 's_step': 2,
+              'save_img':1, 'save_name': 'save_name', 'scale': 1,'SD':1, 'seq_hide':1, 'shape': 2, 's_start': 0, 's_step': 2,
               's_stop': 1, 'subfolder':'subfolder', 's_var': 'x_theta', 'symmetric': 0, 'num':1, 'length_2':0,
               'theta_delta':20, 'ThreeD': 0, 'title': 'title', 'x_theta': 0,'y_theta': 0,'z_theta': 0,'z_dim': 100,'z_scale':1,#}
               'fit_file': 'fit_file', 'center': (0,0), 'border': 0, 'max_iter': 1000, 'update_freq': 0, 'plot_fit_tick': 1, 'plot_residuals_tick': 1, 'mask_threshold': 10, 'background': 2e-5, 'grid_compression': 0,
@@ -317,14 +317,14 @@ ALLVARIABLES = [['altitude', 'Altitude'],
                 ]
 def show_sequence_variables(): #Common Variables button, displays ALLVARIABLES, above.
    dens_options = Tk()
-   dens_options.title("Sequence options")
-   Label(dens_options, text = "Choose a Variable to Change", font = "Times 14 bold underline").grid(row = 0, column = 0, columnspan = 2, sticky = W)
-   Label(dens_options, text = "Variable", font = "Times 11 underline").grid(row = 1, column = 0, sticky = W)
-   Label(dens_options, text = "Description", font = "Times 11 underline").grid(row = 1, column = 1, sticky = W)
+   dens_options.title("Common Variables")
+   #Label(dens_options, text = "Choose a Variable to Change", font = "Times 14 bold underline").grid(row = 0, column = 0, columnspan = 2, sticky = W)
+   Label(dens_options, text = "Variable", font = "Times 11 underline").grid(row = 0, column = 0, sticky = W)
+   Label(dens_options, text = "Description", font = "Times 11 underline").grid(row = 0, column = 1, sticky = W)
    for ROW in range(len(ALLVARIABLES)):
       description = ALLVARIABLES[ROW]
-      Label(dens_options, text = description[0]).grid(row = ROW+3, column = 0, sticky = W)
-      Label(dens_options, text = description[1]).grid(row = ROW+3, column = 1, sticky = W)
+      Label(dens_options, text = description[0]).grid(row = ROW+2, column = 0, sticky = W)
+      Label(dens_options, text = description[1]).grid(row = ROW+2, column = 1, sticky = W)
    dens_options.mainloop()
 
 def plot_points(): #This runs the Real Space to plot the points in Real Space
@@ -469,18 +469,31 @@ def circ(): #This plots a the angle at a fixed radius
    angle_plot(data, "Angle"+str(g.dictionary['radius_2']), g.dictionary['title']+" "+str(g.dictionary['radius_2']), 1)
    print "finshied"
    
-
-def int_seq(): #This is the button, it runs a sequence or a single image depending on whether or not you can edit a sequence (For both analytic models and Monte Carlo Models)
-   if g.dictionary['seq_hide'] == 0:
-      if g.dictionary['shape'] ==0:
-         theory_plot()
-      else:
-         make_intensity()
+def calc_int():
+   '''Calculates intensity (average if # plots > 1).'''
+   if g.dictionary['shape'] ==0:
+      theory_plot()
    else:
-      if g.dictionary['shape']==0:
-         theory_seq()
-      else:
-         sequence()
+      make_intensity()
+
+def calc_seq():
+   '''Calculates intensity for sequence (averaging each time if # plots > 1.'''
+   if g.dictionary['shape']==0:
+      theory_seq()
+   else:
+      sequence()
+
+#def int_seq(): #This is the button, it runs a sequence or a single image depending on whether or not you can edit a sequence (For both analytic models and Monte Carlo Models)
+   #if g.dictionary['seq_hide'] == 0:
+      #if g.dictionary['shape'] ==0:
+         #theory_plot()
+      #else:
+         #make_intensity()
+   #else:
+      #if g.dictionary['shape']==0:
+         #theory_seq()
+      #else:
+         #sequence()
 
 
 
@@ -702,16 +715,16 @@ def sequence_parameters():
     COL = 0
    
     # Label(seq_window, text="Sequence Options", font = "Times 16 bold").grid(row= ROW, column=COL, sticky = W)
-    if g.dictionary['seq_hide'] == 0:
-       seq_button = Button(seq_window, text="Edit Sequence", font = "Times 12 bold")
-    else:
-       seq_button = Button(seq_window, text="No Sequence", font = "Times 12 bold")
-    seq_button.bind("<Button-1>", hide_sequence)
-    seq_button.grid(row=ROW, column = COL, pady=4)
-    COL+=1
-    Button(seq_window, text='Common Variables', command=show_sequence_variables).grid(row=ROW, column = COL, sticky=W, pady=4)    
-    COL-=1
-    ROW+=1
+    #if g.dictionary['seq_hide'] == 0:
+    #   seq_button = Button(seq_window, text="Edit Sequence", font = "Times 12 bold")
+    #else:
+    #   seq_button = Button(seq_window, text="No Sequence", font = "Times 12 bold")
+    #seq_button.bind("<Button-1>", hide_sequence)
+    #seq_button.grid(row=ROW, column = COL, pady=4)
+    #COL+=1
+    #Button(seq_window, text='Common Variables', command=show_sequence_variables).grid(row=ROW, column = COL, sticky=W, pady=4)    
+    #COL-=1
+    #ROW+=1
     enter_str('s_var', "Which Variable?", seq_window, ROW, COL)
     ROW+=1
     enter_num('s_step', 'Number of Frames', seq_window, ROW, COL)
@@ -727,6 +740,30 @@ def sequence_parameters():
     ROW+=1
     enter_num('SD', 'Standard Deviation', seq_window, ROW, COL)
     ROW+=1
+    #Button(seq_window, text='Common Variables', command=show_sequence_variables).grid(row=ROW, column = COL, sticky=W, pady=4)    
+    #calc_button.grid(row=ROW, column = COL, pady=4, columnspan=2)
+    Button(seq_window, text='Common\nVariables', command=show_sequence_variables).grid(row=ROW, column = COL, pady=4)    
+    COL+=1
+    calc_button = Button(seq_window, text="Calculate\nSequence", command = calc_seq, font = "Times 16 bold")
+    calc_button.grid(row=ROW, column = COL, pady=4)
+    ROW+=1
+
+
+def output_options():
+   global output_window,master
+   output_window = Toplevel(master)
+   output_window.title=("Output Options")
+   new_frame = Frame(output_window)
+   ROW=0
+   COL=0
+
+   #scale axes
+   #log plot
+   #3D plot
+   #alt,az
+   #point distance??
+   #description
+
 
     
 def ring_options():
@@ -925,10 +962,11 @@ if __name__ == "__main__":
    Button(master, text='Real Space', command=plot_points, font = "Times 16 bold").grid(row=ROW, column = COL, sticky=W, pady=4)
    ROW+=1
    
-   if g.dictionary['seq_hide'] == 0:
-      int_button = Button(master, text="Calculate Intensity", command = int_seq, font = "Times 16 bold")
-   else:
-      int_button = Button(master, text="Calculate Sequence", command = int_seq, font = "Times 16 bold")
+   #if g.dictionary['seq_hide'] == 0:
+   #   int_button = Button(master, text="Calculate Intensity", command = calc_int, font = "Times 16 bold")
+   #else:
+   #   int_button = Button(master, text="Calculate Sequence", command = calc_seq, font = "Times 16 bold")
+   int_button = Button(master, text="Calculate Intensity", command = calc_int, font = "Times 16 bold")
    int_button.grid(row=ROW, column = COL,sticky=W, pady=4)
    ROW+=1
    

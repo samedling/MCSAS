@@ -428,10 +428,8 @@ def select_fit_parameters():
    ROW += 1
    for i in range(len(g.var_names)):
        if g.var_names[i] == "unused":
-          print('fit_'+g.var_list[i]+'2')
           g.dictionary_in['fit_'+g.var_list[i]+'2'].config(state=DISABLED)
        else:
-          print('fit_'+g.var_list[i]+'2')
           g.dictionary_in['fit_'+g.var_list[i]+'2'].config(state=NORMAL)
           g.labels[g.var_list[i]].config(state=NORMAL)
    
