@@ -1,5 +1,5 @@
 #!/usr/bin/python
-version = '0.3.2'
+version = '0.4.0'
 
 
 try:
@@ -73,10 +73,10 @@ g.dictionary = {'advanced':1, 'altitude':45, 'analytic': 2, 'ave_dist': 0.6, 'az
               'degrees': 1, 'energy_wavelength': 11, 'energy_wavelength_box': 0, 'gauss':0, 'log_scale': 1, 'maximum': 0.01, 'minimum': 1e-8, 'd_lambda': 2e-4,
               'num_plots': 1, 'pixels': (200,200), 'proportional_radius':0.5, 'QSize': 6,'Qz': 0, 'radius_1': 5.0, 'radius_2': 2.5, 'rho_1': 1.0, 'rho_2': -0.5,
               'save_img':1, 'save_name': 'save_name', 'scale': 1,'SD':1, 'seq_hide':0, 'shape': 2, 's_start': 0, 's_step': 2,
-              's_stop': 1, 'subfolder':'subfolder', 's_var': 'x_theta', 'symmetric': 0,
+              's_stop': 1, 'subfolder':'subfolder', 's_var': 'x_theta', 'symmetric': 0, 'num':1, 'length_2':0,
               'theta_delta':20, 'ThreeD': 0, 'title': 'title', 'x_theta': 0,'y_theta': 0,'z_theta': 0,'z_dim': 100,'z_scale':1,#}
-              'fit_file': 'fit_file', 'center': (0,0), 'border': 0, 'max_iter': 1000, 'update_freq': 0, 'plot_fit_tick': 1, 'plot_residuals_tick': 1, 'mask_threshold': 10, 'background': 2e-5, 'grid_compression': 5,
-              'fit_radius_1': 1, 'fit_radius_2': 0, 'fit_rho_1': 1, 'fit_rho_2': 0, 'fit_z_dim': 1, 'fit_x_theta': 1, 'fit_y_theta': 1, 'fit_z_theta': 1, 'fit_background': 1, 'fit_other': 0
+              'fit_file': 'fit_file', 'center': (0,0), 'border': 0, 'max_iter': 1000, 'update_freq': 0, 'plot_fit_tick': 1, 'plot_residuals_tick': 1, 'mask_threshold': 10, 'background': 2e-5, 'grid_compression': 0,
+              'fit_radius_1': 1, 'fit_radius_2': 0, 'fit_rho_1': 1, 'fit_rho_2': 0, 'fit_z_dim': 1, 'fit_x_theta': 1, 'fit_y_theta': 1, 'fit_z_theta': 1, 'fit_background': 1, 'fit_num': 0, 'fit_length_2':0
               }
 
 #####            Importing data or using defaults              #############
@@ -133,8 +133,9 @@ MC_num_and_name = np.array([["Analytic Model Only",0],
                         ["N-gon Truncated Cone",12],
                         ["Sine Shaped Oscillation",13],
                         ["Double Cone",14],
-                        ["Eliptical Cylinder",15],
-                        ["Asym Hex Pyramid",16]
+                        ["Elliptical Cylinder",15],
+                        ["Asym Hex Pyramid",16],
+                        ["Chopped Core Shell",17]
                         ])
 MC_num_and_name_dict = {x[0]:x[1] for x in MC_num_and_name} #This is needed, so that when an option is chosen, we can find the shape number.
 
@@ -162,24 +163,28 @@ def get_numbers_from_gui():
           try:
              g.dictionary[x] = g.dictionary_in[x].get(1.0,END).rstrip()
           except AttributeError: #'int' object has no attribute 'get'...for when testing and there's no actual GUI
-             g.dictionary[x] = g.dictionary_in[x]
+             #g.dictionary[x] = g.dictionary_in[x]
+             pass
        elif x=='advanced' or x== 'seq_hide':
           g.dictionary[x] = g.dictionary[x]
        elif x=='shape':
           try:
              g.dictionary[x] = MC_num_and_name_dict[g.dictionary_in['shape'].get()]
           except AttributeError: #'int' object has no attribute 'get'...for when testing and there's no actual GUI
-             g.dictionary[x] = g.dictionary_in['shape']
+             #g.dictionary[x] = g.dictionary_in['shape']
+             pass
        elif x=='analytic':
           try:
              g.dictionary[x] = Analytic_dict[g.dictionary_in['analytic'].get()]
           except AttributeError: #'int' object has no attribute 'get'...for when testing and there's no actual GUI
-             g.dictionary[x] = g.dictionary_in['analytic']
+             #g.dictionary[x] = g.dictionary_in['analytic']
+             pass
        else:
           try:
              g.dictionary[x] = g.dictionary_in[x].get() 
           except AttributeError:
-             g.dprint("{0} could not be imported from GUI.".format(x))
+             #g.dprint("{0} could not be imported from GUI.".format(x))
+             pass
     
     for x in g.dictionary:
         try:
@@ -462,7 +467,7 @@ def circ(): #This plots a the angle at a fixed radius
    data = plotting_circle(Intensity)
    radial_intensity_plot(data, "theta"+str(g.dictionary['radius_2']), g.dictionary['title']+" "+str(g.dictionary['radius_2']), 0)
    angle_plot(data, "Angle"+str(g.dictionary['radius_2']), g.dictionary['title']+" "+str(g.dictionary['radius_2']), 1)
-   print "finsihed"
+   print "finshied"
    
 
 def int_seq(): #This is the button, it runs a sequence or a single image depending on whether or not you can edit a sequence (For both analytic models and Monte Carlo Models)
@@ -517,11 +522,15 @@ def hide_sequence(event):
       int_button['text'] = 'Calculate Sequence'
 
 #If you want a number box and a label, use this
-def enter_num(variable_name, label, ROW, COL):
-    Label(master, text=label).grid(row= ROW, column=COL, sticky = W)
-    g.dictionary_in[variable_name] = StringVar()
-    g.dictionary_in[variable_name].set(g.dictionary[variable_name])
-    g.dictionary_in[variable_name] = Entry(master, textvariable = g.dictionary_in[variable_name])
+def enter_num(variable_name, label, window, ROW, COL):
+    g.labels[variable_name] = Label(window, text=label)
+    g.labels[variable_name].grid(row= ROW, column=COL, sticky = W)
+    temp = StringVar()
+    g.dictionary_in[variable_name] = Entry(window, textvariable = temp)
+    temp.set(g.dictionary[variable_name])
+    #g.dictionary_in[variable_name] = StringVar()
+    #g.dictionary_in[variable_name].set(g.dictionary[variable_name])
+    #g.dictionary_in[variable_name] = Entry(window, textvariable = g.dictionary_in[variable_name])
     if variable_name in advanced and g.dictionary['advanced'] == 0:
        g.dictionary_in[variable_name].config(state = DISABLED)
     if variable_name in seq_options and g.dictionary['seq_hide'] == 0:
@@ -541,10 +550,10 @@ def enter_vert_num(variable_name, label, ROW, COL):
     g.dictionary_in[variable_name].grid(row= ROW+1, column = COL)
 
 #If you want a tick box
-def tick(variable_name, label, ROW, COL):
+def tick(variable_name, label, window, ROW, COL):
     g.dictionary_in[variable_name] = IntVar()
     g.dictionary_in[variable_name].set(int(g.dictionary[variable_name]))
-    g.dictionary_in[variable_name+'2'] = Checkbutton(master, text=label, variable=g.dictionary_in[variable_name])
+    g.dictionary_in[variable_name+'2'] = Checkbutton(window, text=label, variable=g.dictionary_in[variable_name])
     if variable_name+'2' in advanced and g.dictionary['advanced'] == 0:
        g.dictionary_in[variable_name+'2'].config(state = DISABLED)
 
@@ -553,9 +562,9 @@ def tick(variable_name, label, ROW, COL):
     g.dictionary_in[variable_name+'2'].grid(row=ROW, column = COL, sticky=W)
 
 #If you want a string entered
-def enter_str(variable_name, label, ROW, COL):
-    Label(master, text=label).grid(row= ROW, column=COL, sticky = W)
-    g.dictionary_in[variable_name] = Entry(master)
+def enter_str(variable_name, label, window, ROW, COL):
+    Label(window, text=label).grid(row= ROW, column=COL, sticky = W)
+    g.dictionary_in[variable_name] = Entry(window)
     g.dictionary_in[variable_name].insert(0, g.dictionary[variable_name])
     if variable_name in advanced and g.dictionary['advanced'] == 0:
        g.dictionary_in[variable_name].config(state = DISABLED)
@@ -570,11 +579,11 @@ def enter_text(variable_name, label, WIDTH, HEIGHT, ROW, COL):#For a large textb
    g.dictionary_in[variable_name].insert(1.0, g.dictionary[variable_name])
    g.dictionary_in[variable_name].grid(row=ROW+1, column = COL, rowspan = 2, sticky = W)
 
-def radio(variable_name, MODES, ROW, COL): #Radiobutton
+def radio(variable_name, MODES, window, ROW, COL): #Radiobutton
    g.dictionary_in[variable_name] = StringVar()
    g.dictionary_in[variable_name].set(g.dictionary[variable_name])
    for name, mode in MODES:
-      g.dictionary_in[variable_name+mode] = Radiobutton(master, text=name, variable=g.dictionary_in[variable_name], value=mode)
+      g.dictionary_in[variable_name+mode] = Radiobutton(window, text=name, variable=g.dictionary_in[variable_name], value=mode)
       g.dictionary_in[variable_name+mode].grid(row=ROW, column = COL, sticky = W)
       if variable_name+mode in advanced and g.dictionary['advanced'] == 0:
           g.dictionary_in[variable_name+mode].config(state = DISABLED)
@@ -585,31 +594,197 @@ def radio(variable_name, MODES, ROW, COL): #Radiobutton
 
 
 
+def save_fitparam():
+   get_num_from_gui()
+
+def detector_parameters():
+    global det_window,master
+    det_window = Toplevel(master)
+    det_window.title("Detector Options")
+    new_frame = Frame(det_window)
+    ROW = 0
+    COL = 0
+    
+    MODES_energy_wave = [('Energy (keV)', '0'),('Wavelength (nm)','1'),]
+    radio('energy_wavelength_box', MODES_energy_wave, det_window, ROW, COL)
+    ROW+=1
+    enter_num('energy_wavelength', "Energy/Wavelength", det_window, ROW, COL)
+    ROW+=1
+    enter_num('d_lambda', "Wavelength Spread (2e-4)", det_window, ROW, COL)
+    ROW+=1
+    enter_num('QSize', "Detector Q Range (nm^-1)", det_window, ROW, COL)
+
+
+def model_parameters():
+    global model_window,master
+    model_window = Toplevel(master)
+    model_window.title("Parameter Options")
+    new_frame = Frame(model_window)
+    ROW = 0
+    COL = 0
+    shape = g.dictionary_in['shape'].get()
+    
+    if shape:
+        return
+    
+    
+def rename_parameters(event):
+    global master,parameter_start_row
+    ROW = parameter_start_row
+    COL = 0
+    
+    g.var_list=['radius_1','radius_2','z_dim','rho_1','rho_2','num','length_2']
+    #print g.dictionary_in['shape'].get()
+    shape = np.int(MC_num_and_name_dict[g.dictionary_in['shape'].get()])
+    if shape == 1:  #sphere
+        g.var_names=("Radius (nm)","unused","unused","Density","unused","unused","unused")
+    elif shape == 2: #cylinder
+        g.var_names=("Radius (nm)","unused","Length (nm)","Density","unused","unused","unused")
+    elif shape ==3: #core shell cylinder
+        g.var_names=("Outer Radius (nm)","Inner Radius (nm)","Length (nm)","Core Density","Shell Density","unused","unused")
+    elif shape ==4: #gaussian cylinder
+        g.var_names=("Radius (nm)","Std. Dev. (nm)","Length (nm)","Density","unused","unused","unused")
+    elif shape ==5: #chopped cone
+        g.var_names=("Max Radius (nm)","Min Radius (nm)","Length (nm)","Density","unused","unused","unused")
+    elif shape ==6: #hex prism
+        g.var_names=("Side Length (nm)","unused","Length (nm)","Density","unused","unused","unused")
+    elif shape ==7: #rect prism
+        g.var_names=("Long Side (nm)","Short Side (nm)","Length (nm)","Density","unused","unused","unused")
+    elif shape ==8: #bubble string
+        g.var_names=("Radius (nm)","Space Btwn Centers (nm)","Length (nm)","Density","unused","unused","unused")
+    elif shape ==9: #random chopped cylinder
+        g.var_names=("Radius (nm)","Gap Width (nm)","Length (nm)","Density","Number of Gaps","currently unused","unused")
+    elif shape ==11:    #double slit
+        g.var_names=("Outside Distance (nm)","Inside Distance (nm)","Length (nm)","Density","unused","unused","unused")
+    elif shape ==12:    #n-gon truncated cone
+        g.var_names=("Radius for Large n (nm)","Radius for Small n (nm)","Length (nm)","Density","Number of Sides","currently unused","unused")
+    elif shape ==13:    #sine oscillation
+        g.var_names=("Origin to Peak","Origin to Trough","Length (nm)","Density","Number of Oscillations","currently unused","unused")
+    elif shape ==14:    #double cone
+        g.var_names=("End Radius (nm)","Central Radius (nm)","Length (nm)","Density","unused","unused","unused")
+    elif shape ==15:    #elliptical cylinder
+        g.var_names=("x Radius (nm)","y Radius (nm)","Length (nm)","Density","unused","unused","unused")
+    elif shape ==16:    #asymm hex pyr
+        g.var_names=("Orig. Side Length (nm)","Side Adjustment (nm)","Length (nm)","Density","unused","unused","unused")
+    elif shape ==17:    #chopped core shell
+        g.var_names=("Outer Radius (nm)","Inner Radius (nm)","Length (nm)","Core Density","Shell Density","Number of Gaps","Gap Length (nm)")
+    else:
+        g.dprint("Shape {0} does not have custom names.".format(shape))
+        g.var_names=("Radius 1 (nm)","Radius 2 (nm)","Length (nm)","Rho 1","Rho 2","Number","Length 2 (nm)")
+    for i in range(7):
+        g.labels[g.var_list[i]].config(text=g.var_names[i])
+        if g.var_names[i] == "unused":
+           g.dprint("{0} is unused.".format(g.var_list[i]))
+           g.dictionary_in[g.var_list[i]].config(state=DISABLED)
+           g.labels[g.var_list[i]].config(state=DISABLED)
+           try:
+               g.dictionary_in['fit_'+g.var_list[i]+'2'].config(state=DISABLED)
+               g.dictionary_in['fit_'+g.var_list[i]+'2'].config(text=g.var_names[i])
+           except AttributeError:
+               pass
+        else:
+           g.dictionary_in[g.var_list[i]].config(state=NORMAL)
+           g.labels[g.var_list[i]].config(state=NORMAL)
+           try:
+               g.dictionary_in['fit_'+g.var_list[i]+'2'].config(state=NORMAL)
+               g.dictionary_in['fit_'+g.var_list[i]+'2'].config(text=g.var_names[i])
+           except AttributeError:
+               pass
+
+
+def sequence_parameters():
+   
+    global seq_window,master,seq_button
+    seq_window = Toplevel(master)
+    seq_window.title("Sequence Options")
+    new_frame = Frame(seq_window)
+    ROW = 0
+    COL = 0
+   
+    # Label(seq_window, text="Sequence Options", font = "Times 16 bold").grid(row= ROW, column=COL, sticky = W)
+    if g.dictionary['seq_hide'] == 0:
+       seq_button = Button(seq_window, text="Edit Sequence", font = "Times 12 bold")
+    else:
+       seq_button = Button(seq_window, text="No Sequence", font = "Times 12 bold")
+    seq_button.bind("<Button-1>", hide_sequence)
+    seq_button.grid(row=ROW, column = COL, pady=4)
+    COL+=1
+    Button(seq_window, text='Common Variables', command=show_sequence_variables).grid(row=ROW, column = COL, sticky=W, pady=4)    
+    COL-=1
+    ROW+=1
+    enter_str('s_var', "Which Variable?", seq_window, ROW, COL)
+    ROW+=1
+    enter_num('s_step', 'Number of Frames', seq_window, ROW, COL)
+    ROW+=1
+   
+    ROW+=1
+    MODES_gauss = [('Linear Sequence', '0'),('Gaussian', '1'),]
+    radio('gauss',MODES_gauss, seq_window, ROW, COL)
+    ROW+=1
+    enter_num('s_start', "Sequence Start", seq_window, ROW, COL)
+    ROW+=1
+    enter_num('s_stop', "Sequence Stop", seq_window, ROW, COL)
+    ROW+=1
+    enter_num('SD', 'Standard Deviation', seq_window, ROW, COL)
+    ROW+=1
+
+    
+def ring_options():
+    global ring_window,master
+    ring_window = Toplevel(master)
+    ring_window.title("Ring Options")
+    new_frame = Frame(ring_window)
+    ROW = 0
+    COL = 0
+
+    enter_num('circ_delta', 'Ring Thickness (pixels)', ring_window, ROW, COL)
+    ROW+=1
+    enter_num('theta_delta','Number of Points',ring_window, ROW, COL)
+    ROW+=1
+    enter_num('proportional_radius', 'Proportional Radius', ring_window, ROW, COL)
+    ROW+=1
+
+    Button(ring_window, text='Plot a Ring', command=circ, font = "Times 16 bold").grid(row=ROW, column = COL,sticky=W, pady=4)
+
+
+
+
+
+
 ###########THE GUI STARTS HERE#####################
 
 if __name__ == "__main__":
+   #master = Tk()
+   #master.title("Monte Carlo Small Angle Scattering ({0}), By Max Proft".format(version))
    master = Tk()
-   master.title("Monte Carlo Small Angle Scattering ({0}), By Max Proft".format(version))
+   master.title("Monte Carlo Small Angle Scattering ({0})".format(version))
+   root = Frame(master)
 
    ### Model Type ###
 
    ROW = 0
    COL = 0
    Label(master, text = "Model Type", font = "Times 16 bold").grid(row = ROW, column = COL, sticky = W)
+   COL+=1
+   tick("symmetric", "Radial Symmetry", master,ROW,COL)
+   #ROW+=1
+   #tick('Qz',"Small Angle Approx. (Qz=0)", ROW, COL)
+   #COL+=1
+   #tick('Qz',"Small Angle Approx.", ROW, COL)
+   COL-=1
+
+
+
    ROW+=1
    
    Label(master, text = "Monte Carlo Model: ").grid(row = ROW, column = COL, sticky = W)
    g.dictionary_in['shape'] = StringVar(master)
    g.dictionary_in['shape'].set(MC_num_and_name[g.dictionary['shape']][0])
    OptionMenu(master, g.dictionary_in['shape'], *MC_num_and_name[:,0]).grid(row = ROW, column = COL+1)
+   #MCModel = OptionMenu(master, g.dictionary_in['shape'], *MC_num_and_name[:,0])
+   #MCModel.grid(row = ROW, column = COL+1)
+   #MCModel.bind("<Button-2>",rename_parameters)
    
-   ROW+=1
-   tick("symmetric", "Radial Symmetry", ROW,COL)
-   #ROW+=1
-   #tick('Qz',"Small Angle Approx. (Qz=0)", ROW, COL)
-   #COL+=1
-   #tick('Qz',"Small Angle Approx.", ROW, COL)
-   #COL-=1
    
    ROW+=1
    Label(master, text = "Analytic Model: ").grid(row = ROW, column = COL, sticky = W)
@@ -620,49 +795,61 @@ if __name__ == "__main__":
    ### Parameters ###
    
    ROW+=1
-   enter_num('num_plots', "Number of Plots to Average", ROW, COL)
+   enter_num('num_plots', "Number of Plots to Average", master, ROW, COL)
 
    ROW+=1
-   Label(master, text = "Parameters", font = "Times 16 bold").grid(row = ROW, column = COL, sticky = W)
+   Label(master, text = "Model Parameters", font = "Times 16 bold").grid(row = ROW, column = COL, sticky = W)
+   COL+=1
+   parameter_help = Button(master, text='Parameter Help', font = "Times 12 bold")
+   parameter_help.bind("<Button-1>", rename_parameters)
+   parameter_help.grid(row=ROW, column = COL, sticky=W, pady=4)   
+   COL-=1
    ROW+=1
-   enter_num('radius_1', "Radius 1 (nm)", ROW, COL)
+   parameter_start_row=ROW
+   enter_num('radius_1', "Radius 1 (nm)", master, ROW, COL)
    ROW+=1
-   enter_num('radius_2', "Radius 2 (nm)", ROW, COL)
+   enter_num('radius_2', "Radius 2 (nm)", master, ROW, COL)
    ROW+=1
-   enter_num('z_dim', "Length (nm)", ROW, COL)
+   enter_num('z_dim', "Length (nm)", master, ROW, COL)
    ROW+=1
-   enter_num('rho_1', 'Rho 1', ROW, COL)
+   enter_num('rho_1', 'Rho 1', master, ROW, COL)
    ROW+=1
-   enter_num('rho_2', 'Rho 2', ROW, COL)
+   enter_num('rho_2', 'Rho 2', master, ROW, COL)
    ROW+=1
-   MODES_energy_wave = [('Energy (keV)', '0'),('Wavelength (nm)','1'),]
-   radio('energy_wavelength_box', MODES_energy_wave, ROW, COL)
+
+   enter_num('num', 'Number', master, ROW, COL)
    ROW+=1
-   enter_num('energy_wavelength', "Energy/Wavelength", ROW, COL)
-   ROW+=1
-   enter_num('d_lambda', "Wavelength Spread (2e-4)", ROW, COL)
-   ROW+=1
-   enter_num('QSize', "Detector Q Range (nm^-1)", ROW, COL)
+   enter_num('length_2', 'Length 2 (nm)', master, ROW, COL)
    ROW+=1
    
-   Label(master, text = "Angle of rotation", font = "Times 11 underline").grid(row = ROW, column = COL, sticky = W)
+   Label(master, text = "Rotation Parameters", font = "Times 16 bold").grid(row = ROW, column = COL, sticky = W)
    ROW+=1
    MODES_angle = [('Degrees', '1'),('Radians','0'),]
-   radio('degrees', MODES_angle, ROW, COL)
+   radio('degrees', MODES_angle, master, ROW, COL)
    ROW+=1
-   enter_num('x_theta', 'x rotation', ROW, COL)
+   enter_num('x_theta', 'x rotation', master, ROW, COL)
    ROW+=1
-   enter_num('y_theta', 'y rotation', ROW, COL)
+   enter_num('y_theta', 'y rotation', master, ROW, COL)
    ROW+=1
-   enter_num('z_theta', 'z rotation', ROW, COL)
+   enter_num('z_theta', 'z rotation', master, ROW, COL)
    
-   ROW+=3
-   enter_num('circ_delta', 'Ring Thickness (pixels)', ROW, COL)
-   ROW+=1
-   enter_num('theta_delta','Number of Points',ROW, COL)
-   ROW+=1
-   enter_num('proportional_radius', 'Proportional Radius', ROW, COL)
-   ROW+=1
+   # ROW+=1
+   # MODES_energy_wave = [('Energy (keV)', '0'),('Wavelength (nm)','1'),]
+   # radio('energy_wavelength_box', MODES_energy_wave, master, ROW, COL)
+   # ROW+=1
+   # enter_num('energy_wavelength', "Energy/Wavelength", master, ROW, COL)
+   # ROW+=1
+   # enter_num('d_lambda', "Wavelength Spread (2e-4)", master, ROW, COL)
+   # ROW+=1
+   # enter_num('QSize', "Detector Q Range (nm^-1)", master, ROW, COL)
+   
+   # ROW+=3
+   # enter_num('circ_delta', 'Ring Thickness (pixels)', master, ROW, COL)
+   # ROW+=1
+   # enter_num('theta_delta','Number of Points',master, ROW, COL)
+   # ROW+=1
+   # enter_num('proportional_radius', 'Proportional Radius', master, ROW, COL)
+   # ROW+=1
   
    ### Output Options ###
    
@@ -679,47 +866,47 @@ if __name__ == "__main__":
    COL-=1
    
    ROW+=1
-   tick('save_img', 'Save Images?', ROW, COL)
+   tick('save_img', 'Save Images?', master, ROW, COL)
    COL+=1
-   tick('scale', "Make Axes to Scale when\nPlotting Real Space", ROW, COL)
+   tick('scale', "Scale Axes When\nPlotting Real Space", master, ROW, COL)
    COL-=1
    ROW+=1
-   tick('log_scale', "Plot on a Log Scale?", ROW, COL)
+   tick('log_scale', "Plot on a Log Scale?", master, ROW, COL)
    COL+=1
-   tick('ThreeD', "Plot the Intensity in 3D", ROW, COL)
+   tick('ThreeD', "Plot the Intensity in 3D", master, ROW, COL)
    COL-=1
    ROW+=1
    Label(master, text="Choose Alt/Az for 3D plots (degrees)").grid(row= ROW, column=COL, sticky = W)
    ROW+=1
-   enter_num('altitude', "Altitude", ROW, COL)
+   enter_num('altitude', "Altitude", master, ROW, COL)
    ROW+=1
-   enter_num('azimuth', "Azimuth", ROW, COL)
+   enter_num('azimuth', "Azimuth", master, ROW, COL)
    ROW+=1
-   enter_num('pixels', "Number of Pixels (x y)", ROW, COL)
+   enter_num('pixels', "Number of Pixels (x y)", master, ROW, COL)
    ROW+=1
-   enter_num('ave_dist', "Neighbouring Point Distance (nm)", ROW, COL)
+   enter_num('ave_dist', "Neighbouring Point Distance (nm)", master, ROW, COL)
    ROW+=1
-   enter_num('z_scale','z-direction scaling of\nneighbouring point distance', ROW, COL)
+   enter_num('z_scale','z-direction scaling of\nneighbouring point distance', master, ROW, COL)
    ROW+=1
-   tick('bound', "Upper and Lower Bounds?", ROW, COL)
-   g.dictionary_in['bound2']['font'] = "Times 11 underline"
+   tick('bound', "Upper / Lower Bounds?", master, ROW, COL)
+   #g.dictionary_in['bound2']['font'] = "Times 11 underline"
    ROW+=1
-   enter_num('minimum', "Minimum (enter it in the form: 3e-7)", ROW, COL)
+   enter_num('minimum', "Minimum (ie. 3e-7)", master, ROW, COL)
    ROW+=1
-   enter_num('maximum', "Maximum", ROW, COL)
+   enter_num('maximum', "Maximum", master, ROW, COL)
    ROW+=1
    
    ### File Information ###
    
    Label(master, text="File Infomation", font = "Times 16 bold").grid(row= ROW, column=COL, sticky = W)
    ROW+=1
-   enter_str('title', 'Plot Title', ROW, COL)
+   enter_str('title', 'Plot Title', master, ROW, COL)
    ROW+=1
-   enter_str('save_name', 'File Name', ROW, COL)
+   enter_str('save_name', 'File Name', master, ROW, COL)
    ROW+=1
-   enter_str('subfolder', 'Subfolder', ROW, COL)
+   enter_str('subfolder', 'Subfolder', master, ROW, COL)
    ROW+=1
-   Label(master, text="(No spaces at the start or end of File Name or Subfolder!)").grid(row= ROW, column=COL, columnspan = 2, sticky = W)
+   # Label(master, text="(No spaces at the start or end of File Name or Subfolder!)").grid(row= ROW, column=COL, columnspan = 2, sticky = W)
    ROW+=1
    ROW+=1
    HEIGHT = 3
@@ -727,135 +914,145 @@ if __name__ == "__main__":
    enter_text("comments", "Description (optional):", WIDTH, HEIGHT, ROW, COL)
    ROW+=3
    
-   
-   ROW+=1
-   
-   
-   button_row = ROW
-   if g.dictionary['seq_hide'] == 0:
-      int_button = Button(master, text="Calculate Intensity", command = int_seq, font = "Times 16 bold")
-   else:
-      int_button = Button(master, text="Calculate Sequence", command = int_seq, font = "Times 16 bold")
-   int_button.grid(row=ROW, column = COL,rowspan = 2, pady=4)
-   
-   COL+=1
-   Button(master, text='Replot Intensity', command=view_intensity, font = "Times 16 bold").grid(row=ROW, column = COL,rowspan = 2, pady=4)
-   COL-=1
-   ROW+=2
-   Button(master, text='Real Space', command=plot_points, font = "Times 16 bold").grid(row=ROW, column = COL,rowspan = 2, pady=4)
-   COL+=1
-   Button(master, text='Plot a Ring', command=circ, font = "Times 16 bold").grid(row=ROW, column = COL, rowspan = 2, pady=4)
-   COL-=1
-   ROW+=1
-
-
-
 
 
 
    ### Sequence Options ###
    
-   COL += 2
-   ROW = 0
-   Label(master, text="Sequence Options", font = "Times 16 bold").grid(row= ROW, column=COL, sticky = W)
-   COL+=1
-   if g.dictionary['seq_hide'] == 0:
-      seq_button = Button(master, text="Edit Sequence", font = "Times 12 bold")
-   else:
-      seq_button = Button(master, text="No Sequence", font = "Times 12 bold")
-   seq_button.bind("<Button-1>", hide_sequence)
-   seq_button.grid(row=ROW, column = COL, pady=4)
-   COL-=1
-   ROW+=1
-   enter_num('s_step', 'Number of Frames', ROW, COL)
-   ROW+=1
-   enter_str('s_var', "Which Variable?", ROW, COL)
-   ROW+=1
-   Button(master, text='Common Variables', command=show_sequence_variables).grid(row=ROW, column = COL, sticky=W, pady=4)
+   COL+=2
+   ROW=0
    
+   Button(master, text='Real Space', command=plot_points, font = "Times 16 bold").grid(row=ROW, column = COL, sticky=W, pady=4)
    ROW+=1
-   MODES_gauss = [('Linear Sequence', '0'),('Gaussian', '1'),]
-   radio('gauss',MODES_gauss, ROW, COL)
+   
+   if g.dictionary['seq_hide'] == 0:
+      int_button = Button(master, text="Calculate Intensity", command = int_seq, font = "Times 16 bold")
+   else:
+      int_button = Button(master, text="Calculate Sequence", command = int_seq, font = "Times 16 bold")
+   int_button.grid(row=ROW, column = COL,sticky=W, pady=4)
    ROW+=1
-   enter_num('s_start', "Sequence Start", ROW, COL)
+   
+   Button(master, text='Replot Intensity', command=view_intensity, font = "Times 16 bold").grid(row=ROW, column = COL, sticky=W, pady=4)
+   
+#   ROW+=1
+#   Button(master, text='Plot a Ring', command=circ, font = "Times 16 bold").grid(row=ROW, column = COL,sticky=W, pady=4)
+   
+   ROW+=2
+   Label(master, text="Pop-Up Windows:", font = "Times 16 bold").grid(row= ROW, column=COL, sticky = W)
    ROW+=1
-   enter_num('s_stop', "Sequence Stop", ROW, COL)
+
+   Button(master, text='Ring Options', command=ring_options, font = "Times 14 bold").grid(row=ROW, column = COL, sticky=W, pady=4)   
    ROW+=1
-   enter_num('SD', 'Standard Deviation', ROW, COL)
+   
+   Button(master, text='Detector Options', command=detector_parameters, font = "Times 14 bold").grid(row=ROW, column = COL, sticky=W, pady=4)   
    ROW+=1
+   
+   Button(master, text='Sequence Options', command=sequence_parameters, font = "Times 14 bold").grid(row=ROW, column = COL, sticky=W, pady=4)   
+   ROW+=1
+   
+   # COL += 2
+   # ROW = 0
+   # Label(master, text="Sequence Options", font = "Times 16 bold").grid(row= ROW, column=COL, sticky = W)
+   # COL+=1
+   # if g.dictionary['seq_hide'] == 0:
+   #    seq_button = Button(master, text="Edit Sequence", font = "Times 12 bold")
+   # else:
+   #    seq_button = Button(master, text="No Sequence", font = "Times 12 bold")
+   # seq_button.bind("<Button-1>", hide_sequence)
+   # seq_button.grid(row=ROW, column = COL, pady=4)
+   # COL-=1
+   # ROW+=1
+   # enter_num('s_step', 'Number of Frames', master, ROW, COL)
+   # ROW+=1
+   # enter_str('s_var', "Which Variable?", master, ROW, COL)
+   # ROW+=1
+   # Button(master, text='Common Variables', command=show_sequence_variables).grid(row=ROW, column = COL, sticky=W, pady=4)
+   #
+   # ROW+=1
+   # MODES_gauss = [('Linear Sequence', '0'),('Gaussian', '1'),]
+   # radio('gauss',MODES_gauss, master, ROW, COL)
+   # ROW+=1
+   # enter_num('s_start', "Sequence Start", master, ROW, COL)
+   # ROW+=1
+   # enter_num('s_stop', "Sequence Stop", master, ROW, COL)
+   # ROW+=1
+   # enter_num('SD', 'Standard Deviation', master, ROW, COL)
+   # ROW+=1
 
 
 
    ### Fitting Options ###
 
-   Button(master, text='Fitting Options', command=select_fit_parameters, font = "Times 16 bold").grid(row=ROW, column = COL, sticky=W, pady=4)
+   Button(master, text='Fitting Options', command=select_fit_parameters, font = "Times 14 bold").grid(row=ROW, column = COL, sticky=W, pady=4)
    ROW+=1
 
 
-   Label(master, text="Fitting Options", font = "Times 16 bold").grid(row= ROW, column=COL, sticky = W)
-   ROW += 1
-   enter_num('fit_file', "Experimental Data Filename", ROW, COL)
-   ROW += 1
-   enter_num('center', "Center of Beamstop (x y)", ROW, COL)
-   ROW += 1
-   enter_num('border', "Additional Cropping", ROW, COL)
-   ROW += 1
-   enter_num('mask_threshold', "Mask Threshhold", ROW, COL)
-   ROW += 1
-   COL += 1
-   Button(master, text="Plot Exp Data", command = plot_exp_data, font = "Times 16 bold").grid(row=ROW, column=COL, pady=4)
-   COL -= 1
-   ROW += 1
-   Label(master, text="Fit Parameters:").grid(row= ROW, column=COL, columnspan =2, sticky = W)
-   ROW += 1
-   enter_num('background', "Background Noise", ROW, COL)
+#   Label(master, text="Fitting Options", font = "Times 16 bold").grid(row= ROW, column=COL, sticky = W)
+#   ROW += 1
+#   enter_num('fit_file', "Experimental Data Filename", master, ROW, COL)
+#   ROW += 1
+#   enter_num('center', "Center of Beamstop (x y)", master, ROW, COL)
+#   ROW += 1
+#   enter_num('border', "Additional Cropping", master, ROW, COL)
+#   ROW += 1
+#   enter_num('mask_threshold', "Mask Threshhold", master, ROW, COL)
+#   ROW += 1
+#   COL += 1
+#   Button(master, text="Plot Exp Data", command = plot_exp_data, font = "Times 16 bold").grid(row=ROW, column=COL, pady=4)
+#   COL -= 1
+#   ROW += 1
+#   Label(master, text="Fit Parameters:").grid(row= ROW, column=COL, columnspan =2, sticky = W)
+#   ROW += 1
+#   enter_num('background', "Background Noise", master, ROW, COL)
+#
+#   ROW+=1      # These are checkboxes which, if unchecked, will hold fixed fit parameters.
+#   tick("fit_radius_1", "Radius 1", master,ROW,COL)
+#   COL+=1
+#   tick("fit_radius_2", "Radius 2", master,ROW,COL)
+#   COL-=1
+#   ROW+=1
+#   tick("fit_rho_1", "Rho 1", master,ROW,COL)
+#   COL+=1
+#   tick("fit_rho_2", "Rho 2", master,ROW,COL)
+#   COL-=1
+#   ROW+=1
+#   tick("fit_z_dim", "Length", master,ROW,COL)
+#   COL+=1
+#   tick("fit_x_theta", "x rotation", master,ROW,COL)
+#   COL-=1
+#   ROW+=1
+#   tick("fit_y_theta", "y rotation", master,ROW,COL)
+#   COL+=1
+#   tick("fit_z_theta", "z rotation", master,ROW,COL)
+#   COL-=1
+#   ROW+=1
+#   tick("fit_background", "background", master,ROW,COL)
+#   COL+=1
+#   tick("fit_other", "unused", master,ROW,COL)
+#   COL-=1
+#   ROW += 1
+#   ROW += 1
+#   enter_num('max_iter', "Maximum Iterations (0=default)", master, ROW, COL)
+#   ROW += 1
+#   if g.debug:
+#      enter_num('update_freq', "Update Interval", master, ROW, COL)   #TODO: debug
+#      ROW += 1
+#   enter_num('grid_compression', "Grid Compression (2, 5, or 10)", master, ROW, COL)
+#   ROW += 1
+#   tick('plot_fit_tick',"Plot Fit Results", master,ROW, COL)
+#   COL += 1
+#   tick('plot_residuals_tick',"Plot Fit Residuals", master,ROW, COL)
+#   COL-=1
+#   ROW += 1
+#   Button(master, text="Plot Residuals", command = plot_residuals, font = "Times 16 bold").grid(row=ROW, column=COL, pady=4)
+#   COL+= 1
+#   Button(master, text="Fit Exp Data", command = perform_fit, font = "Times 16 bold").grid(row=ROW, column=COL, pady=4)
+#   COL -= 1
 
-   ROW+=1      # These are checkboxes which, if unchecked, will hold fixed fit parameters.
-   tick("fit_radius_1", "Radius 1", ROW,COL)
-   COL+=1
-   tick("fit_radius_2", "Radius 2", ROW,COL)
-   COL-=1
-   ROW+=1
-   tick("fit_rho_1", "Rho 1", ROW,COL)
-   COL+=1
-   tick("fit_rho_2", "Rho 2", ROW,COL)
-   COL-=1
-   ROW+=1
-   tick("fit_z_dim", "Length", ROW,COL)
-   COL+=1
-   tick("fit_x_theta", "x rotation", ROW,COL)
-   COL-=1
-   ROW+=1
-   tick("fit_y_theta", "y rotation", ROW,COL)
-   COL+=1
-   tick("fit_z_theta", "z rotation", ROW,COL)
-   COL-=1
-   ROW+=1
-   tick("fit_background", "background", ROW,COL)
-   COL+=1
-   tick("fit_other", "unused", ROW,COL)
-   COL-=1
-   ROW += 1
-   ROW += 1
-   enter_num('max_iter', "Maximum Iterations (0=default)", ROW, COL)
-   ROW += 1
-   if g.debug:
-      enter_num('update_freq', "Update Interval", ROW, COL)   #TODO: debug
-      ROW += 1
-   enter_num('grid_compression', "Grid Compression (2, 5, or 10)", ROW, COL)
-   ROW += 1
-   tick('plot_fit_tick',"Plot Fit Results", ROW, COL)
-   COL += 1
-   tick('plot_residuals_tick',"Plot Fit Residuals", ROW, COL)
-   COL-=1
-   ROW += 1
-   Button(master, text="Plot Residuals", command = plot_residuals, font = "Times 16 bold").grid(row=ROW, column=COL, pady=4)
-   COL+= 1
-   Button(master, text="Fit Exp Data", command = perform_fit, font = "Times 16 bold").grid(row=ROW, column=COL, pady=4)
-   COL -= 1
-
+   #select_fit_parameters()
    
-   mainloop()
+   rename_parameters(0)
+   root.mainloop()
    
 
 

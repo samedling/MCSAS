@@ -361,85 +361,95 @@ def plot_residuals():
       print('Plotting difference.')
       Intensity_plot(plot_residuals,"residuals",'Difference Plot',1)
 
-def save_fitparam():
-   get_num_from_gui()
+
 
 def select_fit_parameters():
-   fit_window = Tk()
+   global fit_window,master
+   #fit_window = Tk()
+   #fit_window.title("Select Fit Parameters")
+   fit_window = Toplevel(master)
    fit_window.title("Select Fit Parameters")
+   new_frame = Frame(fit_window)
    ROW = 0
    COL = 0
-   Label(fit_window, text = "Fit Parameters", font = "Times 16 bold").grid(row=ROW,column=COL,sticky=W)
-   COL+=1
-   Button(fit_window, text = "Save", command=save_fitparam, font= "Times 16 bold").grid(row=ROW,column=COL,pady=4)
-   COL-=1
-   ROW+=1
+   #Label(fit_window, text = "Fit Parameters", font = "Times 16 bold").grid(row=ROW,column=COL,sticky=W)
+   #COL+=1
+   #Button(fit_window, text = "Save", command=save_fitparam, font= "Times 16 bold").grid(row=ROW,column=COL,pady=4)
+   #COL-=1
+   #ROW+=1
    
 
    ### Fitting Options ###
 
-   Label(fit_window, text="Fitting Options", font = "Times 16 bold").grid(row= ROW, column=COL, sticky = W)
-   ROW += 1
-   enter_num('fit_file', "Experimental Data Filename", ROW, COL)
-   ROW += 1
-   enter_num('center', "Center of Beamstop (x y)", ROW, COL)
-   ROW += 1
-   enter_num('border', "Additional Cropping", ROW, COL)
-   ROW += 1
-   enter_num('mask_threshold', "Mask Threshhold", ROW, COL)
-   ROW += 1
-   COL += 1
+   Label(fit_window, text="Experimental Data", font = "Times 16 bold").grid(row= ROW, column=COL, sticky = W)
+   COL+=1
    Button(fit_window, text="Plot Exp Data", command = plot_exp_data, font = "Times 16 bold").grid(row=ROW, column=COL, pady=4)
-   COL -= 1
+   COL-=1
    ROW += 1
-   Label(fit_window, text="Fit Parameters:").grid(row= ROW, column=COL, columnspan =2, sticky = W)
+   enter_num('fit_file', "Experimental Data Filename", fit_window,ROW, COL)
    ROW += 1
-   enter_num('background', "Background Noise", ROW, COL)
+   enter_num('center', "Center of Beamstop (x y)", fit_window,ROW, COL)
+   ROW += 1
+   enter_num('border', "Additional Cropping", fit_window,ROW, COL)
+   ROW += 1
+   enter_num('mask_threshold', "Mask Threshhold", fit_window,ROW, COL)
+   ROW += 1
+   Label(fit_window, text="Fit Parameters", font = "Times 16 bold").grid(row= ROW, column=COL, columnspan =2, sticky = W)
+   ROW += 1
+   enter_num('background', "Background Noise", fit_window,ROW, COL)
 
    ROW+=1      # These are checkboxes which, if unchecked, will hold fixed fit parameters.
-   tick("fit_radius_1", "Radius 1", ROW,COL)
+   tick("fit_radius_1", g.var_names[0], fit_window,ROW,COL)
    COL+=1
-   tick("fit_radius_2", "Radius 2", ROW,COL)
+   tick("fit_radius_2", g.var_names[1], fit_window,ROW,COL)
    COL-=1
    ROW+=1
-   tick("fit_rho_1", "Rho 1", ROW,COL)
+   tick("fit_rho_1", g.var_names[3], fit_window,ROW,COL)
    COL+=1
-   tick("fit_rho_2", "Rho 2", ROW,COL)
+   tick("fit_rho_2", g.var_names[4], fit_window,ROW,COL)
    COL-=1
    ROW+=1
-   tick("fit_z_dim", "Length", ROW,COL)
+   tick("fit_z_dim", g.var_names[2], fit_window,ROW,COL)
    COL+=1
-   tick("fit_x_theta", "x rotation", ROW,COL)
+   tick("fit_x_theta", "x rotation", fit_window,ROW,COL)
    COL-=1
    ROW+=1
-   tick("fit_y_theta", "y rotation", ROW,COL)
+   tick("fit_y_theta", "y rotation", fit_window,ROW,COL)
    COL+=1
-   tick("fit_z_theta", "z rotation", ROW,COL)
+   tick("fit_z_theta", "z rotation", fit_window,ROW,COL)
    COL-=1
    ROW+=1
-   tick("fit_background", "background", ROW,COL)
+   tick("fit_background", "background", fit_window,ROW,COL)
    COL+=1
-   tick("fit_other", "unused", ROW,COL)
+   tick("fit_num", g.var_names[5], fit_window,ROW,COL)
    COL-=1
    ROW += 1
+   tick("fit_length_2", g.var_names[6], fit_window,ROW,COL)
    ROW += 1
-   enter_num('max_iter', "Maximum Iterations (0=default)", ROW, COL)
+   for i in range(len(g.var_names)):
+       if g.var_names[i] == "unused":
+          print('fit_'+g.var_list[i]+'2')
+          g.dictionary_in['fit_'+g.var_list[i]+'2'].config(state=DISABLED)
+       else:
+          print('fit_'+g.var_list[i]+'2')
+          g.dictionary_in['fit_'+g.var_list[i]+'2'].config(state=NORMAL)
+          g.labels[g.var_list[i]].config(state=NORMAL)
+   
+   enter_num('max_iter', "Maximum Iterations (0=default)", fit_window,ROW, COL)
    ROW += 1
    if g.debug:
-      enter_num('update_freq', "Update Interval", ROW, COL)   #TODO: debug
+      enter_num('update_freq', "Update Interval", fit_window,ROW, COL)   #TODO: debug
       ROW += 1
-   enter_num('grid_compression', "Grid Compression (2, 5, or 10)", ROW, COL)
+   enter_num('grid_compression', "Grid Compression (2, 5, or 10)", fit_window,ROW, COL)
    ROW += 1
-   tick('plot_fit_tick',"Plot Fit Results", ROW, COL)
+   tick('plot_fit_tick',"Plot Fit Results", fit_window,ROW, COL)
    COL += 1
-   tick('plot_residuals_tick',"Plot Fit Residuals", ROW, COL)
+   tick('plot_residuals_tick',"Plot Fit Residuals", fit_window,ROW, COL)
    COL-=1
    ROW += 1
    Button(fit_window, text="Plot Residuals", command = plot_residuals, font = "Times 16 bold").grid(row=ROW, column=COL, pady=4)
    COL+= 1
    Button(fit_window, text="Fit Exp Data", command = perform_fit, font = "Times 16 bold").grid(row=ROW, column=COL, pady=4)
    COL -= 1
-
-   fit_window.mainloop()
 
 
