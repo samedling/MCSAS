@@ -116,28 +116,6 @@ execfile(root_folder+"/density_formula.py", globals())
 execfile(root_folder+"/analytic_formula.py", globals())
 execfile(root_folder+"/fit.py", globals())
 
-#This is the list of all the Monte Carlo Models that you choose from.
-##TODO: move this to the same file as the Monte Carlo Models (density_formula.py)
-MC_num_and_name = np.array([["Analytic Model Only",0],
-                        ["Sphere",1],
-                        ["Cylinder",2],
-                        ["Core shell cylinder",3],
-                        ["Gaussian",4],
-                        ["Cone Model",5],
-                        ["Hexagonal Prism",6],
-                        ["Rectangular Prism",7],
-                        ["String of Bubbles",8],
-                        ["Chopped up Cylinder",9],
-                        ["Custom CSV Defining the Radius",10],
-                        ["Double Slit",11],
-                        ["N-gon Truncated Cone",12],
-                        ["Sine Shaped Oscillation",13],
-                        ["Double Cone",14],
-                        ["Elliptical Cylinder",15],
-                        ["Asym Hex Pyramid",16],
-                        ["Chopped Core Shell",17]
-                        ])
-MC_num_and_name_dict = {x[0]:x[1] for x in MC_num_and_name} #This is needed, so that when an option is chosen, we can find the shape number.
 
 #This is the list of all the analytic models that you choose from.
 ##TODO: move this to the same file as the Analytic Models (analytic_formula.py)
@@ -169,7 +147,7 @@ def get_numbers_from_gui():
           g.dictionary[x] = g.dictionary[x]
        elif x=='shape':
           try:
-             g.dictionary[x] = MC_num_and_name_dict[g.dictionary_in['shape'].get()]
+             g.dictionary[x] = g.MC_num_and_name_dict[g.dictionary_in['shape'].get()]
           except AttributeError: #'int' object has no attribute 'get'...for when testing and there's no actual GUI
              #g.dictionary[x] = g.dictionary_in['shape']
              pass
@@ -206,6 +184,7 @@ def make_SI_dict():
 
     #Converting to SI units.
     g.dictionary_SI["z_dim"] = g.dictionary["z_dim"]*10**-9
+    g.dictionary_SI["length_2"] = g.dictionary["length_2"]*10**-9
     g.dictionary_SI["ave_dist"] = g.dictionary["ave_dist"]*10**-9
     g.dictionary_SI["travel"] = g.dictionary_SI["ave_dist"]
     g.dictionary_SI["radius_1"] = g.dictionary["radius_1"]*10**-9
@@ -648,43 +627,44 @@ def rename_parameters(event):
     
     g.var_list=['radius_1','radius_2','z_dim','rho_1','rho_2','num','length_2']
     #print g.dictionary_in['shape'].get()
-    shape = np.int(MC_num_and_name_dict[g.dictionary_in['shape'].get()])
-    if shape == 1:  #sphere
-        g.var_names=("Radius (nm)","unused","unused","Density","unused","unused","unused")
-    elif shape == 2: #cylinder
-        g.var_names=("Radius (nm)","unused","Length (nm)","Density","unused","unused","unused")
-    elif shape ==3: #core shell cylinder
-        g.var_names=("Outer Radius (nm)","Inner Radius (nm)","Length (nm)","Core Density","Shell Density","unused","unused")
-    elif shape ==4: #gaussian cylinder
-        g.var_names=("Radius (nm)","Std. Dev. (nm)","Length (nm)","Density","unused","unused","unused")
-    elif shape ==5: #chopped cone
-        g.var_names=("Max Radius (nm)","Min Radius (nm)","Length (nm)","Density","unused","unused","unused")
-    elif shape ==6: #hex prism
-        g.var_names=("Side Length (nm)","unused","Length (nm)","Density","unused","unused","unused")
-    elif shape ==7: #rect prism
-        g.var_names=("Long Side (nm)","Short Side (nm)","Length (nm)","Density","unused","unused","unused")
-    elif shape ==8: #bubble string
-        g.var_names=("Radius (nm)","Space Btwn Centers (nm)","Length (nm)","Density","unused","unused","unused")
-    elif shape ==9: #random chopped cylinder
-        g.var_names=("Radius (nm)","Gap Width (nm)","Length (nm)","Density","Number of Gaps","currently unused","unused")
-    elif shape ==11:    #double slit
-        g.var_names=("Outside Distance (nm)","Inside Distance (nm)","Length (nm)","Density","unused","unused","unused")
-    elif shape ==12:    #n-gon truncated cone
-        g.var_names=("Radius for Large n (nm)","Radius for Small n (nm)","Length (nm)","Density","Number of Sides","currently unused","unused")
-    elif shape ==13:    #sine oscillation
-        g.var_names=("Origin to Peak","Origin to Trough","Length (nm)","Density","Number of Oscillations","currently unused","unused")
-    elif shape ==14:    #double cone
-        g.var_names=("End Radius (nm)","Central Radius (nm)","Length (nm)","Density","unused","unused","unused")
-    elif shape ==15:    #elliptical cylinder
-        g.var_names=("x Radius (nm)","y Radius (nm)","Length (nm)","Density","unused","unused","unused")
-    elif shape ==16:    #asymm hex pyr
-        g.var_names=("Orig. Side Length (nm)","Side Adjustment (nm)","Length (nm)","Density","unused","unused","unused")
-    elif shape ==17:    #chopped core shell
-        g.var_names=("Outer Radius (nm)","Inner Radius (nm)","Length (nm)","Core Density","Shell Density","Number of Gaps","Gap Length (nm)")
-    else:
-        g.dprint("Shape {0} does not have custom names.".format(shape))
-        g.var_names=("Radius 1 (nm)","Radius 2 (nm)","Length (nm)","Rho 1","Rho 2","Number","Length 2 (nm)")
-    for i in range(7):
+    shape = np.int(g.MC_num_and_name_dict[g.dictionary_in['shape'].get()])
+    g.var_names=g.model_parameters[shape][2]
+#    if shape == 1:  #sphere
+#        g.var_names=("Radius (nm)","unused","unused","Density","unused","unused","unused")
+#    elif shape == 2: #cylinder
+#        g.var_names=("Radius (nm)","unused","Length (nm)","Density","unused","unused","unused")
+#    elif shape ==3: #core shell cylinder
+#        g.var_names=("Outer Radius (nm)","Inner Radius (nm)","Length (nm)","Core Density","Shell Density","unused","unused")
+#    elif shape ==4: #gaussian cylinder
+#        g.var_names=("Radius (nm)","Std. Dev. (nm)","Length (nm)","Density","unused","unused","unused")
+#    elif shape ==5: #chopped cone
+#        g.var_names=("Max Radius (nm)","Min Radius (nm)","Length (nm)","Density","unused","unused","unused")
+#    elif shape ==6: #hex prism
+#        g.var_names=("Side Length (nm)","unused","Length (nm)","Density","unused","unused","unused")
+#    elif shape ==7: #rect prism
+#        g.var_names=("Long Side (nm)","Short Side (nm)","Length (nm)","Density","unused","unused","unused")
+#    elif shape ==8: #bubble string
+#        g.var_names=("Radius (nm)","Space Btwn Centers (nm)","Length (nm)","Density","unused","unused","unused")
+#    elif shape ==9: #random chopped cylinder
+#        g.var_names=("Radius (nm)","Gap Width (nm)","Length (nm)","Density","Number of Gaps","currently unused","unused")
+#    elif shape ==11:    #double slit
+#        g.var_names=("Outside Distance (nm)","Inside Distance (nm)","Length (nm)","Density","unused","unused","unused")
+#    elif shape ==12:    #n-gon truncated cone
+#        g.var_names=("Radius for Large n (nm)","Radius for Small n (nm)","Length (nm)","Density","Number of Sides","currently unused","unused")
+#    elif shape ==13:    #sine oscillation
+#        g.var_names=("Origin to Peak","Origin to Trough","Length (nm)","Density","Number of Oscillations","currently unused","unused")
+#    elif shape ==14:    #double cone
+#        g.var_names=("End Radius (nm)","Central Radius (nm)","Length (nm)","Density","unused","unused","unused")
+#    elif shape ==15:    #elliptical cylinder
+#        g.var_names=("x Radius (nm)","y Radius (nm)","Length (nm)","Density","unused","unused","unused")
+#    elif shape ==16:    #asymm hex pyr
+#        g.var_names=("Orig. Side Length (nm)","Side Adjustment (nm)","Length (nm)","Density","unused","unused","unused")
+#    elif shape ==17:    #chopped core shell
+#        g.var_names=("Outer Radius (nm)","Inner Radius (nm)","Length (nm)","Core Density","Shell Density","Number of Gaps","Gap Length (nm)")
+#    else:
+#        g.vprint("Shape {0} does not have custom names.".format(shape))
+#        g.var_names=("Radius 1 (nm)","Radius 2 (nm)","Length (nm)","Rho 1","Rho 2","Number","Length 2 (nm)")
+    for i in range(len(g.var_list)):
         g.labels[g.var_list[i]].config(text=g.var_names[i])
         if g.var_names[i] == "unused":
            g.dprint("{0} is unused.".format(g.var_list[i]))
@@ -720,9 +700,9 @@ def sequence_parameters():
     #else:
     #   seq_button = Button(seq_window, text="No Sequence", font = "Times 12 bold")
     #seq_button.bind("<Button-1>", hide_sequence)
-    #seq_button.grid(row=ROW, column = COL, pady=4)
+    #seq_button.grid(row=ROW, column = COL, pady=2)
     #COL+=1
-    #Button(seq_window, text='Common Variables', command=show_sequence_variables).grid(row=ROW, column = COL, sticky=W, pady=4)    
+    #Button(seq_window, text='Common Variables', command=show_sequence_variables).grid(row=ROW, column = COL, sticky=W, pady=2)    
     #COL-=1
     #ROW+=1
     enter_str('s_var', "Which Variable?", seq_window, ROW, COL)
@@ -740,12 +720,12 @@ def sequence_parameters():
     ROW+=1
     enter_num('SD', 'Standard Deviation', seq_window, ROW, COL)
     ROW+=1
-    #Button(seq_window, text='Common Variables', command=show_sequence_variables).grid(row=ROW, column = COL, sticky=W, pady=4)    
-    #calc_button.grid(row=ROW, column = COL, pady=4, columnspan=2)
-    Button(seq_window, text='Common\nVariables', command=show_sequence_variables).grid(row=ROW, column = COL, pady=4)    
+    #Button(seq_window, text='Common Variables', command=show_sequence_variables).grid(row=ROW, column = COL, sticky=W, pady=2)    
+    #calc_button.grid(row=ROW, column = COL, pady=2, columnspan=2)
+    Button(seq_window, text='Common\nVariables', command=show_sequence_variables).grid(row=ROW, column = COL, pady=2)    
     COL+=1
     calc_button = Button(seq_window, text="Calculate\nSequence", command = calc_seq, font = "Times 16 bold")
-    calc_button.grid(row=ROW, column = COL, pady=4)
+    calc_button.grid(row=ROW, column = COL, pady=2)
     ROW+=1
 
 
@@ -781,7 +761,7 @@ def ring_options():
     enter_num('proportional_radius', 'Proportional Radius', ring_window, ROW, COL)
     ROW+=1
 
-    Button(ring_window, text='Plot a Ring', command=circ, font = "Times 16 bold").grid(row=ROW, column = COL,sticky=W, pady=4)
+    Button(ring_window, text='Plot a Ring', command=circ, font = "Times 16 bold").grid(row=ROW, column = COL,sticky=W, pady=2)
 
 
 
@@ -816,9 +796,9 @@ if __name__ == "__main__":
    
    Label(master, text = "Monte Carlo Model: ").grid(row = ROW, column = COL, sticky = W)
    g.dictionary_in['shape'] = StringVar(master)
-   g.dictionary_in['shape'].set(MC_num_and_name[g.dictionary['shape']][0])
-   OptionMenu(master, g.dictionary_in['shape'], *MC_num_and_name[:,0]).grid(row = ROW, column = COL+1)
-   #MCModel = OptionMenu(master, g.dictionary_in['shape'], *MC_num_and_name[:,0])
+   g.dictionary_in['shape'].set(g.MC_num_and_name[g.dictionary['shape']][0])
+   OptionMenu(master, g.dictionary_in['shape'], *g.MC_num_and_name[:,0]).grid(row = ROW, column = COL+1)
+   #MCModel = OptionMenu(master, g.dictionary_in['shape'], *g.MC_num_and_name[:,0])
    #MCModel.grid(row = ROW, column = COL+1)
    #MCModel.bind("<Button-2>",rename_parameters)
    
@@ -839,7 +819,7 @@ if __name__ == "__main__":
    COL+=1
    parameter_help = Button(master, text='Parameter Help', font = "Times 12 bold")
    parameter_help.bind("<Button-1>", rename_parameters)
-   parameter_help.grid(row=ROW, column = COL, sticky=W, pady=4)   
+   parameter_help.grid(row=ROW, column = COL, sticky=W, pady=2)   
    COL-=1
    ROW+=1
    parameter_start_row=ROW
@@ -899,7 +879,7 @@ if __name__ == "__main__":
    else:
       advbutton = Button(master, text="Simple Options", font = "Times 12 bold")
    advbutton.bind("<Button-1>", hide)
-   advbutton.grid(row=ROW, column = COL, pady=4)
+   advbutton.grid(row=ROW, column = COL, pady=2)
    COL-=1
    
    ROW+=1
@@ -959,7 +939,7 @@ if __name__ == "__main__":
    COL+=2
    ROW=0
    
-   Button(master, text='Real Space', command=plot_points, font = "Times 16 bold").grid(row=ROW, column = COL, sticky=W, pady=4)
+   Button(master, text='Real Space', command=plot_points, font = "Times 16 bold").grid(row=ROW, column = COL, sticky=W, pady=2)
    ROW+=1
    
    #if g.dictionary['seq_hide'] == 0:
@@ -967,25 +947,25 @@ if __name__ == "__main__":
    #else:
    #   int_button = Button(master, text="Calculate Sequence", command = calc_seq, font = "Times 16 bold")
    int_button = Button(master, text="Calculate Intensity", command = calc_int, font = "Times 16 bold")
-   int_button.grid(row=ROW, column = COL,sticky=W, pady=4)
+   int_button.grid(row=ROW, column = COL,sticky=W, pady=2)
    ROW+=1
    
-   Button(master, text='Replot Intensity', command=view_intensity, font = "Times 16 bold").grid(row=ROW, column = COL, sticky=W, pady=4)
+   Button(master, text='Replot Intensity', command=view_intensity, font = "Times 16 bold").grid(row=ROW, column = COL, sticky=W, pady=2)
    
 #   ROW+=1
-#   Button(master, text='Plot a Ring', command=circ, font = "Times 16 bold").grid(row=ROW, column = COL,sticky=W, pady=4)
+#   Button(master, text='Plot a Ring', command=circ, font = "Times 16 bold").grid(row=ROW, column = COL,sticky=W, pady=2)
    
    ROW+=2
    Label(master, text="Pop-Up Windows:", font = "Times 16 bold").grid(row= ROW, column=COL, sticky = W)
    ROW+=1
 
-   Button(master, text='Ring Options', command=ring_options, font = "Times 14 bold").grid(row=ROW, column = COL, sticky=W, pady=4)   
+   Button(master, text='Ring Options', command=ring_options, font = "Times 14 bold").grid(row=ROW, column = COL, sticky=W, pady=2)   
    ROW+=1
    
-   Button(master, text='Detector Options', command=detector_parameters, font = "Times 14 bold").grid(row=ROW, column = COL, sticky=W, pady=4)   
+   Button(master, text='Detector Options', command=detector_parameters, font = "Times 14 bold").grid(row=ROW, column = COL, sticky=W, pady=2)   
    ROW+=1
    
-   Button(master, text='Sequence Options', command=sequence_parameters, font = "Times 14 bold").grid(row=ROW, column = COL, sticky=W, pady=4)   
+   Button(master, text='Sequence Options', command=sequence_parameters, font = "Times 14 bold").grid(row=ROW, column = COL, sticky=W, pady=2)   
    ROW+=1
    
    # COL += 2
@@ -997,14 +977,14 @@ if __name__ == "__main__":
    # else:
    #    seq_button = Button(master, text="No Sequence", font = "Times 12 bold")
    # seq_button.bind("<Button-1>", hide_sequence)
-   # seq_button.grid(row=ROW, column = COL, pady=4)
+   # seq_button.grid(row=ROW, column = COL, pady=2)
    # COL-=1
    # ROW+=1
    # enter_num('s_step', 'Number of Frames', master, ROW, COL)
    # ROW+=1
    # enter_str('s_var', "Which Variable?", master, ROW, COL)
    # ROW+=1
-   # Button(master, text='Common Variables', command=show_sequence_variables).grid(row=ROW, column = COL, sticky=W, pady=4)
+   # Button(master, text='Common Variables', command=show_sequence_variables).grid(row=ROW, column = COL, sticky=W, pady=2)
    #
    # ROW+=1
    # MODES_gauss = [('Linear Sequence', '0'),('Gaussian', '1'),]
@@ -1021,7 +1001,7 @@ if __name__ == "__main__":
 
    ### Fitting Options ###
 
-   Button(master, text='Fitting Options', command=select_fit_parameters, font = "Times 14 bold").grid(row=ROW, column = COL, sticky=W, pady=4)
+   Button(master, text='Fitting Options', command=select_fit_parameters, font = "Times 14 bold").grid(row=ROW, column = COL, sticky=W, pady=2)
    ROW+=1
 
 
@@ -1036,7 +1016,7 @@ if __name__ == "__main__":
 #   enter_num('mask_threshold', "Mask Threshhold", master, ROW, COL)
 #   ROW += 1
 #   COL += 1
-#   Button(master, text="Plot Exp Data", command = plot_exp_data, font = "Times 16 bold").grid(row=ROW, column=COL, pady=4)
+#   Button(master, text="Plot Exp Data", command = plot_exp_data, font = "Times 16 bold").grid(row=ROW, column=COL, pady=2)
 #   COL -= 1
 #   ROW += 1
 #   Label(master, text="Fit Parameters:").grid(row= ROW, column=COL, columnspan =2, sticky = W)
@@ -1082,9 +1062,9 @@ if __name__ == "__main__":
 #   tick('plot_residuals_tick',"Plot Fit Residuals", master,ROW, COL)
 #   COL-=1
 #   ROW += 1
-#   Button(master, text="Plot Residuals", command = plot_residuals, font = "Times 16 bold").grid(row=ROW, column=COL, pady=4)
+#   Button(master, text="Plot Residuals", command = plot_residuals, font = "Times 16 bold").grid(row=ROW, column=COL, pady=2)
 #   COL+= 1
-#   Button(master, text="Fit Exp Data", command = perform_fit, font = "Times 16 bold").grid(row=ROW, column=COL, pady=4)
+#   Button(master, text="Fit Exp Data", command = perform_fit, font = "Times 16 bold").grid(row=ROW, column=COL, pady=2)
 #   COL -= 1
 
    #select_fit_parameters()

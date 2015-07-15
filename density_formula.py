@@ -53,6 +53,56 @@ def density(coords):
       return d17choppedcoreshell(coords)
 
 
+#This is a dictionary containing all of the useful descriptions for the variables for each model.
+#g.var_list=['radius_1','radius_2','z_dim','rho_1','rho_2','num','length_2']
+g.model_parameters=[
+   (0,'Analytic Model Only',('radius_1','radius_2','z_dim','rho_1','rho_2','num','length_2')),
+   (1,'Sphere',("Radius (nm)","unused","unused","Density","unused","unused","unused")),
+   (2,'Cylinder',("Radius (nm)","unused","Length (nm)","Density","unused","unused","unused")),
+   (3,'Core Shell Cylinder',("Outer Radius (nm)","Inner Radius (nm)","Length (nm)","Core Density","Shell Density","unused","unused")),
+   (4,'Gaussian Cylinder',("Radius (nm)","Std. Dev. (nm)","Length (nm)","Density","unused","unused","unused")),
+   (5,'Chopped Cone',("Max Radius (nm)","Min Radius (nm)","Length (nm)","Density","unused","unused","unused")),
+   (6,'Hexagonal Prism',("Side Length (nm)","unused","Length (nm)","Density","unused","unused","unused")),
+   (7,'Rectangular Prism',("Long Side (nm)","Short Side (nm)","Length (nm)","Density","unused","unused","unused")),
+   (8,'String of Bubbles',("Radius (nm)","Space Btwn Centers (nm)","Length (nm)","Density","unused","unused","unused")),
+   (9,'Random Chopped Cylinder',("Radius (nm)","Gap Width (nm)","Length (nm)","Density","Number of Gaps","currently unused","unused")),
+   (10,'Custom CSV',('radius_1','radius_2','z_dim','rho_1','rho_2','num','length_2')),
+   (11,'Double Slit',("Outside Distance (nm)","Inside Distance (nm)","Length (nm)","Density","unused","unused","unused")),
+   (12,'N-gon Truncated Cone',("Radius for Large n (nm)","Radius for Small n (nm)","Length (nm)","Density","Number of Sides","currently unused","unused")),
+   (13,'Sine Oscillation',("Origin to Peak","Origin to Trough","Length (nm)","Density","Number of Oscillations","currently unused","unused")),
+   (14,'Double Cone',("End Radius (nm)","Central Radius (nm)","Length (nm)","Density","unused","unused","unused")),
+   (15,'Elliptical Cylinder',("x Radius (nm)","y Radius (nm)","Length (nm)","Density","unused","unused","unused")),
+   (16,'Aymm Hex Pyramid',("Orig. Side Length (nm)","Side Adjustment (nm)","Length (nm)","Density","unused","unused","unused")),
+   (17,'Chopped Core Shell',("Outer Radius (nm)","Inner Radius (nm)","Length (nm)","Core Density","Shell Density","Number of Gaps","Gap Length (nm)"))
+]
+#Template: fill in number, Name of Model, and useful descriptor or 'unused' in place of each variable name.
+#(n,'Name of Model',('radius_1','radius_2','z_dim','rho_1','rho_2','num','length_2'))
+
+g.MC_num_and_name = np.asarray([[g.model_parameters[i][1],i] for i in range(len(g.model_parameters))])
+
+
+#This is the list of all the Monte Carlo Models that you choose from.
+#g.MC_num_and_name = np.array([["Analytic Model Only",0],
+#                        ["Sphere",1],
+#                        ["Cylinder",2],
+#                        ["Core shell cylinder",3],
+#                        ["Gaussian",4],
+#                        ["Cone Model",5],
+#                        ["Hexagonal Prism",6],
+#                        ["Rectangular Prism",7],
+#                        ["String of Bubbles",8],
+#                        ["Chopped up Cylinder",9],
+#                        ["Custom CSV Defining the Radius",10],
+#                        ["Double Slit",11],
+#                        ["N-gon Truncated Cone",12],
+#                        ["Sine Shaped Oscillation",13],
+#                        ["Double Cone",14],
+#                        ["Elliptical Cylinder",15],
+#                        ["Asym Hex Pyramid",16],
+#                        ["Chopped Core Shell",17]
+#                        ])
+g.MC_num_and_name_dict = {x[0]:x[1] for x in g.MC_num_and_name} #This is needed, so that when an option is chosen, we can find the shape number.
+
 
 #def density_vector(all_coords):
 #   '''Vectorizes any density function.'''
@@ -167,11 +217,18 @@ def d17choppedcoreshell(coords):
    n_gaps = g.dictionary_SI['num']
    gap_l = g.dictionary_SI['length_2']
    piece_l = length-n_gaps*gap_l
+   g.dprint('Chopped Core Shell')
+
    if n_gaps%2:   #odd number of gaps
       return [rho2 if r2<np.sqrt(np.sum(coords[i,0:2]**2))<r1 and (np.abs(coords[i,2])-piece_l/2)%(piece_l+gap_l) > gap_l else rho1 if np.sqrt(np.sum(coords[i,0:2]**2))<r1 and (np.abs(coords[i,2])-piece_l/2)%(piece_l+gap_l) > gap_l else 0 for i in range(coords.shape[0])]
    else:          #even number of gaps
       return [rho2 if r2<np.sqrt(np.sum(coords[i,0:2]**2))<r1 and (np.abs(coords[i,2])-gap_l/2)%(piece_l+gap_l) < piece_l else rho1 if np.sqrt(np.sum(coords[i,0:2]**2))<r1 and (np.abs(coords[i,2])-gap_l/2)%(piece_l+gap_l) < piece_l else 0 for i in range(coords.shape[0])]
 
+#   coreshell = [rho2 if r2<np.sqrt(np.sum(coords[i,0:2]**2))<r1 else rho1 if np.sqrt(np.sum(coords[i,0:2]**2))<r2 else 0 for i in range(coords.shape[0])]
+#   if n_gaps%2:   #odd number of gaps
+#      return [coreshell[i] if (np.abs(coords[i,2])-piece_l/2)%(piece_l+gap_l) > gap_l else 0 for i in range(len(coreshell))]
+#   else:          #even number of gaps
+#      return [coreshell[i] if (np.abs(coords[i,2])-gap_l/2)%(piece_l+gap_l) < piece_l else 0 for i in range(len(coreshell))]
 
 
 #def density_slow_template(coords):
