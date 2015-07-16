@@ -542,7 +542,7 @@ def enter_vert_num(variable_name, label, ROW, COL):
     g.dictionary_in[variable_name].grid(row= ROW+1, column = COL)
 
 #If you want a tick box
-def tick(variable_name, label, window, ROW, COL):
+def tick(variable_name, label, window, ROW, COL,columnspan=1):
     g.dictionary_in[variable_name] = IntVar()
     g.dictionary_in[variable_name].set(int(g.dictionary[variable_name]))
     g.dictionary_in[variable_name+'2'] = Checkbutton(window, text=label, variable=g.dictionary_in[variable_name])
@@ -551,7 +551,7 @@ def tick(variable_name, label, window, ROW, COL):
 
     if variable_name+'2' in seq_options and g.dictionary['seq_hide'] == 0:
        g.dictionary_in[variable_name+'2'].config(state = DISABLED)
-    g.dictionary_in[variable_name+'2'].grid(row=ROW, column = COL, sticky=W)
+    g.dictionary_in[variable_name+'2'].grid(row=ROW, column = COL, columnspan=2,sticky=W)
 
 #If you want a string entered
 def enter_str(variable_name, label, window, ROW, COL):
@@ -564,12 +564,12 @@ def enter_str(variable_name, label, window, ROW, COL):
        g.dictionary_in[variable_name].config(state = DISABLED)
     g.dictionary_in[variable_name].grid(row= ROW, column = COL + 1)
 
-def enter_text(variable_name, label, WIDTH, HEIGHT, ROW, COL):#For a large textbox
+def enter_text(variable_name, label, WIDTH, HEIGHT, ROW, COL, columns=2):#For a large textbox
    Label(master, text=label).grid(row= ROW, column=COL, sticky = W)
    g.dictionary_in[variable_name] = Text(master, height = HEIGHT, width = WIDTH)
 
    g.dictionary_in[variable_name].insert(1.0, g.dictionary[variable_name])
-   g.dictionary_in[variable_name].grid(row=ROW+1, column = COL, rowspan = 2, sticky = W)
+   g.dictionary_in[variable_name].grid(row=ROW+1, column = COL, rowspan = 2, columnspan = columns, sticky = W)
 
 def radio(variable_name, MODES, window, ROW, COL): #Radiobutton
    g.dictionary_in[variable_name] = StringVar()
@@ -732,18 +732,27 @@ def sequence_parameters():
 def output_options():
    global output_window,master
    output_window = Toplevel(master)
-   output_window.title=("Output Options")
+   output_window.title("Output Options")
    new_frame = Frame(output_window)
    ROW=0
    COL=0
 
-   #scale axes
-   #log plot
-   #3D plot
-   #alt,az
-   #point distance??
-   #description
-
+   tick('scale', "Scale Axes When Plotting Real Space", output_window, ROW, COL, 2)
+   ROW+=1
+   tick('log_scale', "Plot on a Log Scale?", output_window, ROW, COL, 2)
+   ROW+=1
+   tick('ThreeD', "Plot the Intensity in 3D", output_window, ROW, COL, 2)
+   ROW+=1
+   Label(output_window, text="Choose Alt/Az for 3D plots (degrees)").grid(row= ROW, column=COL, columnspan=2, sticky = W)
+   ROW+=1
+   enter_num('altitude', "Altitude", output_window, ROW, COL)
+   ROW+=1
+   enter_num('azimuth', "Azimuth", output_window, ROW, COL)
+   ROW+=1
+   #enter_num('ave_dist', "Neighbouring Point Distance (nm)", output_window, ROW, COL)
+   #ROW+=1
+   #enter_num('z_scale','z-direction scaling of\nneighbouring point distance', output_window, ROW, COL)
+   #ROW+=1
 
     
 def ring_options():
@@ -811,8 +820,6 @@ if __name__ == "__main__":
    
    ### Parameters ###
    
-   ROW+=1
-   enter_num('num_plots', "Number of Plots to Average", master, ROW, COL)
 
    ROW+=1
    Label(master, text = "Model Parameters", font = "Times 16 bold").grid(row = ROW, column = COL, sticky = W)
@@ -874,31 +881,43 @@ if __name__ == "__main__":
    ROW=0
    Label(master, text="Output Options", font = "Times 16 bold").grid(row= ROW, column=COL, sticky = W)
    COL+=1
-   if g.dictionary['advanced'] == 0:
-      advbutton = Button(master, text="Advanced Options", font = "Times 12 bold")
-   else:
-      advbutton = Button(master, text="Simple Options", font = "Times 12 bold")
-   advbutton.bind("<Button-1>", hide)
-   advbutton.grid(row=ROW, column = COL, pady=2)
-   COL-=1
-   
-   ROW+=1
    tick('save_img', 'Save Images?', master, ROW, COL)
-   COL+=1
-   tick('scale', "Scale Axes When\nPlotting Real Space", master, ROW, COL)
+   ROW+=1
    COL-=1
+
+   ### File Information ###
+   
+   #Label(master, text="File Infomation", font = "Times 16 bold").grid(row= ROW, column=COL, sticky = W)
+   #ROW+=1
+   enter_str('title', 'Plot Title', master, ROW, COL)
    ROW+=1
-   tick('log_scale', "Plot on a Log Scale?", master, ROW, COL)
-   COL+=1
-   tick('ThreeD', "Plot the Intensity in 3D", master, ROW, COL)
-   COL-=1
+   enter_str('save_name', 'File Name', master, ROW, COL)
    ROW+=1
-   Label(master, text="Choose Alt/Az for 3D plots (degrees)").grid(row= ROW, column=COL, sticky = W)
+   enter_str('subfolder', 'Subfolder', master, ROW, COL)
    ROW+=1
-   enter_num('altitude', "Altitude", master, ROW, COL)
+   # Label(master, text="(No spaces at the start or end of File Name or Subfolder!)").grid(row= ROW, column=COL, columnspan = 2, sticky = W)
+   #ROW+=1
+   HEIGHT = 3
+   WIDTH = 50
+   enter_text("comments", "Description (optional):", WIDTH, HEIGHT, ROW, COL, 2)
+   ROW+=3
+   
+   enter_num('num_plots', "Number of Plots to Average", master, ROW, COL)
    ROW+=1
-   enter_num('azimuth', "Azimuth", master, ROW, COL)
-   ROW+=1
+
+   #tick('scale', "Scale Axes When\nPlotting Real Space", master, ROW, COL)
+   #ROW+=1
+   #tick('log_scale', "Plot on a Log Scale?", master, ROW, COL)
+   #COL+=1
+   #tick('ThreeD', "Plot the Intensity in 3D", master, ROW, COL)
+   #COL-=1
+   #ROW+=1
+   #Label(master, text="Choose Alt/Az for 3D plots (degrees)").grid(row= ROW, column=COL, sticky = W)
+   #ROW+=1
+   #enter_num('altitude', "Altitude", master, ROW, COL)
+   #ROW+=1
+   #enter_num('azimuth', "Azimuth", master, ROW, COL)
+   #ROW+=1
    enter_num('pixels', "Number of Pixels (x y)", master, ROW, COL)
    ROW+=1
    enter_num('ave_dist', "Neighbouring Point Distance (nm)", master, ROW, COL)
@@ -912,24 +931,6 @@ if __name__ == "__main__":
    ROW+=1
    enter_num('maximum', "Maximum", master, ROW, COL)
    ROW+=1
-   
-   ### File Information ###
-   
-   Label(master, text="File Infomation", font = "Times 16 bold").grid(row= ROW, column=COL, sticky = W)
-   ROW+=1
-   enter_str('title', 'Plot Title', master, ROW, COL)
-   ROW+=1
-   enter_str('save_name', 'File Name', master, ROW, COL)
-   ROW+=1
-   enter_str('subfolder', 'Subfolder', master, ROW, COL)
-   ROW+=1
-   # Label(master, text="(No spaces at the start or end of File Name or Subfolder!)").grid(row= ROW, column=COL, columnspan = 2, sticky = W)
-   ROW+=1
-   ROW+=1
-   HEIGHT = 3
-   WIDTH = 25
-   enter_text("comments", "Description (optional):", WIDTH, HEIGHT, ROW, COL)
-   ROW+=3
    
 
 
@@ -1002,6 +1003,9 @@ if __name__ == "__main__":
    ### Fitting Options ###
 
    Button(master, text='Fitting Options', command=select_fit_parameters, font = "Times 14 bold").grid(row=ROW, column = COL, sticky=W, pady=2)
+   ROW+=1
+
+   Button(master, text='Output Options', command=output_options, font = "Times 14 bold").grid(row=ROW, column = COL, sticky=W, pady=2)   
    ROW+=1
 
 

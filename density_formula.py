@@ -224,11 +224,6 @@ def d17choppedcoreshell(coords):
    else:          #even number of gaps
       return [rho2 if r2<np.sqrt(np.sum(coords[i,0:2]**2))<r1 and (np.abs(coords[i,2])-gap_l/2)%(piece_l+gap_l) < piece_l else rho1 if np.sqrt(np.sum(coords[i,0:2]**2))<r1 and (np.abs(coords[i,2])-gap_l/2)%(piece_l+gap_l) < piece_l else 0 for i in range(coords.shape[0])]
 
-#   coreshell = [rho2 if r2<np.sqrt(np.sum(coords[i,0:2]**2))<r1 else rho1 if np.sqrt(np.sum(coords[i,0:2]**2))<r2 else 0 for i in range(coords.shape[0])]
-#   if n_gaps%2:   #odd number of gaps
-#      return [coreshell[i] if (np.abs(coords[i,2])-piece_l/2)%(piece_l+gap_l) > gap_l else 0 for i in range(len(coreshell))]
-#   else:          #even number of gaps
-#      return [coreshell[i] if (np.abs(coords[i,2])-gap_l/2)%(piece_l+gap_l) < piece_l else 0 for i in range(len(coreshell))]
 
 
 #def density_slow_template(coords):
