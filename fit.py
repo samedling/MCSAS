@@ -8,32 +8,44 @@ class Fit_Parameters():
       Also contains list of units for user-friendly output.'''
    def __init__(self):
       shape=g.dictionary['shape']
-      always=('x_theta','y_theta','z_theta','background','z_dim')
+      
+#      if shape in (1,2,6):    #Sphere, Cylinder, or Hex Prism
+#         self.density_params=('radius_1','rho_1')
+#      elif shape == 3:        #Core Shell
+#         self.density_params=('radius_1','radius_2','rho_1','rho_2')
+#      elif shape == 4:        #Gaussian
+#         self.density_params=('radius_1','radius_2')     #radius_1 only for scaling.
+#      elif shape in (5,14):   #Chopped Cone, Double Done
+#         self.density_params=('radius_1','radius_2','rho_1') #z_dim intrinsic too
+#      elif shape == 7:        #Rect. Prism
+#         self.density_params=('radius_1','radius_2','rho_1')
+#      elif shape in (8,11,15):   #Bubbles, Double Slit, Eliptical Cylinder
+#         self.density_params=('radius_1','radius_2','rho_1')
+#      elif shape in (9,12,13):#Chopped Cylinder, N-Shaped Chopped Cone, Sine
+#         self.density_params=('radius_1','radius_2','rho_1','rho_2')  #z_dim intrinsic too
+#      elif shape == 10:
+#         print('Model not supported.')
+#      else:
+#         print('Unknown model. Assuming model uses all parameters.')
+#         self.density_params=('radius_1','radius_2','rho_1','rho_2')  #z_dim intrinsic too
+#      always=('x_theta','y_theta','z_theta','background','z_dim')
+      
+      #self.density_params=[g.var_list[i] if g.model_parameters[shape][2][i] for i in range(len(g.var_list))]
+      self.density_params=[]
+      for i in range(len(g.var_list)):
+         if g.model_parameters[shape][2][i] is not 'unused':
+            self.density_params.append(g.var_list[i])
+      always=['x_theta','y_theta','z_theta','background']
+
       self.names=[]
-      if shape in (1,2,6):    #Sphere, Cylinder, or Hex Prism
-         self.density_params=('radius_1','rho_1')
-      elif shape == 3:        #Core Shell
-         self.density_params=('radius_1','radius_2','rho_1','rho_2')
-      elif shape == 4:        #Gaussian
-         self.density_params=('radius_1','radius_2')     #radius_1 only for scaling.
-      elif shape in (5,14):   #Chopped Cone, Double Done
-         self.density_params=('radius_1','radius_2','rho_1') #z_dim intrinsic too
-      elif shape == 7:        #Rect. Prism
-         self.density_params=('radius_1','radius_2','rho_1')
-      elif shape in (8,11,15):   #Bubbles, Double Slit, Eliptical Cylinder
-         self.density_params=('radius_1','radius_2','rho_1')
-      elif shape in (9,12,13):#Chopped Cylinder, N-Shaped Chopped Cone, Sine
-         self.density_params=('radius_1','radius_2','rho_1','rho_2')  #z_dim intrinsic too
-      elif shape == 10:
-         print('Model not supported.')
-      else:
-         print('Unknown model. Assuming model uses all parameters.')
-         self.density_params=('radius_1','radius_2','rho_1','rho_2')  #z_dim intrinsic too
       for name in (self.density_params+always):
          if g.dictionary['fit_'+name]:   #Looks for checkbox values.
             self.names.append(name)
+      
       self.values=[g.dictionary_SI[var] for var in self.names]
+      
       self.length=len(self.values)
+      
       self.units=[]
       for i in range(self.length):     #Makes array of unit names correlated with values (for printing).
          if self.names[i][2:] == 'theta':
@@ -43,7 +55,7 @@ class Fit_Parameters():
                self.units.append(' radians')
          elif self.names[i][:-2] == 'radius':
             self.units.append(' nm')
-         elif self.names[i] == 'z_dim':
+         elif self.names[i] in ('z_dim','length_2'):
             self.units.append(' nm')
          else:
             self.units.append('')
