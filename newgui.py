@@ -773,6 +773,56 @@ def ring_options():
     Button(ring_window, text='Plot a Ring', command=circ, font = "Times 16 bold").grid(row=ROW, column = COL,sticky=W, pady=2)
 
 
+def run_file():
+   global test_file
+   filename=test_file.get()
+   if filename:
+      execfile(root_folder+"/"+filename,globals())
+   else:
+      execfile(root_folder+"/test.py",globals())
+
+
+def run_code():
+   global test_code
+   print('Printing code:')
+   print(test_code.get(1.0,END).rstrip())
+   print('Running code...')
+   exec test_code.get(1.0,END).rstrip()
+   print('Done.')
+
+
+def open_debug():
+   global debug_window,master
+   global test_file,test_code
+   debug_window = Toplevel(master)
+   debug_window.title("Debug Window")
+   new_frame = Frame(debug_window)
+   ROW = 0
+   COL = 0
+
+   #Button(debug_window, text='Run test.py', command=run_file, font = "Times 16 bold").grid(row=ROW, column = COL,sticky=W, pady=2)
+   #ROW+=1
+
+   Label(debug_window, text='Filename').grid(row= ROW, column=COL, sticky = W)
+   test_file = Entry(debug_window)
+   test_file.insert(0, 'test.py')
+   test_file.grid(row= ROW, column = COL + 1)
+   COL+=2
+
+   Button(debug_window, text='Run File', command=run_file, font = "Times 16 bold").grid(row=ROW, column = COL,sticky=W, pady=2)
+   ROW+=1
+   COL-=2
+   
+   Label(debug_window, text='Arbitrary Python Code').grid(row= ROW, column=COL, columnspan = 2, sticky = W)
+   test_code = Text(debug_window, height = 5, width = 60)
+   #test_code.insert(1.0,'#insert code here')
+   test_code.insert(1.0,'#get_numbers_from_gui()\n#insert code here\n')
+   test_code.grid(row=ROW+1, column = COL, rowspan = 2, columnspan = 3, sticky = W)
+   COL+=2
+
+   #enter_text.get(1.0,END).rstrip()
+   Button(debug_window, text='Run Python Code', command=run_code, font = "Times 16 bold").grid(row=ROW, column = COL,sticky=W, pady=2)
+   ROW+=2
 
 
 
@@ -1008,6 +1058,11 @@ if __name__ == "__main__":
    Button(master, text='Output Options', command=output_options, font = "Times 14 bold").grid(row=ROW, column = COL, sticky=W, pady=2)   
    ROW+=1
 
+
+   if g.debug:
+      ROW+=1
+      Button(master, text='Debug Window', command=open_debug, font = "Times 14 bold").grid(row=ROW, column = COL, sticky=W, pady=2)   
+      ROW+=1
 
 #   Label(master, text="Fitting Options", font = "Times 16 bold").grid(row= ROW, column=COL, sticky = W)
 #   ROW += 1
