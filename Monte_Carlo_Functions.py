@@ -120,7 +120,7 @@ def Calculate_Intensity(Points,mask=[]):
       coherence_length = 1
    else:
       coherence_length = 2*np.pi/(g.dictionary_SI['EHC'] * g.dictionary['d_lambda'])
-   duplication = 10 #number of bunches per coherence_length
+   duplication = 1 #number of bunches per coherence_length
    num_bunches = int(round(duplication*length/coherence_length))
    if num_bunches > duplication:    #if length > coherence_length:
       print("Object length ({0}) exceeds coherence length ({1})...".format(length,coherence_length))
@@ -133,12 +133,12 @@ def Calculate_Intensity(Points,mask=[]):
          print(dividing_points)
       intensity = np.zeros((y_pixels,x_pixels),order='F')   #todo: might not need Fortran order
       #TODO: DO I NEED TO OFFSET Z IN SOME WAY??
-      for i in range(1,duplication):
-         if g.debug:
-            print("Starting section {0} of {1}".format(i,len(dividing_points)+duplication-1))
-            print("{0} to {1}".format(dividing_points[0],dividing_points[i]))
-            print("{0} to {1}".format(z_list[dividing_points[0]],z_list[dividing_points[i]]))
-         intensity += Detector_Intensity(Points[dividing_points[0]:dividing_points[i],:],mask)
+#      for i in range(1,duplication):
+#         if g.debug:
+#            print("Starting section {0} of {1}".format(i,len(dividing_points)+duplication-1))
+#            print("{0} to {1}".format(dividing_points[0],dividing_points[i]))
+#            print("{0} to {1}".format(z_list[dividing_points[0]],z_list[dividing_points[i]]))
+#         intensity += Detector_Intensity(Points[dividing_points[0]:dividing_points[i],:],mask)
       for i in range(len(dividing_points)-duplication):     #TODO: also do more at ends??
          if g.debug:
             print("Starting main section {0} of {1}".format(i+1+duplication,len(dividing_points)+duplication-1))
@@ -146,12 +146,12 @@ def Calculate_Intensity(Points,mask=[]):
             print("{0} to {1}".format(dividing_points[i],dividing_points[i+duplication]))
             print("{0} to {1}".format(z_list[dividing_points[i]],z_list[dividing_points[i+duplication]-1]))
          intensity += Detector_Intensity(Points[dividing_points[i]:dividing_points[i+duplication],:],mask)
-      for i in range(duplication-1):
-         if g.debug:
-            print("Starting section {0} of {1}".format(i+1+len(dividing_points),len(dividing_points)+duplication-1))
-            print("{0} to {1}".format(dividing_points[len(dividing_points)-duplication+i],dividing_points[-1]))
-            print("{0} to {1}".format(z_list[dividing_points[len(dividing_points)-duplication+i]],z_list[-1]))
-         intensity += Detector_Intensity(Points[dividing_points[len(dividing_points)-duplication+i]:dividing_points[-1],:],mask)
+#      for i in range(duplication-1):
+#         if g.debug:
+#            print("Starting section {0} of {1}".format(i+1+len(dividing_points),len(dividing_points)+duplication-1))
+#            print("{0} to {1}".format(dividing_points[len(dividing_points)-duplication+i],dividing_points[-1]))
+#            print("{0} to {1}".format(z_list[dividing_points[len(dividing_points)-duplication+i]],z_list[-1]))
+#         intensity += Detector_Intensity(Points[dividing_points[len(dividing_points)-duplication+i]:dividing_points[-1],:],mask)
       return intensity
    else:
       if coherence_length < 1:

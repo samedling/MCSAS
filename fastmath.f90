@@ -157,7 +157,7 @@ subroutine coherent_long(qsize,ehc,coherence_length,mask,x_pixels,y_pixels,point
                !do p2=MAX(0,p1-coherence_points),MIN(npts,p1+coherence_points)
                do p2=1,npts
                   r = points(1:3,p1)-points(1:3,p2)
-                  if (SUM(r**2) > coherence_length**2) then
+                  if (SUM(r**2) < coherence_length**2) then
                      QdotR = DOT_PRODUCT(Q,r)
                   !if ((points(1:3,p1)-points(1:3,p2))**2 > coherence_length**2) then
                      !QdotR = DOT_PRODUCT(Q,points(1:3,p1)-points(1:3,p2))
