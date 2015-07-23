@@ -83,6 +83,7 @@ Some comments:
 * If the fit steps are each taking less than 10 seconds, there would probaly be very little additional time taken by increasing pixels by 40% or halving the grid compression or z_scaling.
 * Be careful when letting the background vary.  If the background gets set too high by the computer, it cannot normalize properly and all bets are off.
 * Checking the radial symmetry box decreases the time taken by 30-50% (30% for Fortran, 40% for OpenCL, 50% for pure Python).
+* Opening multiple copies of the same window is not recommended.  If you do, it will use the values in the one you opened most recently but it will constantly reopen uneditable old ones.  Or sometimes it will produce an error until you close them and reopen one.  Either way you'll get confused, so avoid opening more than one of each window.
 
 ## Adding Models ##
 
@@ -91,14 +92,16 @@ First, make sure you have the most recent version.
 ### To add a Monte Carlo model: ###
 
 1. Open density_formula.py.
-   At the very bottom of the file, create another "elif:" block like the ones above it.
+   Towards the top of the file, create another "elif:" block inside the density function.
+   At the end of the file, use one of the templates to create another function d##shape_name.  Your new function needs to take in 2d numpy array of all the coordinates and output a 1d numpy array of the densities.
    Remember the parameters your function uses.
    Remember the number you assigned.
    Save and close the file.
 2. Open newgui.py and go to the line defining MC_num_and_name.
-   After the last number (currently around line 80), add a line like the ones above it using the number from step 1.
-3. Go to the beginning of the Fit_Parameter class definition
-   In the elif block (currently around line 450), add a pair of lines with the number and the parameters from step 1.
+   After the last number, add a line like the ones above it using the number from step 1.
+   Save and close the file.
+3. Open fit.py and go to the beginning of the Fit_Parameter class definition
+   In the elif block, add a pair of lines with the number and the parameters from step 1.
    Save and close the file.
    
 Do not add to the middle of the list as this will cause errors when Fortran or OpenCL are enabled.

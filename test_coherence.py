@@ -18,6 +18,9 @@ def long_way(Points,speed='fortran'):
    if speed[0] in ('f','F'):  #fortran
       #print('Calling Fortran...')
       return fastmath.sumint.coherent_long(QSize,EHC,coherence_length,mask,Points.T)
+   elif speed[0] in ('o','O'):   #OpenCL
+      #print('Calling OpenCL...')
+      return g.opencl_sumint.sumint(QSize,EHC,x_pixels,y_pixels,Points,symmetric,coherence_length=coherence_length)
    else:                      #python
       print('Using Python (will probably take forever, and not debugged!)...')
       for i in range(x_pixels):
@@ -33,55 +36,65 @@ def long_way(Points,speed='fortran'):
                         QdotR = np.dot(Q,r)
                         temp_intensity += Points[p1,3]*Points[p2,3]*np.cos(QdotR)
 
-def compare(points):
+def compare(points,speed='Fortran'):
    print('\n')
+   print('{0}: Starting calculations...'.format(time.strftime("%X"),speed))
    #points = Points_For_Calculation()
 
    #Fast Way (check!)
    print('New Way (to check):')
-   calc_int = Calculate_Intensity(points)
+   calc_int = Calculate_Intensity(points,coherence_dup=1,coherence_taper=False)
    #print(calc_int.sum())
-   norm_calc_int = normalize(calc_int)
+   g.calc_int = normalize(calc_int)
    #print norm_calc_int
 
    #Old Way
    print('Old Way (Infinite Coherence Length):')
    det_int = Detector_Intensity(points)  #runs with infinite coherence length
    #print(det_int.sum())
-   norm_det_int = normalize(det_int)
+   g.det_int = normalize(det_int)
    #print norm_det_int
    
    #Long Way
    print('Long Way:')
-   long_int = long_way(points)
+   print('{0}: Starting long calculations using {1}...'.format(time.strftime("%X"),speed))
+   long_int = long_way(points,speed)
    #print('finished')
    #print(long_int.sum())
-   norm_long_int = normalize(long_int)
+   g.long_int = normalize(long_int)
    #print norm_long_int
 
    print('\n')
-   old_diff = norm_long_int - norm_det_int
-   new_diff = norm_long_int - norm_calc_int
+   old_diff = g.long_int - g.det_int
+   new_diff = g.long_int - g.calc_int
    print('Old calculation differs by {0:6.4f} (least sq: {1:8.6f}).'.format(np.sum(np.abs(old_diff)),np.sum(old_diff**2)))
    print('New calculation differs actual by {0:6.4f} (least sq: {1:8.6f}).'.format(np.sum(np.abs(new_diff)),np.sum(new_diff**2)))
 
-   #print('Plotting New Way, Old Way, and Long Way.')
-   #Fit_plot(norm_calc_int,norm_det_int,norm_long_int)
+   print('{0}: All Done!'.format(time.strftime("%X")))
 
+   plot_all()
+   #plot_new()
+   #plot_old()
+
+def plot_all():
+   print('Plotting New Way, Old Way, and Long Way.')
+   Fit_plot(g.calc_int,g.det_int,g.long_int)
+
+def plot_new():
    print('Plotting Long Way, New Way, and difference.')
-   Fit_plot(norm_long_int,norm_calc_int,np.abs(norm_long_int-norm_calc_int))
+   Fit_plot(g.long_int,g.calc_int,np.abs(g.long_int-g.calc_int))
 
-   #print('Plotting Long Way, Old Way, and difference.')
-   #Fit_plot(norm_long_int,norm_det_int,np.abs(norm_long_int-norm_det_int))
-
-   print('All Done!')
+def plot_old():
+   print('Plotting Long Way, Old Way, and difference.')
+   Fit_plot(g.long_int,g.det_int,np.abs(g.long_int-g.det_int))
 
 
 
 
 if __name__ == '__main__':
+   g.verbose = False
    print('\n')
-   g.dictionary['pixels'] = "50 50"
+   g.dictionary['pixels'] = "20 20"
    g.dictionary['z_dim'] = 500
    g.dictionary['z_scale'] = 50
    #g.dictionary['d_lambda'] = 0     #infinite coherence length
@@ -93,7 +106,7 @@ if __name__ == '__main__':
 
    make_SI_dict()
    
-   points = Points_For_Calculation()
-   compare(points)
+   g.points = Points_For_Calculation()
+   compare(g.points,'OpenCL')
 
 #normalize & then take the difference?
