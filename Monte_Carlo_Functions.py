@@ -108,6 +108,43 @@ def Points_For_Calculation(seed=0):
 #symmetric = g.dictionary_SI['symmetric']
 #Qz = g.dictionary_SI['Qz']
 
+
+def Accurate_Intensity(Points,mask=[]):
+   '''SLOW but accurately accounts for coherence length.'''
+   symmetric = g.dictionary_SI['symmetric']
+   QSize = g.dictionary_SI['QSize']
+   x_pixels,y_pixels = [int(i) for i in g.dictionary_SI['pixels'].split()]
+   EHC = g.dictionary_SI['EHC']
+   coherence_length = 2*np.pi/(g.dictionary_SI['EHC']*g.dictionary['d_lambda'])
+   #print('Object length is {0}'.format(Points[-1,2]-Points[0,2])) #wrong; points not sorted
+   #print('Coherence length is {0}'.format(coherence_length))
+   if g.f2py_enabled:  #fortran
+      if not len(mask):
+         mask = np.ones((y_pixels,x_pixels))
+      #print('Calling Fortran...')
+      return fastmath.sumint.coherent_long(QSize,EHC,coherence_length,mask,Points.T)
+   elif g.opencl_enabled:   #OpenCL
+      #print('Calling OpenCL...')
+      if not len(mask):
+         return g.opencl_sumint.sumint(QSize,EHC,x_pixels,y_pixels,Points,symmetric,coherence_length=coherence_length)
+      else:
+         return g.opencl_sumint.sumint_mask(QSize,EHC,mask,Points,symmetric,coherence_length=coherence_length)
+   else:                      #python
+      print('Using Python (will probably take forever, and not debugged!)...')
+      for i in range(x_pixels):
+         for j in range(y_pixels):
+            if (mask[j,i] > 0):
+               Q = [i*QSize/x_pixels-0.5*QSize, j*QSize/y_pixels-0.5*QSize,
+               2*EHC*np.sin(np.sqrt((i-0.5*x_pixels)**2+(j-0.5*y_pixels)**2)*QSize/(y_pixels*2*EHC))**2 ]
+               temp_intensity = 0
+               for p1 in range(len(Points)):
+                  for p2 in range(len(Points)):
+                     r = Points[p1,:] - Points[p2,:]
+                     if (np.sum(r**2) > coherence_length**2):
+                        QdotR = np.dot(Q,r)
+                        temp_intensity += Points[p1,3]*Points[p2,3]*np.cos(QdotR)
+      return intensity
+
 def Calculate_Intensity(Points,mask=[],coherence_dup = 1, coherence_taper = 0):
    '''Runs Detector_Intensity, but can also handle objects longer than the coherence length.'''
    x_pixels,y_pixels = [int(i) for i in g.dictionary_SI['pixels'].split()]
@@ -120,12 +157,14 @@ def Calculate_Intensity(Points,mask=[],coherence_dup = 1, coherence_taper = 0):
       coherence_length = 1
    else:
       coherence_length = 2*np.pi/(g.dictionary_SI['EHC'] * g.dictionary['d_lambda'])
-   #coherence_dup = 1 #number of bunches per coherence_length
-   num_bunches = int(round(coherence_dup*length/coherence_length))
+   #num_bunches = int(round(coherence_dup*length/coherence_length))
+   num_bunches = int(np.floor(coherence_dup*length/coherence_length))   #Seems best for some reason.
+   #num_bunches = int(np.ceil(coherence_dup*length/coherence_length))   #worse than round, at least sometimes
+   piece_length = g.dictionary_SI['z_dim']/num_bunches
    if num_bunches > coherence_dup:    #if length > coherence_length:
       print("Object length ({0}) exceeds coherence length ({1})...".format(length,coherence_length))
-      print("Will divide into {0} sections.".format(num_bunches))
-      dividing_points = np.searchsorted(z_list,-length/2+(np.arange(num_bunches+1))*coherence_length/coherence_dup)
+      print("Will divide into {0} sections of length {1}.".format(num_bunches,piece_length))
+      dividing_points = np.searchsorted(z_list,-length/2+(np.arange(num_bunches+1))*piece_length/coherence_dup)
       dividing_points[0] = 0    #Not sure why this isn't already 0.
       dividing_points[-1] = len(z_list)  #Should this be the last element or should I append?
       if g.debug:

@@ -152,7 +152,8 @@ def normalize(data,mask=[],background=0):
       normalized = np.maximum(data*total*mask,np.zeros_like(data))
       #data *= total    #todo: should be a little faster
    #gprint("Normalized so total value is {0} and lowest value is {1}.".format(np.sum(normalized),np.min(normalized)))
-   g.dprint("Normalized so total value is {0} and lowest value is {1}.".format(np.sum(normalized*mask),np.min(normalized)))
+   if g.verbose:
+      g.dprint("Normalized so total value is {0} and lowest value is {1}.".format(np.sum(normalized*mask),np.min(normalized)))
    return normalized
 
 def plot_exp_data():#threshold=1e-7,zero_value=1e-7):
