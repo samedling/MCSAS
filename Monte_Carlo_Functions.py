@@ -1,5 +1,6 @@
 import random, os, sys, pylab, time
 import numpy as np
+from scipy.interpolate import interp2d,Rbf,griddata
 
 import global_vars as g
 
@@ -120,7 +121,7 @@ def Accurate_Intensity(Points,mask=[]):
    #print('Coherence length is {0}'.format(coherence_length))
    if g.f2py_enabled:  #fortran
       if not len(mask):
-         mask = np.ones((y_pixels,x_pixels))
+         mask = np.ones((y_pixels,x_pixels))    #TODO: Is this right or backwards?
       #print('Calling Fortran...')
       return fastmath.sumint.coherent_long(QSize,EHC,coherence_length,mask,Points.T)
    elif g.opencl_enabled:   #OpenCL
@@ -145,6 +146,85 @@ def Accurate_Intensity(Points,mask=[]):
                         temp_intensity += Points[p1,3]*Points[p2,3]*np.cos(QdotR)
       return intensity
 
+def Adjust_Intensity(points,mask=[],newmask_shape=(20,20),newmask_points=400,interp_method='rbf'):
+    '''Runs Accurate_Intensity on a small subset of the points in order to correct the faster Calculate_Intensity.'''
+    #Create New Mask
+    x_pixels,y_pixels = [int(i) for i in g.dictionary_SI['pixels'].split()]
+    if not len(mask):
+        newmask = np.zeros((x_pixels,y_pixels)) #TODO: Is this right or backwards?
+        modx = x_pixels/newmask_shape[0]
+        mody = y_pixels/newmask_shape[1]
+        for i in range(newmask_shape[0]):
+            for j in range(newmask_shape[1]):
+                newmask[int((i+0.5)*modx),int((j+0.5)*mody)] = 1
+    else:
+        newmask = mask.copy()
+        mask_points = mask.sum()
+        mod = mask_points/newpoints
+        counter = int((mask_points%newpoints)/2)
+        for i in range(mask.shape[0]):
+            for j in range(mask.shape[1]):
+                if mask[i,j]:
+                    counter = (counter+1)%mod
+                    if counter == 1:
+                        newmask[i,j] = 0
+    #Calculate Accurate Intensity at New Mask points, and Fast Intensity at all points
+    g.dprint('Calculating actual intensity on {0} pixels...'.format(int(newmask.sum())))
+    accurate = Accurate_Intensity(points,newmask)
+    g.dprint('Calculating rough intensity everywhere...')
+    fast = Calculate_Intensity(points,mask)
+    scaleby = normalize(accurate)/normalize(fast)
+    
+    #Interpolation Options: scipy.interpolate: Rbf, interp2d, or griddata
+    if interp_method[0] == 'r':
+        #Rbf
+        x = []
+        y = []
+        z = []
+        for i in range(x_pixels):
+            for j in range(y_pixels):
+                if newmask[i,j]:
+                    x.append(i)
+                    y.append(j)
+                    z.append(scaleby[i,j])
+        xx,yy = np.meshgrid(np.arange(x_pixels),np.arange(y_pixels))
+        rbf = Rbf(x,y,z,epsilon=2)
+        scaleby = rbf(xx,yy)
+    
+    #interp2d
+    elif interp_method[0] == 'i':
+        x = []
+        y = []
+        z = []
+        for i in range(x_pixels):
+            for j in range(y_pixels):
+                if newmask[i,j]:
+                    x.append(i)
+                    y.append(j)
+                    z.append(scaleby[i,j])
+        xx,yy = np.meshgrid(x,y)
+        f = interp2d(x,y,z,kind='cubic')    # 'cubic', 'linear', or 'nearest'
+        newx = np.arange(x_pixels)
+        newy = np.arange(y_pixels)
+        scaleby = f(newx,newy)
+    
+    #griddata - seems broken; see http://docs.scipy.org/doc/scipy/reference/tutorial/interpolate.html ??
+    elif interp_method[0] == 'g':
+        xy = []
+        z = []
+        for i in range(x_pixels):
+            for j in range(y_pixels):
+                if newmask[i,j]:
+                    xy.append([i,j])
+                    z.append(scaleby[i,j])
+        xy = np.asarray(xy)
+        gridx,gridy=np.mgrid[0:x_pixels,0:y_pixels]
+        scaleby = griddata(xy,z,(gridx,gridy),method='cubic')
+    
+    print('Done Interpolating.')
+    
+    return fast*scaleby
+
 def Calculate_Intensity(Points,mask=[],coherence_dup = 1, coherence_taper = 0):
    '''Runs Detector_Intensity, but can also handle objects longer than the coherence length.'''
    x_pixels,y_pixels = [int(i) for i in g.dictionary_SI['pixels'].split()]
@@ -160,8 +240,8 @@ def Calculate_Intensity(Points,mask=[],coherence_dup = 1, coherence_taper = 0):
    #num_bunches = int(round(coherence_dup*length/coherence_length))
    num_bunches = int(np.floor(coherence_dup*length/coherence_length))   #Seems best for some reason.
    #num_bunches = int(np.ceil(coherence_dup*length/coherence_length))   #worse than round, at least sometimes
-   piece_length = g.dictionary_SI['z_dim']/num_bunches
    if num_bunches > coherence_dup:    #if length > coherence_length:
+      piece_length = g.dictionary_SI['z_dim']/num_bunches
       print("Object length ({0}) exceeds coherence length ({1})...".format(length,coherence_length))
       print("Will divide into {0} sections of length {1}.".format(num_bunches,piece_length))
       dividing_points = np.searchsorted(z_list,-length/2+(np.arange(num_bunches+1))*piece_length/coherence_dup)
