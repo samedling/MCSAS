@@ -47,18 +47,27 @@ if g.f2py_enabled:
       print("Accelerating using f2py.")
    except ImportError:
       g.f2py_enabled = False
-   #try:
-   #   fastmath.module.new_function(<vars>)     #Update this line to check for updates for f2py binary.
-   #except AttributeError:
-   #   print('Existing f2py binary was out of date; newer version copied.')
-   #   g.vprint('If you ran `make` yourself, run it again for optimal performance.')
-   #   if sys.platform == 'darwin':
-   #      os.system('cp fastmath-OSX10.10_C2DP8700.so fastmath.so')
-   #      import fastmath
-   #   elif sys.platform == 'linux2':
-   #      os.system('cp fastmath-Ubuntu14.10_i7M640.so fastmath.so')
-   #      import fastmath
-   #   print("Accelerating using f2py.")
+   try:
+     if fastmath.version.number() < 0.3:     #Update this line to check for updates for f2py binary.
+        print('Existing f2py binary was out of date; newer version copied.')
+        g.vprint('If you ran `make` yourself, run it again for optimal performance.')
+        if sys.platform == 'darwin':
+           os.system('cp fastmath-OSX10.10_C2DP8700.so fastmath.so')
+           import fastmath
+        elif sys.platform == 'linux2':
+           os.system('cp fastmath-Ubuntu14.10_i7M640.so fastmath.so')
+           import fastmath
+        print("Accelerating using f2py.")
+   except AttributeError:
+     print('Existing f2py binary was out of date; newer version copied.')
+     g.vprint('If you ran `make` yourself, run it again for optimal performance.')
+     if sys.platform == 'darwin':
+        os.system('cp fastmath-OSX10.10_C2DP8700.so fastmath.so')
+        import fastmath
+     elif sys.platform == 'linux2':
+        os.system('cp fastmath-Ubuntu14.10_i7M640.so fastmath.so')
+        import fastmath
+     print("Accelerating using f2py.")
 if not g.f2py_enabled and not g.opencl_enabled:
    print("Could not accelerate using either OpenCL or f2py.")
    print("See README for how to install either OpenCL or f2py.")
@@ -69,7 +78,7 @@ if g.debug:
 
 
 #These are the default settings
-g.dictionary = {'advanced':1, 'altitude':45, 'analytic': 2, 'ave_dist': 0.6, 'azimuth':45, 'bound': 1, 'circ_delta':5, 'comments':'',
+g.dictionary = {'advanced':1, 'altitude':45, 'analytic': 2, 'ave_dist': 1.0, 'azimuth':45, 'bound': 1, 'circ_delta':5, 'comments':'',
               'degrees': 1, 'energy_wavelength': 11, 'energy_wavelength_box': 0, 'gauss':0, 'log_scale': 1, 'maximum': 0.01, 'minimum': 1e-8, 'd_lambda': 2e-4,
               'num_plots': 1, 'pixels': (200,200), 'proportional_radius':0.5, 'QSize': 6,'Qz': 0, 'radius_1': 5.0, 'radius_2': 2.5, 'rho_1': 1.0, 'rho_2': -0.5,
               'save_img':1, 'save_name': 'save_name', 'scale': 1,'SD':1, 'seq_hide':1, 'shape': 2, 's_start': 0, 's_step': 2,
@@ -327,6 +336,19 @@ def view_intensity(): #This allows you to view a premade intensity
     Intensity_plot(Intensity, "intensity", g.dictionary_SI['title'], 1)
     clear_mem()
     print "Program Finished"
+
+
+def slow_intensity(): #This makes an intensity the accuate, slow way.
+    global sim_info
+    get_numbers_from_gui()
+    save_vars_to_file("Monte Carlo Intensity")
+    Intensity = normalize(Accurate_Intensity(Points_For_Calculation(sort=1)))
+    save(Intensity, "intensity")
+    radial_intensity = radial(Intensity)
+    save(radial_intensity, "radial_intensity")
+    if g.dictionary_SI['save_img'] == 1:
+      view_intensity()
+    clear_mem()
     
 def make_intensity(): #This makes an intensity
     global sim_info
@@ -602,9 +624,15 @@ def detector_parameters():
     ROW+=1
     enter_num('energy_wavelength', "Energy/Wavelength", det_window, ROW, COL)
     ROW+=1
-    enter_num('d_lambda', "Wavelength Spread (2e-4)", det_window, ROW, COL)
-    ROW+=1
     enter_num('QSize', "Detector Q Range (nm^-1)", det_window, ROW, COL)
+    ROW+=1
+    Label(det_window, text="Coherence Length").grid(row= ROW, column=COL, columnspan=2, sticky = W) 
+    COL+=1
+    Button(det_window, text='SLOW Calculate', command=slow_intensity, font = "Times 16 bold").grid(row=ROW, column = COL,sticky=W, pady=2)
+    COL-=1
+    ROW+=1
+    enter_num('d_lambda', "Wavelength Spread (2e-4)", det_window, ROW, COL)
+
 
 
 def model_parameters():

@@ -6,7 +6,7 @@ import global_vars as g
 
 ######################          Finding the Point used in the Calculation         ##################
 
-def Points_For_Calculation(seed=0):
+def Points_For_Calculation(seed=0,sort=0):
     if seed:
        np.random.seed([seed])
     
@@ -85,8 +85,10 @@ def Points_For_Calculation(seed=0):
     #Multiplying the matrix by each column. The transpose is to make the multiplication work properly.
     #I am multiplying the rotation matricies together, then multiplying it by the coordinates for each point
     try:
-       return np.asarray(points_inside.dot(np.transpose(rotz.dot(roty).dot(rotx))))
-       #return np.asarray(points_inside[points_inside[:,2].argsort()].dot(np.transpose(rotz.dot(roty).dot(rotx))))   #first orders list by z and then rotation matrices....backwards?
+       if sort:
+          return np.asarray(points_inside[points_inside[:,2].argsort()].dot(np.transpose(rotz.dot(roty).dot(rotx))))   #first orders list by z and then rotation matrices....backwards?
+       else:
+          return np.asarray(points_inside.dot(np.transpose(rotz.dot(roty).dot(rotx))))
     except ValueError:
        print points.shape
        print rotx.shape, roty.shape, rotz.shape
@@ -110,7 +112,7 @@ def Points_For_Calculation(seed=0):
 #Qz = g.dictionary_SI['Qz']
 
 
-def Accurate_Intensity(Points,mask=[]):
+def Accurate_Intensity(Points,mask=[],sort=0):
    '''SLOW but accurately accounts for coherence length.'''
    symmetric = g.dictionary_SI['symmetric']
    QSize = g.dictionary_SI['QSize']
@@ -122,10 +124,13 @@ def Accurate_Intensity(Points,mask=[]):
    if g.f2py_enabled:  #fortran
       if not len(mask):
          mask = np.ones((y_pixels,x_pixels))    #TODO: Is this right or backwards?
-      #print('Calling Fortran...')
-      return fastmath.sumint.coherent_long(QSize,EHC,coherence_length,mask,Points.T)
+      g.dprint('Calling Fortran...')
+      if sort:
+         return fastmath.sumint.coherent_shorter(QSize,EHC,coherence_length,mask,Points.T)
+      else:
+         return fastmath.sumint.coherent_long(QSize,EHC,coherence_length,mask,Points.T)
    elif g.opencl_enabled:   #OpenCL
-      #print('Calling OpenCL...')
+      g.dprint('Calling OpenCL...')
       if not len(mask):
          return g.opencl_sumint.sumint(QSize,EHC,x_pixels,y_pixels,Points,symmetric,coherence_length=coherence_length)
       else:
@@ -263,7 +268,7 @@ def Calculate_Intensity(Points,mask=[],coherence_dup = 1, coherence_taper = 0):
              intensity += Detector_Intensity(Points[dividing_points[0]:dividing_points[i],:],mask)
       for i in range(len(dividing_points)-coherence_dup):     #TODO: also do more at ends??
          if g.debug and g.verbose:
-            print("Starting main section {0} of {1}".format(i+coherence_dup,len(dividing_points)+coherence_dup-1))
+            print("Starting main section {0} of {1}".format(i+coherence_dup,len(dividing_points)+coherence_dup-2))
             #print("Starting section {0} of {1}".format(i+1,len(dividing_points)-coherence_dup))
             print("{0} to {1}".format(dividing_points[i],dividing_points[i+coherence_dup]-1))
             print("{0} to {1}".format(z_list[dividing_points[i]],z_list[dividing_points[i+coherence_dup]-1]))

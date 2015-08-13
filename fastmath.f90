@@ -19,6 +19,13 @@
 !Divide up points into smaller chuncks, make temp_intensity into arrays so can sqaure at end.
 !Change mask implmentation so x,y coordinates of relevant pixels are passed in so there's no need for an if statement.
 
+module version
+contains
+subroutine number(version)
+   real*4, intent(out) :: version
+   version = 0.3
+end subroutine number
+end module version
 
 module sumint
 contains
@@ -174,6 +181,93 @@ subroutine coherent_long(qsize,ehc,coherence_length,mask,x_pixels,y_pixels,point
    !$OMP END PARALLEL DO
    return
 end subroutine coherent_long
+
+subroutine coherent_shorter(qsize,ehc,coherence_length,mask,x_pixels,y_pixels,points,npts,intensity)
+   real*8, intent(in) :: qsize
+   integer*4, intent(in) :: x_pixels,y_pixels
+   real*8, intent(in) :: ehc
+   integer*4, intent(in) :: npts
+   real*4, dimension(4,npts), intent(in) :: points
+   real*4, dimension(x_pixels,y_pixels), intent(in) :: mask
+   real*8, dimension(x_pixels,y_pixels), intent(out) :: intensity
+   real*8, dimension(3) :: Q,r
+   real*8 :: temp_intensity,temp_intensity_2,QdotR
+   real*8, parameter :: pi = 4.0*ATAN(1.0)
+   integer*4, dimension(2,npts) :: coherence_range !min & max values to iterate p2 over
+   real*8, intent(in) :: coherence_length
+   integer*4 :: p1,p2!,coherence_points
+   !This version uses no symmetry but doesn't use the trigonometric trick from Sjoberg.
+   !coherence_length = 2*pi / (ehc * 1.5e-4)      !coherence_lengh = lambda / dlambda; 2pi/ehc = wavelength
+	!should be slightly faster than coherent_long at the expense of requiring points be sorted by z and only using z coordinate for 'distance'
+
+!    coherence_range(1,1) = 1
+!    do p2=npts,2,-1
+!       if (SUM((points(1:3,p2)-points(1:3,1))**2)<coherence_length**2) then
+!          coherence_range(1,2) = p2
+!          exit
+!       end if
+!    end do
+   
+!    do p1=2,npts
+!       coherence_range(p1,1) = 1
+!       do p2=coherence_range(p1-1,1),p1    !sets min for point p1
+!          if (points(3,p1)-points(3,p2)>coherence_length) then
+!             coherence_range(p1,1) = p2
+!          end if
+!       end do
+!       do p2=coherence_range(p1-1,2),npts  !sets max for points p1
+!          if (points(3,p2)-points(3,p1)>coherence_length) then
+!             coherence_range(p1,2) = p2
+!             exit
+!          end if
+!       end do
+!    end do
+   
+   do p1=1,npts
+      !coherence_range(p1,1) = 1
+      do p2 = 1,p1
+         if (SUM((points(1:3,p2)-points(1:3,p1))**2)<coherence_length**2) then
+            coherence_range(1,p1) = p2
+            exit
+         end if         
+      end do
+      !coherence_range(p1,2) = npts
+      do p2 = npts,p1,-1
+         if (SUM((points(1:3,p2)-points(1:3,p1))**2)<coherence_length**2) then
+            coherence_range(2,p1) = p2
+            exit
+         end if
+      end do
+      !print *, p1,coherence_range(1,p1),coherence_range(2,p1)
+   end do
+   
+   !$OMP PARALLEL DO PRIVATE(Q,QdotR,temp_intensity,temp_intensity_2) SHARED(mask,points,intensity,coherence_range)
+   do j=1,y_pixels
+      do i=1,x_pixels
+         if (mask(i,j) > 0) then
+            Q = (/ i*qsize/x_pixels-0.5*qsize, j*qsize/y_pixels-0.5*qsize, &
+                2*ehc*sin(sqrt((i-0.5*x_pixels)**2+(j-0.5*y_pixels)**2)*qsize/(y_pixels*2*ehc))**2 /)
+            temp_intensity = 0
+            do p1=1,npts
+               do p2=coherence_range(1,p1),coherence_range(2,p1)
+                  r = points(1:3,p1)-points(1:3,p2)
+                  if (SUM(r**2) < coherence_length**2) then
+                     QdotR = DOT_PRODUCT(Q,r)
+                  !if ((points(1:3,p1)-points(1:3,p2))**2 > coherence_length**2) then
+                     !QdotR = DOT_PRODUCT(Q,points(1:3,p1)-points(1:3,p2))
+                     temp_intensity = temp_intensity + points(4,p1)*points(4,p2)*COS(QdotR)
+                  end if
+               end do
+            end do
+            intensity(i,j) = temp_intensity
+         else
+            intensity(i,j) = 0
+         end if
+      end do
+   end do
+   !$OMP END PARALLEL DO
+   return
+end subroutine coherent_shorter
 
 
 end module sumint
