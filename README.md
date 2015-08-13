@@ -64,13 +64,15 @@ Due to the large number of shapes, it's possible some of the sped-up versions of
 
 ### Individual Monte Carlo Calculations ###
 
-'Real Space' will show you the points.
+After selecting the Monte Carlo model, pressing the Parameter Help button will rename individual model parameters to be more descriptive and grey out unused parameters.
 
-'Calculate Intensity' will show you the detector image.
+The Radial Symmetry checkbox speeds the program, so check if appropriate.
 
 To activate the advanced options, click on the Pop-Up Window buttons at the right.
 
-The Radial Symmetry checkbox speeds the program, so check if appropriate.
+'Real Space' will show you the points.
+
+'Calculate Intensity' will show you the detector image.
 
 
 ### Performing Fits ###
@@ -95,20 +97,16 @@ First, make sure you have the most recent version.
 
 ### To add a Monte Carlo model: ###
 
-1. Open density_formula.py.
-   Towards the top of the file, create another "elif:" block inside the density function.
-   At the end of the file, use one of the templates to create another function d##shape_name.  Your new function needs to take in 2d numpy array of all the coordinates and output a 1d numpy array of the densities.
-   Remember the parameters your function uses.
-   Remember the number you assigned.
-   Save and close the file.
-2. Open newgui.py and go to the line defining MC_num_and_name.
-   After the last number, add a line like the ones above it using the number from step 1.
-   Save and close the file.
-3. Open fit.py and go to the beginning of the Fit_Parameter class definition
-   In the elif block, add a pair of lines with the number and the parameters from step 1.
-   Save and close the file.
-   
-Do not add to the middle of the list as this will cause errors when Fortran or OpenCL are enabled.
+Open density_formula.py
+
+1. In density(coords), at the top, created another elif line at the bottom like all the others.
+2. Add an element to the end of g.model_parameters.  Note, you'll need to put a comma at the end of the previous last line and then put in useful descriptors for each of the parameters you are using (to show the user when they click the help button).  (Do not add to the middle of the list as this will cause errors when Fortran or OpenCL are enabled.)
+3. Create a new density function d##name near the bottom using one of the two templates at the very bottom.
+
+Save and close the file.
+
+Optionally: If you want to speed up the calculation using Fortan, edit fastmath.f90 with a Fortran version of your new density and edit the elif blocks in Points_For_Calculations() in Monte_Carlo_Functions.py.  If you want to speed up the calculation using OpenCL, edit density.cl with an OpenCL version of your new density and edit the elif blocks in opencl.py, class OpenCL, def density().
+
 
 ### To add an analytic model: ###
 
