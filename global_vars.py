@@ -11,7 +11,7 @@ accelerate_points = True   #In case there are bugs and you want to disable only 
 
 quiet = False     #For temporary suppression of output.
 verbose = 2       #Scale 0 to 10
-debug = True
+debug = False
 
 
 # You shouldn't need to edit anything below here.

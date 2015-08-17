@@ -342,7 +342,9 @@ def slow_intensity(): #This makes an intensity the accuate, slow way.
     global sim_info
     get_numbers_from_gui()
     save_vars_to_file("Monte Carlo Intensity")
+    print "START TIME: "+time.strftime("%X")
     Intensity = normalize(Accurate_Intensity(Points_For_Calculation(sort=1)))
+    print "END TIME: "+time.strftime("%X")
     save(Intensity, "intensity")
     radial_intensity = radial(Intensity)
     save(radial_intensity, "radial_intensity")

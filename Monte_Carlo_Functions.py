@@ -248,9 +248,11 @@ def Adjust_Intensity(points,mask=[],newmask_shape=(20,20),newmask_points=400,int
 def Calculate_Intensity(Points,mask=[],coherence_dup = 1, coherence_taper = 0):
    '''Runs Detector_Intensity, but can also handle objects longer than the coherence length with reasonable speed and accuracy.'''
    x_pixels,y_pixels = [int(i) for i in g.dictionary_SI['pixels'].split()]
-   Points = Points[Points[:,2].argsort()]    #orders by z
+   #Points = Points[Points[:,2].argsort()]    #orders by z
    #z_list = Points[:,2]   #WRONG if things have been rotated.
-   z_list = rot_points(Points,True)
+   z_list = rot_points(Points,True)[:,2]  #un-rotates
+   Points = Points[z_list.argsort()]      #orders by unrotated z
+   z_list = z_list[z_list.argsort()]      #orders by unrotated z
    #print(points_inside[points_inside[:,2].argsort()][::100,2])
    length = z_list[-1]-z_list[0]
    #coherence_length = 5e-7

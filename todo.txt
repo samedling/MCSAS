@@ -15,6 +15,7 @@ Don't overwrite old defaults when there are new ones.
 
 Debug update_interval.
 Add key to top right of 1D plot.
+Increase time resolution with debug.
 
 Check coherence length code for known cases
     Make pieces all the same size;
