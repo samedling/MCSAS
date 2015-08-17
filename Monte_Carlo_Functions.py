@@ -6,6 +6,21 @@ import global_vars as g
 
 ######################          Finding the Point used in the Calculation         ##################
 
+def rot_points(points,reverse=True):
+   '''Rotates, or counter-rotates, a list of points.'''
+   x_theta=g.dictionary_SI['x_theta']
+   y_theta=g.dictionary_SI['y_theta']
+   z_theta=g.dictionary_SI['z_theta']
+   rotx=np.array([[1,0,0,0],[0,np.cos(x_theta),-np.sin(x_theta),0],[0,np.sin(x_theta),np.cos(x_theta),0],[0,0,0,1]])
+   roty=np.array([[np.cos(y_theta),0,np.sin(y_theta),0],[0,1,0,0],[-np.sin(y_theta),0,np.cos(y_theta),0],[0,0,0,1]])
+   rotz=np.array([[np.cos(z_theta),-np.sin(z_theta),0,0],[np.sin(z_theta),np.cos(z_theta),0,0],[0,0,1,0],[0,0,0,1]])   
+   if reverse:
+      return points.dot(rotz.dot(roty).dot(rotx))
+   else:
+      return points.dot(np.transpose(rotz.dot(roty).dot(rotx)))
+
+
+
 def Points_For_Calculation(seed=0,sort=0):
     if seed:
        np.random.seed([seed])
@@ -86,7 +101,7 @@ def Points_For_Calculation(seed=0,sort=0):
     #I am multiplying the rotation matricies together, then multiplying it by the coordinates for each point
     try:
        if sort:
-          return np.asarray(points_inside[points_inside[:,2].argsort()].dot(np.transpose(rotz.dot(roty).dot(rotx))))   #first orders list by z and then rotation matrices....backwards?
+          return np.asarray(points_inside[points_inside[:,2].argsort()].dot(np.transpose(rotz.dot(roty).dot(rotx))))    #first orders points by z, then rotates
        else:
           return np.asarray(points_inside.dot(np.transpose(rotz.dot(roty).dot(rotx))))
     except ValueError:
@@ -231,10 +246,11 @@ def Adjust_Intensity(points,mask=[],newmask_shape=(20,20),newmask_points=400,int
     return fast*scaleby
 
 def Calculate_Intensity(Points,mask=[],coherence_dup = 1, coherence_taper = 0):
-   '''Runs Detector_Intensity, but can also handle objects longer than the coherence length.'''
+   '''Runs Detector_Intensity, but can also handle objects longer than the coherence length with reasonable speed and accuracy.'''
    x_pixels,y_pixels = [int(i) for i in g.dictionary_SI['pixels'].split()]
    Points = Points[Points[:,2].argsort()]    #orders by z
-   z_list = Points[:,2]
+   #z_list = Points[:,2]   #WRONG if things have been rotated.
+   z_list = rot_points(Points,True)
    #print(points_inside[points_inside[:,2].argsort()][::100,2])
    length = z_list[-1]-z_list[0]
    #coherence_length = 5e-7
