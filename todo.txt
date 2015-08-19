@@ -4,9 +4,9 @@ To Do:
 
 ## High Priority ##
 
-Have fitting save random points.
+Do something to better fit length and radii (which seem to not change).
+
 Make OpenCL code divide data into chunks if too big.
-Improve SLOW opencl code (like done to fortran)
 Vary z_scaling as length changes to keep number of points constant or add warning to README about letting length vary.
    maybe z_scale = length/100.
 Don't overwrite old defaults when there are new ones.

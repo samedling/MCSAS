@@ -192,9 +192,9 @@ def residuals(param,exp_data,mask=[],random_seed=2015):
       mask = np.ones(exp_data.shape)
    calc_intensity = normalize(Calculate_Intensity(Points_For_Calculation(seed=random_seed),mask),mask,True)
    #TODO: it shouldn't be able to set the background too high....???
-   #TODO: remove +backgrund from next line??
-   err = mask*(exp_data - (calc_intensity + g.dictionary_SI['background']))
-   #calc_intensity += g.dictionary_SI'background'] - exp_data  #todo: might be faster
+   #err = mask*(exp_data - (calc_intensity + g.dictionary_SI['background']))
+   err = mask*(exp_data - calc_intensity)
+   #calc_intensity -= exp_data                                 #todo: might be faster
    #calc_intensity *= mask                                     #todo: might be faster
    print('{0}: Total error = {1:.4}; sum of squares = {2:.4}'.format(time.strftime("%X"),np.abs(err).sum(),np.square(err).sum()))
    return np.ravel(err)     #flattens err since leastsq only takes 1D array
@@ -276,9 +276,10 @@ def perform_fit():  #Gets run when you press the Button.
    #with open(g.dictionary_SI['path_to_subfolder']+"default.txt", 'wb') as f:
    #   pickle.dump(g.dictionary, f) #saving a copy in the subfolder for reference.
    if plot_fit and plot_diff:
-      fit_results=normalize(Average_Intensity(),background=True)
+      fit_results=normalize(Average_Intensity(),mask=mask,background=True)
+      #fit_results=normalize(Calculate_Intensity(Points_For_Calculation()),background=True)
       save(fit_results,"_fit")
-      diff = abs(exp_data - fit_results)
+      diff = abs(exp_data - fit_results)*mask
       #diff = abs(exp_data - (fit_results + g.dictionary_SI['background']))
       Fit_plot(exp_data*mask,fit_results,diff)
    elif plot_fit:
