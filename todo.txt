@@ -4,12 +4,36 @@ To Do:
 
 ## High Priority ##
 
-Debug update_interval.
-Add comments to README warning against letting background or length vary.
+Do something to better fit length and radii (which seem to not change).
+
+Make OpenCL code divide data into chunks if too big.
+Vary z_scaling as length changes to keep number of points constant or add warning to README about letting length vary.
+   maybe z_scale = length/100.
+Don't overwrite old defaults when there are new ones.
 
 ## Medium Priority ##
 
-Move other functions (sequence,make_intensity, etc.) somewhere??
+Debug update_interval.
+Add key to top right of 1D plot.
+Increase time resolution with debug.
+
+Check coherence length code for known cases
+    Make pieces all the same size;
+    run test with various coherece_dup and coherence_tapering and record variation (80x80?)
+    EITHER:
+        try having the fortran or openCL calculate the actual, long value for 100 or 400 evenly spaced points and adjust them all accordingly?
+        separately run the actual calculation on a 10x10 or 20x20 grid, interpolate, and adjust
+Make long version give updates by running 10x10, then 20x20, etc..
+
+Make & test command line version
+
+Add Calculate Single Intensity Button?
+Add simple Save Setting button to GUI.
+
+Autodetect if defaults.txt is out-of-date??
+Check sphere analytic model.
+When fitting, improve error handling of random "ValueError: matrices are not aligned" which occurs during points_inside.dot(np.transpose(rotz.dot(roty).dot(rotx))).
+
 Rename newgui.py to mcsas.py or gui.py or something.
 
 Better downsampling & cropping of exp_data (only crop once).
@@ -22,7 +46,6 @@ Add Abort button.
     Or http://stackoverflow.com/questions/10847626/program-freezing-during-the-execution-of-a-function-in-tkinter
 Don't overwrite filenames.
 Have the center location be a fit parameter.
-Move fitting code to fit.py.
 
 ## Low Priority ##
 

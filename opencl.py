@@ -27,24 +27,24 @@ class OpenCL:
       fstr = "".join(f.readlines())
       self.program=cl.Program(self.context,fstr).build()
       
-   def sumint(self,qsize,ehc,x_pixels,y_pixels,points,sym=0,small=0):
+   def sumint(self,qsize,ehc,x_pixels,y_pixels,points,sym=0,small=0,coherence_length=0):
       '''Returns the normalized intensity.'''
       npts=points.shape[0]
       buf_points = cl.Buffer(self.context,cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=np.float32(points))  #Copy input arrays into memory.
       out=np.empty(x_pixels*y_pixels,dtype=np.float32)
       out_buffer = cl.Buffer(self.context,cl.mem_flags.WRITE_ONLY,out.nbytes)   #for the output
 
-      if sym == 0:
-         self.program.sumint00(self.queue,out.shape,None,np.float32(qsize),np.float32(ehc),np.int32(x_pixels),np.int32(y_pixels),buf_points,np.int32(npts),out_buffer)
-      elif small == 0:
-         self.program.sumint10(self.queue,out.shape,None,np.float32(qsize),np.float32(ehc),np.int32(x_pixels),np.int32(y_pixels),buf_points,np.int32(npts),out_buffer)
+      if coherence_length and (coherence_length < g.dictionary_SI['z_dim']):
+         self.program.sumint_long(self.queue,out.shape,None,np.float32(qsize),np.float32(ehc),np.float32(coherence_length),np.int32(x_pixels),np.int32(y_pixels),buf_points,np.int32(npts),out_buffer)
+      elif sym == 0:
+         self.program.sumint_asym(self.queue,out.shape,None,np.float32(qsize),np.float32(ehc),np.int32(x_pixels),np.int32(y_pixels),buf_points,np.int32(npts),out_buffer)
       else:
-         self.program.sumint11(self.queue,out.shape,None,np.float32(qsize),np.int32(x_pixels),buf_points,np.int32(y_pixels),np.int32(npts),out_buffer)
+         self.program.sumint_sym(self.queue,out.shape,None,np.float32(qsize),np.float32(ehc),np.int32(x_pixels),np.int32(y_pixels),buf_points,np.int32(npts),out_buffer)
       #cl.enqueue_read_buffer(self.queue,out_buffer,out).wait()
       cl.enqueue_copy(self.queue,out,out_buffer)
       return out.reshape(y_pixels,-1)    #Converts 1D intensity back to 2D.
 
-   def sumint_mask(self,qsize,ehc,mask,points,sym=0,small=0):
+   def sumint_mask(self,qsize,ehc,mask,points,sym=0,small=0,coherence_length=0):
       '''Returns the normalized intensity.'''
       npts=points.shape[0]
       x_pixels,y_pixels = mask.shape
@@ -55,14 +55,13 @@ class OpenCL:
       out=np.empty(len(x_coords),dtype=np.float32)
       out_buffer = cl.Buffer(self.context,cl.mem_flags.WRITE_ONLY,out.nbytes)   #for the output
 
-      sym = 0
       try:
-         if sym == 0:
-            self.program.sumint00mask(self.queue,out.shape,None,np.float32(qsize),np.float32(ehc),np.int32(x_pixels),np.int32(y_pixels),buf_x,buf_y,buf_points,np.int32(npts),out_buffer)
-         elif small == 0:
-            self.program.sumint10mask(self.queue,out.shape,None,np.float32(qsize),np.float32(ehc),np.int32(x_pixels),np.int32(y_pixels),buf_x,buf_y,buf_points,np.int32(npts),out_buffer)
+         if coherence_length and coherence_length > g.dictionary_SI['z_dim']:
+            self.program.sumint_long_mask(self.queue,out.shape,None,np.float32(qsize),np.float32(ehc),np.float32(coherence_length),np.int32(x_pixels),np.int32(y_pixels),buf_x,buf_y,buf_points,np.int32(npts),out_buffer)
+         elif sym == 0:
+            self.program.sumint_asym_mask(self.queue,out.shape,None,np.float32(qsize),np.float32(ehc),np.int32(x_pixels),np.int32(y_pixels),buf_x,buf_y,buf_points,np.int32(npts),out_buffer)
          else:
-            self.program.sumint11mask(self.queue,out.shape,None,np.float32(qsize),np.int32(x_pixels),np.int32(y_pixels),buf_x,buf_y,buf_points,np.int32(npts),out_buffer)
+            self.program.sumint_sym_mask(self.queue,out.shape,None,np.float32(qsize),np.float32(ehc),np.int32(x_pixels),np.int32(y_pixels),buf_x,buf_y,buf_points,np.int32(npts),out_buffer)
       except:
          print("Runtime Error. Too many pixels being calculated for OpenCL to work with grid compression.")
          print("Either disable grid compression entirely or decrease number of pixels or increase grid compression.")
@@ -71,7 +70,7 @@ class OpenCL:
             print("(Number of points: {0}.)".format(npts))
          if g.dictionary_SI['grid_compression'] < 5:
             print("Try grid compression of 5 or 10")
-         self.program.sumint11mask(self.queue,out.shape,None,np.float32(qsize),np.int32(x_pixels),np.int32(y_pixels),buf_x,buf_y,buf_points,np.int32(npts),out_buffer)
+         self.program.sumint_asym_mask(self.queue,out.shape,None,np.float32(qsize),np.float32(ehc),np.int32(x_pixels),np.int32(y_pixels),buf_x,buf_y,buf_points,np.int32(npts),out_buffer)
          return
       #cl.enqueue_read_buffer(self.queue,out_buffer,out).wait()
       cl.enqueue_copy(self.queue,out,out_buffer)

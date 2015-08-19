@@ -21,6 +21,8 @@ There are two optional but recommended ways of speeding up the code:
 
 Run `python newgui.py` on the command line or open it in Canopy and click run.  (Note: you may discover running `nice python newgui.py` results in your system being a lot more responsive.)
 
+If you want to try out the latest features, you can try the develop branch (by either running `git pull origin develop` or via the web GUI clicking on 'master', selecting 'develop', and then downloading the zip) but consider editing global_vars.py so debug = False.
+
 
 
 ### OS X Fortran Installation ###
@@ -56,31 +58,38 @@ Fortran/Hyperthreading: If you have a Core i7 processor, (or other CPU with hype
 
 Due to the large number of shapes, it's possible some of the sped-up versions of these have bugs.  If you find that the shapes don't look right, edit the global_vars.py file so `accelerate_points = False` to disable the erroneous speedup.
 
+
+
 ## Running the Program ##
 
 ### Individual Monte Carlo Calculations ###
 
+After selecting the Monte Carlo model, pressing the Parameter Help button will rename individual model parameters to be more descriptive and grey out unused parameters.
+
+The Radial Symmetry checkbox speeds the program, so check if appropriate.
+
+To activate the advanced options, click on the Pop-Up Window buttons at the right.
+
 'Real Space' will show you the points.
 
 'Calculate Intensity' will show you the detector image.
-
-To activate/inactivate the advanced options, toggle the Simple Options/Advanced Options button at the top of the center column.
-
-The Radial Symmetry and Small Angle Approx. checkboxes speed the program, so check them if appropriate.
 
 
 ### Performing Fits ###
 
 1. Input the name of the experimental data file to fit and click "Plot Exp Data".  If "Center of Beamstop" is left blank ("0 0") then it will plot the original experimental data (which takes a minute).  The lower bounds option in the center column is quite useful here.  Try a value in the range 1e-8 to 1e-6.  Then, move the mouse over the center of the beamstop and read the x,y-coordinates from the plot screen.  Use these values and replot the experimental data.  It will crop a sqaure around the center and downsample it so the side length is equal to the Pixels parameter.
 2. Input known values, uncheck relevant parameter boxes, make a good guess of unknown parameters.  To see how good your guess is, press "Plot Residuals".
-3. When you have a satisfactory guess, click "Fit Exp Data".  Make sure that the update interval isn't too small, or it will actually take longer and/or make no progress.  Each iteration, it prints out the time and the sum of the residuals; be aware that it is normal for the sum of the residuals to go several iterations without changing significantly.
+3. When you have a satisfactory guess, click "Fit Exp Data".  Each iteration, it prints out the time and the sum of the residuals; be aware that it is normal for the sum of the residuals to go several iterations without changing significantly.
 4. Read the fit results from the terminal.  If you had a grid compression >1 (assuming you're using Fortran acceleration) and now you want more printable results, copy the fit results back into the GUI and Plot Residuals.
 
 Some comments:
 * Grid compression only works with reliably with fortran; it works with OpenCL if the number of points/pixels does not exceed OpenCL's capabilities.
 * If the fit steps are each taking less than 10 seconds, there would probaly be very little additional time taken by increasing pixels by 40% or halving the grid compression or z_scaling.
-
-
+* Be careful when letting the background vary.  If the background gets set too high by the computer, it cannot normalize properly and all bets are off.
+* Checking the radial symmetry box decreases the time taken by 30-50% (30% for Fortran, 40% for OpenCL, 50% for pure Python).
+* Opening multiple copies of the same window is not recommended.  If you do, it will use the values in the one you opened most recently but it will constantly reopen uneditable old ones.  Or sometimes it will produce an error until you close them and reopen one.  Either way you'll get confused, so avoid opening more than one of each window.
+* Taking into account a non-infinte coherence length really complicates things.  By default, the code uses a rough approximation where the object is broken into chunks.  This should work reasonably well (with the hopefully temporary caveat that x_rot and y_rot not be large), but if you want to really calculate it the long way, there's a button for that in Detector Options and I recommend no more than 2500 (50x50) pixels and 5000 points if you want it to take less than an hour. 
+* Neighboring point distance and z-direction scaling can provide speedups at the expense of decreased background contrast; doubling the neighboring point distance decreases the number of points by a factor of 8, while z-direction scaling decreases it by a factor of 2.
 
 ## Adding Models ##
 
@@ -88,18 +97,16 @@ First, make sure you have the most recent version.
 
 ### To add a Monte Carlo model: ###
 
-1. Open density_formula.py.
-   At the very bottom of the file, create another "elif:" block like the ones above it.
-   Remember the parameters your function uses.
-   Remember the number you assigned.
-   Save and close the file.
-2. Open newgui.py and go to the line defining MC_num_and_name.
-   After the last number (currently around line 80), add a line like the ones above it using the number from step 1.
-3. Go to the beginning of the Fit_Parameter class definition
-   In the elif block (currently around line 450), add a pair of lines with the number and the parameters from step 1.
-   Save and close the file.
-   
-Do not add to the middle of the list as this will cause errors when Fortran or OpenCL are enabled.
+Open density_formula.py
+
+1. In density(coords), at the top, created another elif line at the bottom like all the others.
+2. Add an element to the end of g.model_parameters.  Note, you'll need to put a comma at the end of the previous last line and then put in useful descriptors for each of the parameters you are using (to show the user when they click the help button).  (Do not add to the middle of the list as this will cause errors when Fortran or OpenCL are enabled.)
+3. Create a new density function d##name near the bottom using one of the two templates at the very bottom.
+
+Save and close the file.
+
+Optionally: If you want to speed up the calculation using Fortan, edit fastmath.f90 with a Fortran version of your new density and edit the elif blocks in Points_For_Calculations() in Monte_Carlo_Functions.py.  If you want to speed up the calculation using OpenCL, edit density.cl with an OpenCL version of your new density and edit the elif blocks in opencl.py, class OpenCL, def density().
+
 
 ### To add an analytic model: ###
 
