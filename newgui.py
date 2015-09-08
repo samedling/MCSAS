@@ -4,7 +4,7 @@ version = '0.4.0'
 
 try:
    from Tkinter import *
-except:
+except ImportError:
    from tkinter import *
 
 import os, sys, pickle, random, pylab, time
@@ -14,9 +14,13 @@ from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 from matplotlib import cm
 
-from PIL import Image
+try:
+   from PIL import Image
+except ImportError:
+   import Image   #not sure if this will work
+   #from scipy import misc     #alternative to PIL?
+
 from scipy.optimize import leastsq
-#from scipy import misc     #alternative to PIL
 #from scipy import ndimage  #possible smoothing of exp_data before viewing
 
 import global_vars as g

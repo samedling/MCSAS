@@ -5,6 +5,10 @@ To Do:
 ## High Priority ##
 
 Do something to better fit length and radii (which seem to not change).
+Update names of common variables in Sequence Options
+Debug sequence of lengths.
+Automate saving individual sequence calculations.
+Don't overwrite existing files.
 
 Make OpenCL code divide data into chunks if too big.
 Vary z_scaling as length changes to keep number of points constant or add warning to README about letting length vary.
@@ -12,6 +16,10 @@ Vary z_scaling as length changes to keep number of points constant or add warnin
 Don't overwrite old defaults when there are new ones.
 
 ## Medium Priority ##
+
+Show coherence length in detector window?
+Button to turn coherence length on/off?
+
 
 Debug update_interval.
 Add key to top right of 1D plot.

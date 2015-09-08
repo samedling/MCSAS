@@ -190,8 +190,8 @@ def Fit_plot(experimental,fit,residuals,orientation=False):
        im = axes[1].imshow(fit_plot,cmap=cmap)
        im = axes[2].imshow(res_plot,cmap=cmap)
 
-    axes[0].set_title('Exp Data')
-    axes[1].set_title('Fit Results')
+    axes[0].set_title('Exp. Data')
+    axes[1].set_title('Calc. Intensity')
     axes[2].set_title('|Difference|')
 
     for i in range(3):
