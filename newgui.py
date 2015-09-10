@@ -1,5 +1,5 @@
 #!/usr/bin/python
-version = '0.4.0'
+version = '0.4.1'
 
 
 try:
@@ -68,6 +68,9 @@ if g.f2py_enabled:
         os.system('cp fastmath-Ubuntu14.10_i7M640.so fastmath.so')
         import fastmath
      print("Accelerating using f2py.")
+   except NameError: #For when fortran binary isn't compatible.
+      print('Fortran binary is not compatible. Please run make to compile.')
+      g.f2py_enabled = False
 if not g.f2py_enabled and not g.opencl_enabled:
    print("Could not accelerate using either OpenCL or f2py.")
    print("See README for how to install either OpenCL or f2py.")
