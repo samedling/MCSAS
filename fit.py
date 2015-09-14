@@ -199,9 +199,10 @@ def residuals(param,exp_data,mask=[],random_seed=2015):
    print('{0}: Total error = {1:.4}; sum of squares = {2:.4}'.format(time.strftime("%X"),np.abs(err).sum(),np.square(err).sum()))
    return np.ravel(err)     #flattens err since leastsq only takes 1D array
 
-def lprint(text,filename=0):
+def lprint(text,filename=0,quiet=0):
    '''Simple routine for logging text printed to the screen.'''
-   print(text)
+   if not quiet:
+      print(text)
    if filename:
       with open(filename,'a') as log:
          log.write(text+"\n")
@@ -212,7 +213,8 @@ def fit_step(exp_data,mask=[],update_freq=50):
    guess = parameters.get_param()
    #norm_exp_data = exp_data/np.sum(exp_data*mask) #data normalized taking mask into account.
    exp_data = normalize(exp_data,mask)
-   fit_param = leastsq(residuals,guess,args=(exp_data,mask,int(time.time())),full_output=1,maxfev=update_freq)
+   random_seed = int(time.time())
+   fit_param = leastsq(residuals,guess,args=(exp_data,mask,random_seed),full_output=1,maxfev=update_freq)
    with open(root_folder+"/default.txt", 'wb') as f:
       pickle.dump(g.dictionary, f)#Saving the infomation from g.dictionary so it can be loaded later
    with open(g.dictionary_SI['path_to_subfolder']+"default.txt", 'wb') as f:
@@ -230,6 +232,11 @@ def perform_fit():  #Gets run when you press the Button.
    plot_diff=g.dictionary['plot_residuals_tick']
    logfile=g.dictionary_SI['path_to_subfolder']+'fitlog.txt'   #g.dictionary['fitlog']
    grid_compression=g.dictionary['grid_compression']
+   #prefit_jumps = 5  #TODO: make into new user dictionary variable
+   prefit_jumps = int(np.sqrt(max_iter))           #7-31 for max_iter 50-1000
+   #prefit_jumps = int(2*np.power(max_iter,0.33))  #7-19 for max_iter 50-1000
+   #prefit_jumps = int(3*np.power(max_iter,0.25))  #7-16 for max_iter 50-1000
+   #max_iter -= prefit_jumps
    if not g.f2py_enabled and not g.opencl_enabled:
       print('Fortran acceleration is NOT enabled!')
       if grid_compression > 1:
@@ -251,7 +258,13 @@ def perform_fit():  #Gets run when you press the Button.
    if grid_compression > 1:
       mask = fast_mask(exp_data,mask,grid_compression)
    total_steps = 0
-   while total_steps < max_iter or max_iter == 0:     #TODO: debug or disable update_interval
+   while total_steps < max_iter or max_iter == 0:     #TODO: debug update_interval
+      if prefit_jumps:
+         g.dprint("Starting {0} prefit random jumps.".format(prefit_jumps))
+         jump_fit(exp_data,mask,iterations=prefit_jumps,jump_size=0.02)
+         g.dprint("Completed {0} prefit random jumps.".format(prefit_jumps))
+         lprint('Prefit Values:',logfile)
+         parameters.print_param(logfile)
       fit_param = fit_step(exp_data,mask,update_freq)
       total_steps+=fit_param[2]['nfev']
       if fit_param[2]['nfev'] < update_freq:      #Checks if fit is completed.
@@ -290,6 +303,33 @@ def perform_fit():  #Gets run when you press the Button.
    elif plot_diff:
       print('Plotting difference.')
       Intensity_plot(diff,"residuals",'Difference Plot',1)
+
+
+def jump_fit(exp_data,mask=[],vary_all=True,jump_size=0.02,init_residuals=0,seed=0,iterations=1):
+   '''Randomly varies parameters (all, or a random one) if it lowers residuals.'''
+   global parameters
+   if not seed:
+      seed = int(time.time())
+   original_param = parameters.get_param()
+   if not init_residuals:
+      init_residuals = np.square(residuals(original_param,exp_data,mask,seed)).sum()
+   np.random.seed([int(time.time())])
+   if vary_all:
+      test_param = original_param*(1+(np.random.random(len(original_param))-0.5)*jump_size) #jump_size=0.02 results in up to +/-1% change in each parameter
+   else: #vary only one, randomly, but by more
+      test_param = original_param
+      n = np.random.randint(0,len(original_param))
+      test_param[n] = original_param[n]*(1+(np.random.random()-0.5)*10*jump_size) #jump_size=0.02 results in up to +/-10% change in parameter
+   test_residuals = np.square(residuals(test_param,exp_data,mask,seed)).sum()
+   #np.random.seed([seed])
+   #if test_residuals > init_residuals and np.random.random() > 0.1:  #10% chance of making jump anyway
+   if test_residuals > init_residuals:
+      parameters.set_param(original_param)
+   else:
+      g.dprint('New sum of squares is smaller; accepting new parameters.')
+      init_residuals = test_residuals
+   if iterations > 1:
+      jump_fit(exp_data,mask,vary_all,jump_size,init_residuals,seed,iterations-1)
 
 
 def fast_mask(exp_data,mask,speedup=5):

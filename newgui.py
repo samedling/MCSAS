@@ -46,7 +46,8 @@ if g.f2py_enabled:
          os.system('cp fastmath-OSX10.10_C2DP8700.so fastmath.so')
          import fastmath
       elif sys.platform == 'linux2':
-         os.system('cp fastmath-Ubuntu14.10_i7M640.so fastmath.so')
+         os.system('cp fastmath-Ubuntu14.04_i7-4770.so fastmath.so')
+         #os.system('cp fastmath-Ubuntu14.10_i7M640.so fastmath.so')
          import fastmath
       print("Accelerating using f2py.")
    except ImportError:
