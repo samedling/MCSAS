@@ -21,7 +21,6 @@ Show coherence length in detector window?
 Button to turn coherence length on/off?
 
 
-Debug update_interval.
 Add key to top right of 1D plot.
 Increase time resolution with debug.
 
