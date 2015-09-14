@@ -1,5 +1,6 @@
 import numpy as np
 import global_vars as g
+import copy
 
 
 class Fit_Parameters():
