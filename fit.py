@@ -237,6 +237,10 @@ def perform_fit():  #Gets run when you press the Button.
    '''Loads experimental data from filename, fits the data using current g.dictionary as initial guesses, leaves final parameters in g.dictionary.'''
    global parameters
    get_numbers_from_gui()
+   if g.dictionary['center'] == '0 0':
+      print('ERROR: You must specify the centre of the beamstop before fitting.')
+      print('Click Plot Exp. Data, hover the mouse over the centre, and record the x,y values.')
+      return
    filename = g.dictionary['fit_file']
    max_iter = g.dictionary['max_iter']
    plot_fit=g.dictionary['plot_fit_tick']
