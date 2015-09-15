@@ -4,21 +4,26 @@ To Do:
 
 ## High Priority ##
 
-Do something to better fit length and radii (which seem to not change).
-
-Make OpenCL code divide data into chunks if too big.
-Vary z_scaling as length changes to keep number of points constant or add warning to README about letting length vary.
-   maybe z_scale = length/100.
-Don't overwrite old defaults when there are new ones.
+Check sphere analytic model.
 
 ## Medium Priority ##
 
-Debug update_interval.
+Allow sequences to be fit, or at least have residuals calculated.
+
+Automate saving individual sequence calculations.
+Vary z_scaling as length changes to keep number of points constant or add warning to README about letting length vary.
+   maybe z_scale = length/100.
+
+Show coherence length in detector window?
+Button to turn coherence length on/off?
+Make OpenCL code divide data into chunks if too big.
+
 Add key to top right of 1D plot.
 Increase time resolution with debug.
+Don't overwrite old defaults when there are new ones.
+Don't overwrite existing files.
 
 Check coherence length code for known cases
-    Make pieces all the same size;
     run test with various coherece_dup and coherence_tapering and record variation (80x80?)
     EITHER:
         try having the fortran or openCL calculate the actual, long value for 100 or 400 evenly spaced points and adjust them all accordingly?
@@ -31,20 +36,15 @@ Add Calculate Single Intensity Button?
 Add simple Save Setting button to GUI.
 
 Autodetect if defaults.txt is out-of-date??
-Check sphere analytic model.
 When fitting, improve error handling of random "ValueError: matrices are not aligned" which occurs during points_inside.dot(np.transpose(rotz.dot(roty).dot(rotx))).
 
 Rename newgui.py to mcsas.py or gui.py or something.
-
 Better downsampling & cropping of exp_data (only crop once).
 Create test cases (which should also be timed).
-Comment & clean up code.
-Implement scale parameter.
 Add Abort button.
     Try threads, see http://stupidpythonideas.blogspot.com.au/2013/10/why-your-gui-app-freezes.html
     Or http://stackoverflow.com/questions/25828659/tkinter-gui-freezes-when-using-multiprocessing-process
     Or http://stackoverflow.com/questions/10847626/program-freezing-during-the-execution-of-a-function-in-tkinter
-Don't overwrite filenames.
 Have the center location be a fit parameter.
 
 ## Low Priority ##
@@ -53,19 +53,14 @@ Enable horizontal multiplot GUI flag
 Add separate filenames for fit_results.
 Difference plot should always be linear (not log)?
 Add initial messages to fitlog (geometry,cropping,downsampling)
-Choose dictionary file to load from?
 Better to calculate residuals from already run calculations.
 Save and load from files?
-Enable specifying random seed?
 Preconditioning:
    radius of curvature depends on angle
 Add ability to change sampling frequency (pixel distance) as a function of position even for non-experimental data.
-Check parameters list for duplicates
-Do not run Fit if exp_data center is "0 0", or at least do something intelligent.
 Add additional variables used by Points_For_Calculation: ave_dist, z_scale?
 Add ability to set number of cores:
     `use omp_lib` in each subroutine + `call OMP_SET_NUM_THREADS(n)`
-
 
 Bounds for variables (specifically rho <1000, maybe radius < 50nm).
    Easy option: add test in residuals; if parameter too far outside range, reset it to it's original value and fit without it, then allow it to vary again?

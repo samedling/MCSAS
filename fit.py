@@ -1,5 +1,6 @@
 import numpy as np
 import global_vars as g
+import copy
 
 
 class Fit_Parameters():
@@ -184,6 +185,8 @@ def plot_exp_data():#threshold=1e-7,zero_value=1e-7):
 def residuals(param,exp_data,mask=[],random_seed=2015):
    '''Returns residual array of difference between experimental data and data calculated from passed parameters.'''
    global parameters
+   global total_steps
+   update_freq = g.dictionary['update_freq']
    parameters.set_param(param)
    parameters.sync_dict()
    x=range(exp_data.shape[0])
@@ -196,23 +199,34 @@ def residuals(param,exp_data,mask=[],random_seed=2015):
    err = mask*(exp_data - calc_intensity)
    #calc_intensity -= exp_data                                 #todo: might be faster
    #calc_intensity *= mask                                     #todo: might be faster
-   print('{0}: Total error = {1:.4}; sum of squares = {2:.4}'.format(time.strftime("%X"),np.abs(err).sum(),np.square(err).sum()))
+   try:
+      print('{0}: Step {3} total error = {1:.4}; sum of squares = {2:.4}'.format(time.strftime("%X"),np.abs(err).sum(),np.square(err).sum(),total_steps))
+      total_steps +=1
+      if update_freq and not total_steps%update_freq:
+         logfile=g.dictionary_SI['path_to_subfolder']+'fitlog.txt'   #g.dictionary['fitlog']
+         lprint('{0}: On function call {1}...'.format(time.strftime("%X"),total_steps),logfile,quiet=True)
+         lprint('Current parameter values are:',logfile)
+         parameters.print_param(logfile)
+   except NameError:
+      print('{0}: Total error = {1:.4}; sum of squares = {2:.4}'.format(time.strftime("%X"),np.abs(err).sum(),np.square(err).sum()))
    return np.ravel(err)     #flattens err since leastsq only takes 1D array
 
-def lprint(text,filename=0):
+def lprint(text,filename=0,quiet=0):
    '''Simple routine for logging text printed to the screen.'''
-   print(text)
+   if not quiet:
+      print(text)
    if filename:
       with open(filename,'a') as log:
          log.write(text+"\n")
 
-def fit_step(exp_data,mask=[],update_freq=50):
+def fit_step(exp_data,mask=[],max_iter=0):
    '''Runs a small number of iterations of fitting exp_data.'''
    global parameters
    guess = parameters.get_param()
    #norm_exp_data = exp_data/np.sum(exp_data*mask) #data normalized taking mask into account.
    exp_data = normalize(exp_data,mask)
-   fit_param = leastsq(residuals,guess,args=(exp_data,mask,int(time.time())),full_output=1,maxfev=update_freq)
+   random_seed = int(time.time())
+   fit_param = leastsq(residuals,guess,args=(exp_data,mask,random_seed),full_output=1,maxfev=max_iter)
    with open(root_folder+"/default.txt", 'wb') as f:
       pickle.dump(g.dictionary, f)#Saving the infomation from g.dictionary so it can be loaded later
    with open(g.dictionary_SI['path_to_subfolder']+"default.txt", 'wb') as f:
@@ -223,13 +237,23 @@ def perform_fit():  #Gets run when you press the Button.
    '''Loads experimental data from filename, fits the data using current g.dictionary as initial guesses, leaves final parameters in g.dictionary.'''
    global parameters
    get_numbers_from_gui()
+   if g.dictionary['center'] == '0 0':
+      print('ERROR: You must specify the centre of the beamstop before fitting.')
+      print('Click Plot Exp. Data, hover the mouse over the centre, and record the x,y values.')
+      return
    filename = g.dictionary['fit_file']
    max_iter = g.dictionary['max_iter']
-   update_freq = g.dictionary['update_freq']
    plot_fit=g.dictionary['plot_fit_tick']
    plot_diff=g.dictionary['plot_residuals_tick']
    logfile=g.dictionary_SI['path_to_subfolder']+'fitlog.txt'   #g.dictionary['fitlog']
    grid_compression=g.dictionary['grid_compression']
+   #prefit_jumps = 5  #TODO: make into new user dictionary variable
+   if max_iter:
+      prefit_jumps = int(np.sqrt(max_iter))           #7-31 for 50-1000
+      #prefit_jumps = int(2*np.power(max_iter,0.33))  #7-19 for 50-1000
+      #prefit_jumps = int(3*np.power(max_iter,0.25))  #7-16 for 50-1000
+   else:
+      prefit_jumps=32
    if not g.f2py_enabled and not g.opencl_enabled:
       print('Fortran acceleration is NOT enabled!')
       if grid_compression > 1:
@@ -240,9 +264,8 @@ def perform_fit():  #Gets run when you press the Button.
    else:
       initial_quiet=False
    g.quiet = True
+   global total_steps
    total_steps = 0
-   if update_freq == 0:
-      update_freq = max_iter
    exp_data,mask=load_exp_image()
    parameters=Fit_Parameters()  #Creates object of parameters with values and names.
    lprint('Starting values:',logfile)
@@ -250,24 +273,23 @@ def perform_fit():  #Gets run when you press the Button.
    lprint('{0}: Starting fit...'.format(time.strftime("%X")),logfile)
    if grid_compression > 1:
       mask = fast_mask(exp_data,mask,grid_compression)
-   total_steps = 0
-   while total_steps < max_iter or max_iter == 0:     #TODO: debug or disable update_interval
-      fit_param = fit_step(exp_data,mask,update_freq)
-      total_steps+=fit_param[2]['nfev']
-      if fit_param[2]['nfev'] < update_freq:      #Checks if fit is completed.
-         lprint('{0}: Converged after {1} function calls.'.format(time.strftime("%X"),total_steps),logfile)
-         lprint('Final parameter values are:',logfile)
+   if prefit_jumps:
+      g.dprint("Starting {0} prefit random jumps.".format(prefit_jumps))
+      jump_fit(exp_data,mask,iterations=prefit_jumps,jump_size=0.10)    #jump_size = 0.02 means +/- 1% change in each parameter
+      g.dprint("Completed {0} prefit random jumps.".format(prefit_jumps))
+      if g.debug:
+         lprint('Prefit Values:',logfile)
          parameters.print_param(logfile)
-         break
-      elif total_steps < max_iter:
-         lprint('{0}: On function call {1}...'.format(time.strftime("%X"),total_steps),logfile)
-         lprint('Current parameter values are:',logfile)
-         parameters.print_param(logfile)
-         #Intensity_plot(fit_param[2]['fvec'].reshape(exp_data.shape),"residuals",'Difference Plot',1)
-      else:
-         lprint('{0}: Fit did not converge in {1} steps.'.format(time.strftime("%X"),total_steps),logfile)
-         lprint('Current parameter values are:',logfile)
-         parameters.print_param(logfile)
+   fit_param = fit_step(exp_data,mask,max_iter)
+   #total_steps+=fit_param[2]['nfev']
+   if fit_param[2]['nfev'] < max_iter:      #Checks if fit is completed.
+      lprint('{0}: Converged after {1} function calls.'.format(time.strftime("%X"),total_steps),logfile)
+      lprint('Final parameter values are:',logfile)
+      parameters.print_param(logfile)
+   else:
+      lprint('{0}: Fit did not converge in {1} steps.'.format(time.strftime("%X"),total_steps),logfile)
+      lprint('Parameter values are:',logfile)
+      parameters.print_param(logfile)
    diff=fit_param[2]['fvec'].reshape(exp_data.shape)
    g.quiet=initial_quiet
    save(diff,"_fit_residuals")
@@ -290,6 +312,34 @@ def perform_fit():  #Gets run when you press the Button.
    elif plot_diff:
       print('Plotting difference.')
       Intensity_plot(diff,"residuals",'Difference Plot',1)
+
+
+def jump_fit(exp_data,mask=[],vary_all=True,jump_size=0.02,init_residuals=0,seed=0,iterations=1):
+   '''Randomly varies parameters (all, or a random one) if it lowers residuals.'''
+   global parameters
+   if not seed:
+      seed = int(time.time())
+   original_param = parameters.get_param()
+   if not init_residuals:
+      init_residuals = np.square(residuals(original_param,exp_data,mask,seed)).sum()
+   np.random.seed([int(time.time())])
+   vary_all = iterations%2 #TODO: decide if this is good!
+   if vary_all:
+      test_param = original_param*(1+(np.random.random(len(original_param))-0.5)*jump_size) #jump_size=0.02 results in up to +/-1% change in each parameter
+   else: #vary only one, randomly, but by more
+      test_param = copy.copy(original_param)
+      n = np.random.randint(0,len(original_param))
+      test_param[n] = original_param[n]*(1+(np.random.random()-0.5)*5*jump_size) #jump_size=0.02 results in up to +/-10% change in parameter
+   test_residuals = np.square(residuals(test_param,exp_data,mask,seed)).sum()
+   #np.random.seed([seed])
+   #if test_residuals > init_residuals and np.random.random() > 0.1:  #10% chance of making jump anyway
+   if test_residuals > init_residuals:
+      parameters.set_param(original_param)
+   else:
+      g.dprint('New sum of squares is smaller; accepting new parameters.')
+      init_residuals = test_residuals
+   if iterations > 1:
+      jump_fit(exp_data,mask,vary_all,jump_size,init_residuals,seed,iterations-1)
 
 
 def fast_mask(exp_data,mask,speedup=5):
@@ -449,9 +499,8 @@ def select_fit_parameters():
    
    enter_num('max_iter', "Maximum Iterations (0=default)", fit_window,ROW, COL)
    ROW += 1
-   if g.debug:
-      enter_num('update_freq', "Update Interval", fit_window,ROW, COL)   #TODO: debug
-      ROW += 1
+   enter_num('update_freq', "Update Interval", fit_window,ROW, COL)   #TODO: debug
+   ROW += 1
    enter_num('grid_compression', "Grid Compression (2, 5, or 10)", fit_window,ROW, COL)
    ROW += 1
    tick('plot_fit_tick',"Plot Fit Results", fit_window,ROW, COL)

@@ -66,13 +66,24 @@ Due to the large number of shapes, it's possible some of the sped-up versions of
 
 After selecting the Monte Carlo model, pressing the Parameter Help button will rename individual model parameters to be more descriptive and grey out unused parameters.
 
-The Radial Symmetry checkbox speeds the program, so check if appropriate.
-
-To activate the advanced options, click on the Pop-Up Window buttons at the right.
 
 'Real Space' will show you the points.
 
 'Calculate Intensity' will show you the detector image.
+
+To activate the advanced options, click on the Pop-Up Window buttons at the right.
+
+If the Save Images box is checked it automatically overwrites anything with the same filename.
+
+
+* The Radial Symmetry checkbox speeds the program, so check if appropriate.
+
+* Neighboring point distance and z-direction scaling can provide speedups at the expense of decreased background contrast; doubling the neighboring point distance decreases the number of points by a factor of 8, while doubling z-direction scaling decreases it by a factor of 2.
+
+* Opening multiple copies of the same window is not recommended.  If you do, it will use the values in the one you opened most recently but it will constantly reopen uneditable old ones.  Or sometimes it will produce an error until you close them and reopen one.  Either way you'll get confused, so avoid opening more than one of each window.
+
+* Taking into account a non-infinte coherence length really complicates things.  By default, the code uses a rough approximation where the object is broken into chunks.  This should work reasonably well, but if you want to really calculate it the long way, there's a button for that in Detector Options and I recommend no more than 2500 (50x50) pixels and 5000 points if you want it to take less than an hour.
+
 
 
 ### Performing Fits ###
@@ -87,9 +98,7 @@ Some comments:
 * If the fit steps are each taking less than 10 seconds, there would probaly be very little additional time taken by increasing pixels by 40% or halving the grid compression or z_scaling.
 * Be careful when letting the background vary.  If the background gets set too high by the computer, it cannot normalize properly and all bets are off.
 * Checking the radial symmetry box decreases the time taken by 30-50% (30% for Fortran, 40% for OpenCL, 50% for pure Python).
-* Opening multiple copies of the same window is not recommended.  If you do, it will use the values in the one you opened most recently but it will constantly reopen uneditable old ones.  Or sometimes it will produce an error until you close them and reopen one.  Either way you'll get confused, so avoid opening more than one of each window.
-* Taking into account a non-infinte coherence length really complicates things.  By default, the code uses a rough approximation where the object is broken into chunks.  This should work reasonably well (with the hopefully temporary caveat that x_rot and y_rot not be large), but if you want to really calculate it the long way, there's a button for that in Detector Options and I recommend no more than 2500 (50x50) pixels and 5000 points if you want it to take less than an hour. 
-* Neighboring point distance and z-direction scaling can provide speedups at the expense of decreased background contrast; doubling the neighboring point distance decreases the number of points by a factor of 8, while z-direction scaling decreases it by a factor of 2.
+
 
 ## Adding Models ##
 

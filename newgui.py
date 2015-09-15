@@ -1,10 +1,10 @@
 #!/usr/bin/python
-version = '0.4.1'
+version = '0.4.2'
 
 
 try:
    from Tkinter import *
-except:
+except ImportError:
    from tkinter import *
 
 import os, sys, pickle, random, pylab, time
@@ -14,9 +14,13 @@ from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 from matplotlib import cm
 
-from PIL import Image
+try:
+   from PIL import Image
+except ImportError:
+   import Image   #not sure if this will work
+   #from scipy import misc     #alternative to PIL?
+
 from scipy.optimize import leastsq
-#from scipy import misc     #alternative to PIL
 #from scipy import ndimage  #possible smoothing of exp_data before viewing
 
 import global_vars as g
@@ -42,7 +46,8 @@ if g.f2py_enabled:
          os.system('cp fastmath-OSX10.10_C2DP8700.so fastmath.so')
          import fastmath
       elif sys.platform == 'linux2':
-         os.system('cp fastmath-Ubuntu14.10_i7M640.so fastmath.so')
+         os.system('cp fastmath-Ubuntu14.04_i7-4770.so fastmath.so')
+         #os.system('cp fastmath-Ubuntu14.10_i7M640.so fastmath.so')
          import fastmath
       print("Accelerating using f2py.")
    except ImportError:
@@ -294,28 +299,39 @@ ALLVARIABLES = [['altitude', 'Altitude'],
                 ["ave_dist","Neighbouring Point Distance"],
                 ['azimuth', 'Azimuth'],
                 ["energy_wavelength","Energy/Wavelength"],
+                ["num","Number of Pieces"],
+                ["length_2","Other Length"],
                 ["pixels","pixels on the detector"],
                 ["QSize","Q Range of the entire detector"],
                 ["radius_1","Radius 1"],
                 ["radius_2","Radius 2"],
                 ["rho_1","Rho 1"],
                 ["rho_2","Rho 2"],
-                ["x_theta","rotation in x direction"],
-                ["y_theta","rotation in y direction"],
+                ["x_theta","Rotation in x direction"],
+                ["y_theta","Rotation in y direction"],
                 ["z_dim","Length"],
-                ['z_scale', 'z-direction scaling of\nneighbouring point distance'],
-                ["z_theta","rotation in z direction"],
+                ['z_scale', 'Z-direction Scaling of\nNeighbouring Point Distance'],
+                ["z_theta","Rotation in z Direction"],
                 ]
+ALLVAR_LIST= []
+ALLVAR_NAMES= []
+for i in range(len(ALLVARIABLES)):
+   ALLVAR_LIST.append(ALLVARIABLES[i][0])
+   ALLVAR_NAMES.append(ALLVARIABLES[i][1])
+
 def show_sequence_variables(): #Common Variables button, displays ALLVARIABLES, above.
+   get_numbers_from_gui()
+   #rename_parameters()
+   for i in range(len(g.var_list)):
+      ALLVAR_NAMES[ALLVAR_LIST.index(g.var_list[i])] = g.var_names[i]
    dens_options = Tk()
    dens_options.title("Common Variables")
    #Label(dens_options, text = "Choose a Variable to Change", font = "Times 14 bold underline").grid(row = 0, column = 0, columnspan = 2, sticky = W)
    Label(dens_options, text = "Variable", font = "Times 11 underline").grid(row = 0, column = 0, sticky = W)
    Label(dens_options, text = "Description", font = "Times 11 underline").grid(row = 0, column = 1, sticky = W)
    for ROW in range(len(ALLVARIABLES)):
-      description = ALLVARIABLES[ROW]
-      Label(dens_options, text = description[0]).grid(row = ROW+2, column = 0, sticky = W)
-      Label(dens_options, text = description[1]).grid(row = ROW+2, column = 1, sticky = W)
+      Label(dens_options, text = ALLVAR_LIST[ROW]).grid(row = ROW+2, column = 0, sticky = W)
+      Label(dens_options, text = ALLVAR_NAMES[ROW]).grid(row = ROW+2, column = 1, sticky = W)
    dens_options.mainloop()
 
 def plot_points(): #This runs the Real Space to plot the points in Real Space
@@ -484,10 +500,13 @@ def calc_int():
 
 def calc_seq():
    '''Calculates intensity for sequence (averaging each time if # plots > 1.'''
-   if g.dictionary['shape']==0:
-      theory_seq()
+   if g.dictionary['s_var'] in g.dictionary:
+      if g.dictionary['shape']==0:
+         theory_seq()
+      else:
+         sequence()
    else:
-      sequence()
+      print('No such variable {0}. Check var list.'.format(g.dictionary['s_var']))
 
 #def int_seq(): #This is the button, it runs a sequence or a single image depending on whether or not you can edit a sequence (For both analytic models and Monte Carlo Models)
    #if g.dictionary['seq_hide'] == 0:
