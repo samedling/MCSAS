@@ -1,5 +1,8 @@
 #!/usr/bin/python
-version = '0.4.2'
+version = '0.4.3'
+updated = '21 Sep 2015'
+
+print('Starting MCSAS v{0} (updated {1}).'.format(version,updated))
 
 
 try:
@@ -146,8 +149,12 @@ Analytic_dict = {x[0]:x[1] for x in Analytic_options} #This is needed, so that w
 
 
 def xy_dim(): #Since x_dim and y_dim are not defined by the user any more, the function to define them is here.
-   g.dictionary_SI['x_dim'] = 2.*g.dictionary_SI['radius_1']
-   g.dictionary_SI['y_dim'] = 2.*g.dictionary_SI['radius_1']
+   if g.model_parameters[g.dictionary['shape']][2][1] == 'unused':
+      g.dictionary_SI['x_dim'] = 2.*g.dictionary_SI['radius_1']
+      g.dictionary_SI['y_dim'] = 2.*g.dictionary_SI['radius_1']
+   else:
+      g.dictionary_SI['x_dim'] = 2.*max(g.dictionary_SI['radius_1'],g.dictionary_SI['radius_2'])
+      g.dictionary_SI['y_dim'] = 2.*max(g.dictionary_SI['radius_1'],g.dictionary_SI['radius_2'])
    
    
 
@@ -205,8 +212,8 @@ def make_SI_dict():
     g.dictionary_SI["ave_dist"] = g.dictionary["ave_dist"]*10**-9
     g.dictionary_SI["travel"] = g.dictionary_SI["ave_dist"]
     g.dictionary_SI["radius_1"] = g.dictionary["radius_1"]*10**-9
-    xy_dim()#defining x_dim and y_dim - dependent of radius_1
     g.dictionary_SI["radius_2"] = g.dictionary["radius_2"]*10**-9
+    xy_dim()#defining x_dim and y_dim - dependent of radius_1
     g.dictionary_SI["QSize"] = g.dictionary["QSize"]*10**9
 
     #g.dictionary_SI['num_plot_points'] = int(g.dictionary_SI['pixels']/2.)
