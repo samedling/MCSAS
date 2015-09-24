@@ -1,6 +1,6 @@
 #!/usr/bin/python
 version = '0.4.3'
-updated = '21 Sep 2015'
+updated = '24 Sep 2015'
 
 print('Starting MCSAS v{0} (updated {1}).'.format(version,updated))
 

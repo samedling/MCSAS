@@ -408,8 +408,9 @@ def plot_residuals():
    exp_data,mask=load_exp_image()
    if g.dictionary['grid_compression'] > 1:
       fast_mask(exp_data,mask,g.dictionary['grid_compression'])
-   #calc_intensity=Average_Intensity(mask)
-   calc_intensity = normalize(Calculate_Intensity(Points_For_Calculation(),mask),mask,True)
+   #calc_intensity=Average_Intensity(mask)   #Old; probably doesn't add background
+   calc_intensity = normalize(Average_Intensity(mask),mask,True)  #Averages several and adds background.
+   #calc_intensity = normalize(Calculate_Intensity(Points_For_Calculation(),mask),mask,True) #Does not average.
    save(calc_intensity,"_calc")     #wrong suffix!!
    err = calc_intensity - exp_data
    ##calc_intensity = normalize(Calculate_Intensity(Points_For_Calculation(seed=random_seed),mask),mask,True)
