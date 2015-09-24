@@ -23,7 +23,7 @@ module version
 contains
 subroutine number(version)
    real*4, intent(out) :: version
-   version = 0.3
+   version = 0.31
 end subroutine number
 end module version
 
@@ -426,7 +426,7 @@ subroutine d14doublecone(radius_1,radius_2,rho_1,z_dim,points,npts)
    integer*4, intent(in) :: npts
    !$OMP PARALLEL DO
    do i=1,npts
-      if (SQRT(SUM(points(1:2,i)**2)) < radius_2+ABS(points(3,i))*(radius_1-radius_2)/z_dim/2) then
+      if (SQRT(SUM(points(1:2,i)**2)) < radius_2+ABS(points(3,i))*(radius_1-radius_2)/z_dim*2) then
          points(4,i) = rho_1
       else
          points(4,i) = 0
