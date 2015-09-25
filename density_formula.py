@@ -51,6 +51,8 @@ def density(coords):
       return d16asymmhexpyr(coords)
    elif g.dictionary_SI['shape'] == 17:
       return d17choppedcoreshell(coords)
+   elif g.dictionary_SI['shape'] == 18:
+      return d18doublecone_track(coords)
 
 
 #This is a dictionary containing all of the useful descriptions for the variables for each model.
@@ -73,7 +75,8 @@ g.model_parameters=[
    (14,'Double Cone',("End Radius (nm)","Central Radius (nm)","Length (nm)","Density","unused","unused","unused")),
    (15,'Elliptical Cylinder',("x Radius (nm)","y Radius (nm)","Length (nm)","Density","unused","unused","unused")),
    (16,'Aymm Hex Pyramid',("Orig. Side Length (nm)","Side Adjustment (nm)","Length (nm)","Density","unused","unused","unused")),
-   (17,'Chopped Core Shell',("Outer Radius (nm)","Inner Radius (nm)","Length (nm)","Core Density","Shell Density","Number of Gaps","Gap Length (nm)"))
+   (17,'Chopped Core Shell',("Outer Radius (nm)","Inner Radius (nm)","Length (nm)","Core Density","Shell Density","Number of Gaps","Gap Length (nm)")),
+   (18,'Double Cone with Track',("End Cone Radius (nm)","Central Cone Radius (nm)","Total Length (nm)","Density","unused","unused","Track Radius (nm)")),
 ]
 #Template: fill in number, Name of Model, and useful descriptor or 'unused' in place of each variable name.
 #(n,'Name of Model',('radius_1','radius_2','z_dim','rho_1','rho_2','num','length_2'))
@@ -223,6 +226,9 @@ def d17choppedcoreshell(coords):
       return [rho2 if r2<np.sqrt(np.sum(coords[i,0:2]**2))<r1 and (np.abs(coords[i,2])-piece_l/2)%(piece_l+gap_l) > gap_l else rho1 if np.sqrt(np.sum(coords[i,0:2]**2))<r1 and (np.abs(coords[i,2])-piece_l/2)%(piece_l+gap_l) > gap_l else 0 for i in range(coords.shape[0])]
    else:          #even number of gaps
       return [rho2 if r2<np.sqrt(np.sum(coords[i,0:2]**2))<r1 and (np.abs(coords[i,2])-gap_l/2)%(piece_l+gap_l) < piece_l else rho1 if np.sqrt(np.sum(coords[i,0:2]**2))<r1 and (np.abs(coords[i,2])-gap_l/2)%(piece_l+gap_l) < piece_l else 0 for i in range(coords.shape[0])]
+
+def d18doublecone_track(coords):
+    return [g.dictionary_SI['rho_1'] if ((np.sqrt(np.sum(coords[i,0:2]**2)) < np.abs(coords[i,2])*(g.dictionary_SI['radius_1']-g.dictionary_SI['radius_2'])/(g.dictionary_SI['z_dim']/2.)+g.dictionary_SI['radius_2']) or (np.sqrt(np.sum(coords[i,0:2]**2)) < g.dictionary_SI['length_2']) ) else 0 for i in range(coords.shape[0])]
 
 
 
