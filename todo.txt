@@ -8,6 +8,8 @@ Check sphere analytic model.
 
 ## Medium Priority ##
 
+Don't store random points?  Rather test them as they are generated.
+
 Allow sequences to be fit, or at least have residuals calculated.
 
 Automate saving individual sequence calculations.
