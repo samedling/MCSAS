@@ -219,13 +219,16 @@ def d17choppedcoreshell(coords):
    length = g.dictionary_SI['z_dim']
    n_gaps = g.dictionary_SI['num']
    gap_l = g.dictionary_SI['length_2']
-   piece_l = length-n_gaps*gap_l
+   piece_l = (length-n_gaps*gap_l)/(n_gaps+1)
    g.dprint('Chopped Core Shell')
+   print('Piece length is {0} nm.'.format(piece_l*10**9))
 
    if n_gaps%2:   #odd number of gaps
-      return [rho2 if r2<np.sqrt(np.sum(coords[i,0:2]**2))<r1 and (np.abs(coords[i,2])-piece_l/2)%(piece_l+gap_l) > gap_l else rho1 if np.sqrt(np.sum(coords[i,0:2]**2))<r1 and (np.abs(coords[i,2])-piece_l/2)%(piece_l+gap_l) > gap_l else 0 for i in range(coords.shape[0])]
-   else:          #even number of gaps
+      #g.dprint('Odd number of gaps.')
       return [rho2 if r2<np.sqrt(np.sum(coords[i,0:2]**2))<r1 and (np.abs(coords[i,2])-gap_l/2)%(piece_l+gap_l) < piece_l else rho1 if np.sqrt(np.sum(coords[i,0:2]**2))<r1 and (np.abs(coords[i,2])-gap_l/2)%(piece_l+gap_l) < piece_l else 0 for i in range(coords.shape[0])]
+   else:          #even number of gaps
+      #g.dprint('Even number of gaps.')
+      return [rho2 if r2<np.sqrt(np.sum(coords[i,0:2]**2))<r1 and (np.abs(coords[i,2])-piece_l/2)%(piece_l+gap_l) > gap_l else rho1 if np.sqrt(np.sum(coords[i,0:2]**2))<r1 and (np.abs(coords[i,2])-piece_l/2)%(piece_l+gap_l) > gap_l else 0 for i in range(coords.shape[0])]
 
 def d18doublecone_track(coords):
     return [g.dictionary_SI['rho_1'] if ((np.sqrt(np.sum(coords[i,0:2]**2)) < np.abs(coords[i,2])*(g.dictionary_SI['radius_1']-g.dictionary_SI['radius_2'])/(g.dictionary_SI['z_dim']/2.)+g.dictionary_SI['radius_2']) or (np.sqrt(np.sum(coords[i,0:2]**2)) < g.dictionary_SI['length_2']) ) else 0 for i in range(coords.shape[0])]
