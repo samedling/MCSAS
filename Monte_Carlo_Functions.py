@@ -331,7 +331,7 @@ elif g.f2py_enabled:
          mask = np.ones((y_pixels,x_pixels))
       if symmetric:
          g.dprint("Using symmetry.")
-         return fastmath.sumint.symmetric(QSize,mask,Points.T)
+         return fastmath.sumint.symmetric(QSize,EHC,mask,Points.T)
       else:
          return fastmath.sumint.asymmetric(QSize,EHC,mask,Points.T)
 
