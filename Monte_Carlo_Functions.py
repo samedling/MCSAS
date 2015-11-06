@@ -255,10 +255,11 @@ def Calculate_Intensity(Points,mask=[],coherence_dup = 1, coherence_taper = 0):
    z_list = z_list[z_list.argsort()]      #orders by unrotated z
    #print(points_inside[points_inside[:,2].argsort()][::100,2])
    length = z_list[-1]-z_list[0]
-   if length == 0:
+   if len(z_list) == 0:
       print("Error: shape has no points; check your parameters.")
       return
-   elif length < 100:
+   elif len(z_list) < 100:
+      print length
       print("Warning: shape has few points; check your parameters.")
    #coherence_length = 5e-7
    if not g.dictionary['d_lambda']:

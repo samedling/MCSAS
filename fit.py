@@ -193,7 +193,32 @@ def residuals(param,exp_data,mask=[],random_seed=2015):
    y=range(exp_data.shape[1])
    if not len(mask):
       mask = np.ones(exp_data.shape)
-   calc_intensity = normalize(Calculate_Intensity(Points_For_Calculation(seed=random_seed),mask),mask,True)
+
+   if g.debug and g.dictionary['s_var'] > 1:    #sequence fit
+      convert_from_SI()
+      orig = g.dictionary[g.dictionary['s_var']]
+      for i in range(g.dictionary['s_step']):
+         #g.dictionary_SI[g.dictionary['s_var']] = np.random.normal(loc=g.dictionary_SI[g.dictionary['s_var']],scale=g.dictionary['SD'])
+         if g.dictionary['gauss']:
+            np.random.seed([random_seed+i])
+            current_value = np.random.normal(loc=orig,scale=g.dictionary['SD'])
+         else:
+            start = g.dictionary['s_start']
+            stop = g.dictionary['s_stop']
+            current_value = (orig*2/(stop+start))*(start+((stop-start)*i/((g.dictionary['s_step']-1))))  #percent mode
+            #current_value = (orig-(stop+start)/2)+(start+((stop-start)*i/((g.dictionary['s_step']-1))))  #difference mode
+         change_units(current_value)
+         g.vprint('{0} is {1} (SI: {2})'.format(g.dictionary['s_var'],current_value,g.dictionary_SI[g.dictionary['s_var']]))
+         one_intensity = normalize(Calculate_Intensity(Points_For_Calculation(seed=random_seed),mask),mask,True)
+         try:
+            calc_intensity += one_intensity
+         except NameError:
+            calc_intensity = one_intensity
+         #parameters.set_param(param)
+         parameters.sync_dict()
+   else:
+      calc_intensity = normalize(Calculate_Intensity(Points_For_Calculation(seed=random_seed),mask),mask,True)
+
    #TODO: it shouldn't be able to set the background too high....???
    #err = mask*(exp_data - (calc_intensity + g.dictionary_SI['background']))
    err = mask*(exp_data - calc_intensity)
@@ -408,9 +433,34 @@ def plot_residuals():
    exp_data,mask=load_exp_image()
    if g.dictionary['grid_compression'] > 1:
       fast_mask(exp_data,mask,g.dictionary['grid_compression'])
+
+   if g.debug and g.dictionary['s_var'] > 1:    #sequence fit
+      orig = g.dictionary[g.dictionary['s_var']]
+      for i in range(g.dictionary['s_step']):
+         #g.dictionary_SI[g.dictionary['s_var']] = np.random.normal(loc=g.dictionary_SI[g.dictionary['s_var']],scale=g.dictionary['SD'])
+         if g.dictionary['gauss']:
+            current_value = np.random.normal(loc=orig,scale=g.dictionary['SD'])
+         else:
+            start = g.dictionary['s_start']
+            stop = g.dictionary['s_stop']
+            current_value = (orig*2/(stop+start))*(start+((stop-start)*i/((g.dictionary['s_step']-1))))  #percent mode
+            #current_value = (orig-(stop+start)/2)+(start+((stop-start)*i/((g.dictionary['s_step']-1))))  #difference mode
+         change_units(current_value)
+         g.vprint('{0} is {1} (SI: {2})'.format(g.dictionary['s_var'],current_value,g.dictionary_SI[g.dictionary['s_var']]))
+         one_intensity = normalize(Calculate_Intensity(Points_For_Calculation(),mask),mask,True)
+         try:
+            calc_intensity += one_intensity
+         except NameError:
+            calc_intensity = one_intensity
+   else:
+      #calc_intensity = normalize(Calculate_Intensity(Points_For_Calculation(seed=random_seed),mask),mask,True)
+      calc_intensity = normalize(Average_Intensity(mask),mask,True)  #Averages several and adds background.
+
+   #calc_intensity = normalize(Average_Intensity(mask),mask,True)  #Averages several and adds background.
+
    #calc_intensity=Average_Intensity(mask)   #Old; probably doesn't add background
-   calc_intensity = normalize(Average_Intensity(mask),mask,True)  #Averages several and adds background.
    #calc_intensity = normalize(Calculate_Intensity(Points_For_Calculation(),mask),mask,True) #Does not average.
+
    save(calc_intensity,"_calc")     #wrong suffix!!
    err = calc_intensity - exp_data
    ##calc_intensity = normalize(Calculate_Intensity(Points_For_Calculation(seed=random_seed),mask),mask,True)
