@@ -37,9 +37,15 @@ class OpenCL:
       if coherence_length and (coherence_length < g.dictionary_SI['z_dim']):
          self.program.sumint_long(self.queue,out.shape,None,np.float32(qsize),np.float32(ehc),np.float32(coherence_length),np.int32(x_pixels),np.int32(y_pixels),buf_points,np.int32(npts),out_buffer)
       elif sym == 0:
-         self.program.sumint_asym(self.queue,out.shape,None,np.float32(qsize),np.float32(ehc),np.int32(x_pixels),np.int32(y_pixels),buf_points,np.int32(npts),out_buffer)
+         if small == 0:
+            self.program.sumint_asym(self.queue,out.shape,None,np.float32(qsize),np.float32(ehc),np.int32(x_pixels),np.int32(y_pixels),buf_points,np.int32(npts),out_buffer)
+         else:
+            self.program.sumint_asym_small(self.queue,out.shape,None,np.float32(qsize),np.float32(ehc),np.int32(x_pixels),np.int32(y_pixels),buf_points,np.int32(npts),out_buffer)
       else:
-         self.program.sumint_sym(self.queue,out.shape,None,np.float32(qsize),np.float32(ehc),np.int32(x_pixels),np.int32(y_pixels),buf_points,np.int32(npts),out_buffer)
+         if small == 0:
+            self.program.sumint_sym(self.queue,out.shape,None,np.float32(qsize),np.float32(ehc),np.int32(x_pixels),np.int32(y_pixels),buf_points,np.int32(npts),out_buffer)
+         else:
+            self.program.sumint_sym_small(self.queue,out.shape,None,np.float32(qsize),np.float32(ehc),np.int32(x_pixels),np.int32(y_pixels),buf_points,np.int32(npts),out_buffer)
       #cl.enqueue_read_buffer(self.queue,out_buffer,out).wait()
       cl.enqueue_copy(self.queue,out,out_buffer)
       return out.reshape(y_pixels,-1)    #Converts 1D intensity back to 2D.
@@ -59,9 +65,19 @@ class OpenCL:
          if coherence_length and coherence_length > g.dictionary_SI['z_dim']:
             self.program.sumint_long_mask(self.queue,out.shape,None,np.float32(qsize),np.float32(ehc),np.float32(coherence_length),np.int32(x_pixels),np.int32(y_pixels),buf_x,buf_y,buf_points,np.int32(npts),out_buffer)
          elif sym == 0:
-            self.program.sumint_asym_mask(self.queue,out.shape,None,np.float32(qsize),np.float32(ehc),np.int32(x_pixels),np.int32(y_pixels),buf_x,buf_y,buf_points,np.int32(npts),out_buffer)
+            if small == 0:
+               g.dprint("Not using radial symmetry or small angle approximation.")
+               self.program.sumint_asym_mask(self.queue,out.shape,None,np.float32(qsize),np.float32(ehc),np.int32(x_pixels),np.int32(y_pixels),buf_x,buf_y,buf_points,np.int32(npts),out_buffer)
+            else:
+               g.dprint("Using small angle approximation but not radial symmetry.")
+               self.program.sumint_asym_small_mask(self.queue,out.shape,None,np.float32(qsize),np.float32(ehc),np.int32(x_pixels),np.int32(y_pixels),buf_x,buf_y,buf_points,np.int32(npts),out_buffer)
          else:
-            self.program.sumint_sym_mask(self.queue,out.shape,None,np.float32(qsize),np.float32(ehc),np.int32(x_pixels),np.int32(y_pixels),buf_x,buf_y,buf_points,np.int32(npts),out_buffer)
+            if small == 0:
+               g.dprint("Using radial symmetry but not small angle approximation.")
+               self.program.sumint_sym_mask(self.queue,out.shape,None,np.float32(qsize),np.float32(ehc),np.int32(x_pixels),np.int32(y_pixels),buf_x,buf_y,buf_points,np.int32(npts),out_buffer)
+            else:
+               g.dprint("Using both radial symmetry and small angle approximation.")
+               self.program.sumint_sym_small_mask(self.queue,out.shape,None,np.float32(qsize),np.float32(ehc),np.int32(x_pixels),np.int32(y_pixels),buf_x,buf_y,buf_points,np.int32(npts),out_buffer)
       except:
          print("Runtime Error. Too many pixels being calculated for OpenCL to work with grid compression.")
          print("Either disable grid compression entirely or decrease number of pixels or increase grid compression.")

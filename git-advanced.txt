@@ -31,6 +31,8 @@ Other Useful Git Commands:
 
 `git reset --hard HEAD`             #Returns all files to status from last commit.  Can't undo.
 
+`git log -g --grep=<search>`        #Searches all git commit messages for instances of <search>.
+
 ## Branches ##
 
 `git branch -a`                   #Lists all branches

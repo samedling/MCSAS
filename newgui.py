@@ -1,6 +1,6 @@
 #!/usr/bin/python
-version = '0.4.5'
-updated = '6 Nov 2015'
+version = '0.5.0'
+updated = '13 Nov 2015'
 
 print('Starting MCSAS v{0} (updated {1}).'.format(version,updated))
 
@@ -56,7 +56,7 @@ if g.f2py_enabled:
    except ImportError:
       g.f2py_enabled = False
    try:
-     if fastmath.version.number() < 0.31:     #Update this line to check for updates for f2py binary.
+     if fastmath.version.number() < 0.40:     #Update this line to check for updates for f2py binary.
         print('Existing f2py binary was out of date; newer version copied.')
         g.vprint('If you ran `make` yourself, run it again for optimal performance.')
         if sys.platform == 'darwin':
@@ -900,12 +900,10 @@ if __name__ == "__main__":
    ROW = 0
    COL = 0
    Label(master, text = "Model Type", font = "Times 16 bold").grid(row = ROW, column = COL, sticky = W)
+   ROW+=1
+   tick('Qz',"Small Angle Approx.", master, ROW, COL)
    COL+=1
    tick("symmetric", "Radial Symmetry", master,ROW,COL)
-   #ROW+=1
-   #tick('Qz',"Small Angle Approx. (Qz=0)", ROW, COL)
-   #COL+=1
-   #tick('Qz',"Small Angle Approx.", ROW, COL)
    COL-=1
 
 

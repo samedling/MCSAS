@@ -313,12 +313,11 @@ def Calculate_Intensity(Points,mask=[],coherence_dup = 1, coherence_taper = 0):
 if g.opencl_enabled:
    def Detector_Intensity(Points,mask=[]):
       symmetric = g.dictionary_SI['symmetric']
+      Qz = g.dictionary_SI['Qz']
       qsize=g.dictionary_SI['QSize']
       ehc=g.dictionary_SI['EHC']
       x_pixels,y_pixels = [int(i) for i in g.dictionary_SI['pixels'].split()]
       #g.dprint("Shape {0}".format(g.dictionary['shape']))
-      if symmetric:
-         g.dprint("Using symmetry.")
       if not len(mask) or g.dictionary['grid_compression'] < 2:
          return g.opencl_sumint.sumint(qsize,ehc,x_pixels,y_pixels,Points,symmetric)
       else:
@@ -329,6 +328,7 @@ if g.opencl_enabled:
 elif g.f2py_enabled:
    def Detector_Intensity(Points,mask=[]):
       symmetric = g.dictionary_SI['symmetric']
+      Qz = g.dictionary_SI['Qz']
       QSize = g.dictionary_SI['QSize']
       x_pixels,y_pixels = [int(i) for i in g.dictionary_SI['pixels'].split()]
       EHC = g.dictionary_SI['EHC']
@@ -336,34 +336,62 @@ elif g.f2py_enabled:
       if not len(mask):
          mask = np.ones((y_pixels,x_pixels))
       if symmetric:
-         g.dprint("Using symmetry.")
-         return fastmath.sumint.symmetric(QSize,EHC,mask,Points.T)
+         if Qz:
+            g.dprint("Using both radial symmetry and small angle approximation.")
+            return fastmath.sumint.symmetric_small(QSize,EHC,mask,Points.T)
+         else:
+            g.dprint("Using radial symmetry but not small angle approximation.")
+            return fastmath.sumint.symmetric(QSize,EHC,mask,Points.T)
       else:
-         return fastmath.sumint.asymmetric(QSize,EHC,mask,Points.T)
+         if Qz:
+            g.dprint("Using small angle approximation but not radial symmetry.")
+            return fastmath.sumint.asymmetric_small(QSize,EHC,mask,Points.T)
+         else:
+            g.dprint("Not using radial symmetry or small angle approximation.")
+            return fastmath.sumint.asymmetric(QSize,EHC,mask,Points.T)
 
 else:   #python only
    def Detector_Intensity(Points,mask=[]):
       symmetric = g.dictionary_SI['symmetric']
+      Qz = g.dictionary_SI['Qz']
       QSize = g.dictionary_SI['QSize']
       x_pixels,y_pixels = [int(i) for i in g.dictionary_SI['pixels'].split()]
+      max_pixels=max(x_pixels,y_pixels)
       EHC = g.dictionary_SI['EHC']
       #g.dprint("Shape {0}".format(g.dictionary['shape']))
       if symmetric:
-         g.dprint("Using symmetry.")
-         Intensity = np.array([[np.sum(np.cos(np.sum(
-               [row*QSize/y_pixels-0.5*QSize, col*QSize/x_pixels-0.5*QSize, 2*EHC*np.sin((((row-0.5*y_pixels)**2 + (col-0.5*x_pixels)**2)**0.5)*QSize/x_pixels/2/EHC)**2]
+         if Qz:
+            g.dprint("Using both radial symmetry and small angle approximation.")
+            Intensity = np.array([[np.sum(np.cos(np.sum(
+               [(row-0.5*y_pixels)*QSize/max_pixels, (col-0.5*x_pixels)*QSize/max_pixels, 0.]
                *Points[:,0:3],axis =1))*np.transpose(Points[:,3:4]))**2
-                         for col in range(int(x_pixels))] for row in range(int(y_pixels))])
-         return Intensity/np.sum(Intensity)
+               for col in range(int(x_pixels))] for row in range(int(y_pixels))])
+         else:
+            g.dprint("Using radial symmetry but not small angle approximation.")
+            Intensity = np.array([[np.sum(np.cos(np.sum(
+               [(row-0.5*y_pixels)*QSize/max_pixels, (col-0.5*x_pixels)*QSize/max_pixels, 2*EHC*np.sin((((row-0.5*y_pixels)**2 + (col-0.5*x_pixels)**2)**0.5)*QSize/max_pixels/2/EHC)**2]
+               *Points[:,0:3],axis =1))*np.transpose(Points[:,3:4]))**2
+               for col in range(int(x_pixels))] for row in range(int(y_pixels))])
       else:
-         Intensity = np.array([[np.sum(np.cos(np.sum(
-            [row*QSize/y_pixels-0.5*QSize, col*QSize/x_pixels-0.5*QSize, 2*EHC*np.sin((((row-0.5*y_pixels)**2 + (col-0.5*x_pixels)**2)**0.5)*QSize/x_pixels/2/EHC)**2]
-              *Points[:,0:3], axis = 1))*np.transpose(Points[:,3:4]))**2
-                        +np.sum(np.sin(np.sum(
-                            [row*QSize/y_pixels-0.5*QSize, col*QSize/x_pixels-0.5*QSize, 2*EHC*np.sin((((row-0.5*y_pixels)**2 + (col-0.5*x_pixels)**2)**0.5)*QSize/x_pixels/2/EHC)**2]
-                            *Points[:,0:3], axis = 1))*np.transpose(Points[:,3:4]))**2
-                        for col in range(int(x_pixels))] for row in range(int(y_pixels))])
-         return Intensity/np.sum(Intensity)
+         if Qz:
+            g.dprint("Using small angle approximation but not radial symmetry.")
+            Intensity = np.array([[np.sum(np.cos(np.sum(
+               [(row-0.5*y_pixels)*QSize/max_pixels, (col-0.5*x_pixels)*QSize/max_pixels, 0.]
+               *Points[:,0:3], axis = 1))*np.transpose(Points[:,3:4]))**2
+               +np.sum(np.sin(np.sum(
+               [(row-0.5*y_pixels)*QSize/max_pixels, (col-0.5*x_pixels)*QSize/max_pixels, 2*EHC*np.sin((((row-0.5*y_pixels)**2 + (col-0.5*x_pixels)**2)**0.5)*QSize/max_pixels/2/EHC)**2]
+               *Points[:,0:3], axis = 1))*np.transpose(Points[:,3:4]))**2
+               for col in range(int(x_pixels))] for row in range(int(y_pixels))])
+         else:
+            g.dprint("Not using radial symmetry or small angle approximation.")
+            Intensity = np.array([[np.sum(np.cos(np.sum(
+               [(row-0.5*y_pixels)*QSize/max_pixels, (col-0.5*x_pixels)*QSize/max_pixels, 2*EHC*np.sin((((row-0.5*y_pixels)**2 + (col-0.5*x_pixels)**2)**0.5)*QSize/max_pixels/2/EHC)**2]
+               *Points[:,0:3], axis = 1))*np.transpose(Points[:,3:4]))**2
+               +np.sum(np.sin(np.sum(
+               [(row-0.5*y_pixels)*QSize/max_pixels, (col-0.5*x_pixels)*QSize/max_pixels, 2*EHC*np.sin((((row-0.5*y_pixels)**2 + (col-0.5*x_pixels)**2)**0.5)*QSize/max_pixels/2/EHC)**2]
+               *Points[:,0:3], axis = 1))*np.transpose(Points[:,3:4]))**2
+               for col in range(int(x_pixels))] for row in range(int(y_pixels))])
+      return Intensity/np.sum(Intensity)
 
 
 

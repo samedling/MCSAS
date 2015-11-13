@@ -194,7 +194,7 @@ def residuals(param,exp_data,mask=[],random_seed=2015):
    if not len(mask):
       mask = np.ones(exp_data.shape)
 
-   if g.debug and g.dictionary['s_var'] > 1:    #sequence fit
+   if g.dictionary['s_var'] > 1:    #sequence fit
       convert_from_SI()
       orig = g.dictionary[g.dictionary['s_var']]
       for i in range(g.dictionary['s_step']):

@@ -1,9 +1,6 @@
 !f90
 
 !The sumint module contains subroutines for calculating the intensity at each point.
-!There are subroutines both with and without both symmetry and the small-angle approximation.
-!The first number in the title indicates if it's symmetric (1=symmetric,0=asymmetric)
-!The second number in the title indicates if the small-angle approxmation is used.
 !Single-precision is used for the input array to keep the size down. Output array is double.
 
 !The density module contains vectorized subroutines to calculate the density at every point in real space.
@@ -23,7 +20,7 @@ module version
 contains
 subroutine number(version)
    real*4, intent(out) :: version
-   version = 0.31
+   version = 0.40
 end subroutine number
 end module version
 
@@ -39,15 +36,16 @@ subroutine asymmetric(qsize,ehc,mask,x_pixels,y_pixels,points,npts,intensity)
    real*4, dimension(x_pixels,y_pixels), intent(in) :: mask
    real*8, dimension(x_pixels,y_pixels), intent(out) :: intensity
    real*8, dimension(3) :: Q
-   real*8 :: temp_intensity,temp_intensity_2,QdotR
+   real*8 :: temp_intensity,temp_intensity_2,QdotR,max_pixels
    integer*4 :: p
+   max_pixels=max(x_pixels,y_pixels)
    !'asymmetry'; no small angle approximation
    !$OMP PARALLEL DO PRIVATE(Q,QdotR,temp_intensity,temp_intensity_2) SHARED(mask,points,intensity)
    do j=1,y_pixels
       do i=1,x_pixels
          if (mask(i,j) > 0) then
-            Q = (/ i*qsize/x_pixels-0.5*qsize, j*qsize/y_pixels-0.5*qsize, &
-                2*ehc*sin(sqrt((i-0.5*x_pixels)**2+(j-0.5*y_pixels)**2)*qsize/(y_pixels*2*ehc))**2 /)
+            Q = (/ (i-0.5*x_pixels)*qsize/max_pixels, (j-0.5*y_pixels)*qsize/max_pixels, &
+                2*ehc*sin(sqrt((i-0.5*x_pixels)**2+(j-0.5*y_pixels)**2)*qsize/(max_pixels*2*ehc))**2 /)
                 !!TODO: POSSIBLE FORMULA ERROR, CHECK PIXELS IN DENOMINATOR!!
             !intensity(i,j)= SUM(density(p)*COS(DOT_PRODUCT(Q,R(p))))**2 + SUM(density(p)*SIN(DOT_PRODUCT(Q,R(p))))**2
             temp_intensity = 0
@@ -67,6 +65,45 @@ subroutine asymmetric(qsize,ehc,mask,x_pixels,y_pixels,points,npts,intensity)
    return
 end subroutine asymmetric
 
+subroutine asymmetric_small(qsize,ehc,mask,x_pixels,y_pixels,points,npts,intensity)
+   real*8, intent(in) :: qsize
+   integer*4, intent(in) :: x_pixels,y_pixels
+   real*8, intent(in) :: ehc
+   integer*4, intent(in) :: npts
+   real*4, dimension(4,npts), intent(in) :: points
+   real*4, dimension(x_pixels,y_pixels), intent(in) :: mask
+   real*8, dimension(x_pixels,y_pixels), intent(out) :: intensity
+   real*8, dimension(3) :: Q
+   real*8 :: temp_intensity,temp_intensity_2,QdotR,QPdotR,max_pixels
+   integer*4 :: p
+   max_pixels=max(x_pixels,y_pixels)
+   !'asymmetry'; no small angle approximation
+   !$OMP PARALLEL DO PRIVATE(Q,QdotR,temp_intensity,temp_intensity_2) SHARED(mask,points,intensity)
+   do j=1,y_pixels
+      do i=1,x_pixels
+         if (mask(i,j) > 0) then
+            Q = (/ (i-0.5*x_pixels)*qsize/max_pixels, (j-0.5*y_pixels)*qsize/max_pixels, &
+                2*ehc*sin(sqrt((i-0.5*x_pixels)**2+(j-0.5*y_pixels)**2)*qsize/(max_pixels*2*ehc))**2 /)
+                !!TODO: POSSIBLE FORMULA ERROR, CHECK PIXELS IN DENOMINATOR!!
+            !intensity(i,j)= SUM(density(p)*COS(DOT_PRODUCT(Q,R(p))))**2 + SUM(density(p)*SIN(DOT_PRODUCT(Q,R(p))))**2
+            temp_intensity = 0
+            temp_intensity_2 = 0
+            do p=1,npts
+               QdotR = DOT_PRODUCT(Q,points(1:3,p))
+               QPdotR = DOT_PRODUCT(Q(1:2),points(1:2,p))
+               temp_intensity = temp_intensity + points(4,p)*COS(QdotR)
+               temp_intensity_2 = temp_intensity_2 + points(4,p)*SIN(QPdotR)
+            end do
+            intensity(i,j) = temp_intensity**2 + temp_intensity_2**2
+         else
+            intensity(i,j) = 0
+         end if
+      end do
+   end do
+   !$OMP END PARALLEL DO
+   return
+end subroutine asymmetric_small
+
 subroutine test00(qsize,ehc,mask,x_pixels,y_pixels,points,npts,intensity)
    real*8, intent(in) :: qsize
    integer*4, intent(in) :: x_pixels,y_pixels
@@ -76,20 +113,21 @@ subroutine test00(qsize,ehc,mask,x_pixels,y_pixels,points,npts,intensity)
    real*4, dimension(x_pixels,y_pixels), intent(in) :: mask
    real*8, dimension(x_pixels,y_pixels), intent(out) :: intensity
    real*8, dimension(3) :: Q
-   real*8 :: QdotR
+   real*8 :: QdotR,max_pixels
    real*8, dimension(x_pixels,y_pixels) :: temp_intensity,temp_intensity_2
    integer*4 :: p
    !'asymmetry'; no small angle approximation
    !test with loop order switched
    temp_intensity(:,:) = 0
    temp_intensity_2(:,:) = 0
+   max_pixels=max(x_pixels,y_pixels)
    !$OMP PARALLEL DO PRIVATE(Q,QdotR) SHARED(mask,points) REDUCTION(+:temp_intensity,temp_intensity_2)
    do p=1,npts
    do j=1,y_pixels
       do i=1,x_pixels
          if (mask(i,j) > 0) then
-            Q = (/ i*qsize/x_pixels-0.5*qsize, j*qsize/y_pixels-0.5*qsize, &
-                2*ehc*sin(sqrt((i-0.5*x_pixels)**2+(j-0.5*y_pixels)**2)*qsize/(y_pixels*2*ehc))**2 /)
+            Q = (/ (i-0.5*x_pixels)*qsize/max_pixels, (j-0.5*y_pixels)*qsize/max_pixels, &
+                2*ehc*sin(sqrt((i-0.5*x_pixels)**2+(j-0.5*y_pixels)**2)*qsize/(max_pixels*2*ehc))**2 /)
                 !!TODO: POSSIBLE FORMULA ERROR, CHECK PIXELS IN DENOMINATOR!!
             !intensity(i,j)= SUM(density(p)*COS(DOT_PRODUCT(Q,R(p))))**2 + SUM(density(p)*SIN(DOT_PRODUCT(Q,R(p))))**2
             QdotR = DOT_PRODUCT(Q,points(1:3,p))
@@ -112,16 +150,17 @@ subroutine symmetric(qsize,ehc,mask,x_pixels,y_pixels,points,npts,intensity)
    real*4, dimension(4,npts), intent(in) :: points
    real*4, dimension(x_pixels,y_pixels), intent(in) :: mask
    real*8, dimension(x_pixels,y_pixels), intent(out) :: intensity
-   real*8 :: temp_intensity
+   real*8 :: temp_intensity,max_pixels
    real*8, dimension(3) :: Q
    integer*4 :: p
+   max_pixels=max(x_pixels,y_pixels)
    !'symmetry'; no small angle approximation
    !$OMP PARALLEL DO PRIVATE(Q,temp_intensity) SHARED(mask,points,intensity)
    do j=1,y_pixels
       do i=1,x_pixels
          if (mask(i,j) > 0) then
-            Q = (/ i*qsize/x_pixels-0.5*qsize, j*qsize/y_pixels-0.5*qsize, &
-                2*ehc*sin(sqrt((i-0.5*x_pixels)**2+(j-0.5*y_pixels)**2)*qsize/(y_pixels*2*ehc))**2 /)
+            Q = (/ (i-0.5*x_pixels)*qsize/max_pixels, (j-0.5*y_pixels)*qsize/max_pixels, &
+                2*ehc*sin(sqrt((i-0.5*x_pixels)**2+(j-0.5*y_pixels)**2)*qsize/(max_pixels*2*ehc))**2 /)
                 !!TODO: POSSIBLE FORMULA ERROR, CHECK PIXELS IN DENOMINATOR!!
             temp_intensity = 0
             do p=1,npts
@@ -138,6 +177,39 @@ subroutine symmetric(qsize,ehc,mask,x_pixels,y_pixels,points,npts,intensity)
    return
 end subroutine symmetric
 
+subroutine symmetric_small(qsize,ehc,mask,x_pixels,y_pixels,points,npts,intensity)
+   real*8, intent(in) :: qsize
+   integer*4, intent(in) :: x_pixels,y_pixels
+   real*8, intent(in) :: ehc
+   integer*4, intent(in) :: npts
+   real*4, dimension(4,npts), intent(in) :: points
+   real*4, dimension(x_pixels,y_pixels), intent(in) :: mask
+   real*8, dimension(x_pixels,y_pixels), intent(out) :: intensity
+   real*8 :: temp_intensity,max_pixels
+   real*8, dimension(2) :: Q
+   integer*4 :: p
+   max_pixels=max(x_pixels,y_pixels)
+   !'symmetry'; no small angle approximation
+   !$OMP PARALLEL DO PRIVATE(Q,temp_intensity) SHARED(mask,points,intensity)
+   do j=1,y_pixels
+      do i=1,x_pixels
+         if (mask(i,j) > 0) then
+            Q = (/ (i-0.5*x_pixels)*qsize/max_pixels, (j-0.5*y_pixels)*qsize/max_pixels /)
+            temp_intensity = 0
+            do p=1,npts
+               !temp_intensity = temp_intensity + (density(p)*COS(DOT_PRODUCT(Q,R)))**2
+               temp_intensity = temp_intensity + (points(4,p)*COS(DOT_PRODUCT(Q,points(1:2,p))))
+            end do
+            intensity(i,j) = temp_intensity**2
+         else
+            intensity(i,j) = 0
+         end if
+      end do
+   end do
+   !$OMP END PARALLEL DO
+   return
+end subroutine symmetric_small
+
 subroutine coherent_long(qsize,ehc,coherence_length,mask,x_pixels,y_pixels,points,npts,intensity)
    real*8, intent(in) :: qsize
    integer*4, intent(in) :: x_pixels,y_pixels
@@ -147,18 +219,19 @@ subroutine coherent_long(qsize,ehc,coherence_length,mask,x_pixels,y_pixels,point
    real*4, dimension(x_pixels,y_pixels), intent(in) :: mask
    real*8, dimension(x_pixels,y_pixels), intent(out) :: intensity
    real*8, dimension(3) :: Q,r
-   real*8 :: temp_intensity,temp_intensity_2,QdotR
+   real*8 :: temp_intensity,temp_intensity_2,QdotR,max_pixels
    real*8, parameter :: pi = 4.0*ATAN(1.0)
    real*8, intent(in) :: coherence_length
    integer*4 :: p1,p2!,coherence_points
+   max_pixels=max(x_pixels,y_pixels)
    !This version uses no symmetry but doesn't use the trigonometric trick from Sjoberg.
    !coherence_length = 2*pi / (ehc * 1.5e-4)      !coherence_lengh = lambda / dlambda; 2pi/ehc = wavelength
    !$OMP PARALLEL DO PRIVATE(Q,QdotR,temp_intensity,temp_intensity_2) SHARED(mask,points,intensity)
    do j=1,y_pixels
       do i=1,x_pixels
          if (mask(i,j) > 0) then
-            Q = (/ i*qsize/x_pixels-0.5*qsize, j*qsize/y_pixels-0.5*qsize, &
-                2*ehc*sin(sqrt((i-0.5*x_pixels)**2+(j-0.5*y_pixels)**2)*qsize/(y_pixels*2*ehc))**2 /)
+            Q = (/ (i-0.5*x_pixels)*qsize/max_pixels, (j-0.5*y_pixels)*qsize/max_pixels, &
+                2*ehc*sin(sqrt((i-0.5*x_pixels)**2+(j-0.5*y_pixels)**2)*qsize/(max_pixels*2*ehc))**2 /)
             temp_intensity = 0
             do p1=1,npts
                !do p2=MAX(0,p1-coherence_points),MIN(npts,p1+coherence_points)
@@ -191,11 +264,12 @@ subroutine coherent_shorter(qsize,ehc,coherence_length,mask,x_pixels,y_pixels,po
    real*4, dimension(x_pixels,y_pixels), intent(in) :: mask
    real*8, dimension(x_pixels,y_pixels), intent(out) :: intensity
    real*8, dimension(3) :: Q,r
-   real*8 :: temp_intensity,temp_intensity_2,QdotR
+   real*8 :: temp_intensity,temp_intensity_2,QdotR,max_pixels
    real*8, parameter :: pi = 4.0*ATAN(1.0)
    integer*4, dimension(2,npts) :: coherence_range !min & max values to iterate p2 over
    real*8, intent(in) :: coherence_length
    integer*4 :: p1,p2!,coherence_points
+   max_pixels=max(x_pixels,y_pixels)
    !This version uses no symmetry but doesn't use the trigonometric trick from Sjoberg.
    !coherence_length = 2*pi / (ehc * 1.5e-4)      !coherence_lengh = lambda / dlambda; 2pi/ehc = wavelength
 	!should be slightly faster than coherent_long at the expense of requiring points be sorted by z and only using z coordinate for 'distance'
@@ -245,8 +319,8 @@ subroutine coherent_shorter(qsize,ehc,coherence_length,mask,x_pixels,y_pixels,po
    do j=1,y_pixels
       do i=1,x_pixels
          if (mask(i,j) > 0) then
-            Q = (/ i*qsize/x_pixels-0.5*qsize, j*qsize/y_pixels-0.5*qsize, &
-                2*ehc*sin(sqrt((i-0.5*x_pixels)**2+(j-0.5*y_pixels)**2)*qsize/(y_pixels*2*ehc))**2 /)
+            Q = (/ (i-0.5*x_pixels)*qsize/max_pixels, (j-0.5*y_pixels)*qsize/max_pixels, &
+                2*ehc*sin(sqrt((i-0.5*x_pixels)**2+(j-0.5*y_pixels)**2)*qsize/(max_pixels*2*ehc))**2 /)
             temp_intensity = 0
             do p1=1,npts
                do p2=coherence_range(1,p1),coherence_range(2,p1)
