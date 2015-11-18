@@ -55,6 +55,8 @@ def density(coords):
       return d18doublecone_track(coords)
    elif g.dictionary_SI['shape'] == 19:
       return d19taperedcylinder(coords)
+   elif g.dictionary_SI['shape'] == 20:
+      return d20continuouscoreshell(coords)
 
 
 #This is a dictionary containing all of the useful descriptions for the variables for each model.
@@ -80,6 +82,7 @@ g.model_parameters=[
    (17,'Chopped Core Shell',("Outer Radius (nm)","Inner Radius (nm)","Length (nm)","Core Density","Shell Density","Number of Gaps","Gap Length (nm)")),
    (18,'Double Cone with Track',("End Cone Radius (nm)","Central Cone Radius (nm)","Total Length (nm)","Density","unused","unused","Track Radius (nm)")),
    (19,'Tapered Cylinder',('Radius (nm)','unused','Total Length (nm)','Density','unused','Taper Both Ends?','Cone Length (nm)')),
+   (20,'Continuous Core Shell Cylinder',("Outer Radius (nm)","Inner Radius (nm)","Length (nm)","Extreme Core Density","Shell Density","unused","unused")),
 ]
 #Template: fill in number, Name of Model, and useful descriptor or 'unused' in place of each variable name.
 #(n,'Name of Model',('radius_1','radius_2','z_dim','rho_1','rho_2','num','length_2'))
@@ -246,6 +249,10 @@ def d19taperedcylinder(coords):
     else: #taper only one end
        return [rho if ((np.sqrt(np.sum(coords[i,0:2]**2)) < radius) and (np.sqrt(np.sum(coords[i,0:2]**2)) < -radius*coords[i,2]/length_2+0.5*radius*length/length_2)) else 0 for i in range(coords.shape[0])]
 
+def d20continuouscoreshell(coords):
+    return [g.dictionary_SI['rho_2'] if g.dictionary_SI['radius_2']<np.sqrt(np.sum(coords[i,0:2]**2))<g.dictionary_SI['radius_1'] else
+    (g.dictionary_SI['rho_2']-g.dictionary_SI['rho_1']/g.dictionary['radius_2'])*np.sqrt(np.sum(coords[i,0:2]**2))+g.dictionary_SI['rho_1']
+    if np.sqrt(np.sum(coords[i,0:2]**2))<g.dictionary_SI['radius_2'] else 0 for i in range(coords.shape[0])]
 
 #def density_slow_template(coords):
     #densities = np.empty(coords.shape[0])   #creates empty density array
