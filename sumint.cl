@@ -195,7 +195,7 @@ __kernel void sumint_asym_small (
    __global const float4* points, const int npts, __global float* intensity)
 {
 // For no symmetry and small angle approximation
-   float temp_intensity,temp_intensity_2,QdotR;
+   float temp_intensity,temp_intensity_2,QdotR,QPdotR;
    int n = get_global_id(0);
    int i = n/x_pixels;
    int j = n%x_pixels;
@@ -219,7 +219,7 @@ __kernel void sumint_asym_small_mask (
    __global const float4* points, const int npts, __global float* intensity)
 {
 // For no symmetry and small angle approximation
-   float temp_intensity,temp_intensity_2,QdotR;
+   float temp_intensity,temp_intensity_2,QdotR,QPdotR;
    int n = get_global_id(0);
    int i = xval[n];
    int j = yval[n];

@@ -105,12 +105,16 @@ def Points_For_Calculation(seed=0,sort=0):
        else:
           return np.asarray(points_inside.dot(np.transpose(rotz.dot(roty).dot(rotx))))
     except ValueError:
-       print points.shape
-       print rotx.shape, roty.shape, rotz.shape
-       print rotz.dot(roty).dot(rotx).shape
-       print points_inside.shape
-       print np.transpose(rotz.dot(roty).dot(rotx)).shape
-       print points_inside.dot(np.transpose(rotz.dot(roty).dot(rotx))).shape
+       if len(points_inside) == 0:
+          print("Error: shape has no points; check your parameters.")
+       else:
+          print("Unknown error: it might work if you just run it again without changing anything.  Sorry.")
+          print points.shape
+          print rotx.shape, roty.shape, rotz.shape
+          print rotz.dot(roty).dot(rotx).shape
+          print points_inside.shape
+          print np.transpose(rotz.dot(roty).dot(rotx)).shape
+          print points_inside.dot(np.transpose(rotz.dot(roty).dot(rotx))).shape
        return np.asarray(points_inside.dot(np.transpose(rotz.dot(roty).dot(rotx))))
 
     #return np.asarray(points_inside.dot(np.transpose(rotz.dot(roty).dot(rotx))))
