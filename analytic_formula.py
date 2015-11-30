@@ -1,3 +1,4 @@
+#testing how to make changes in github
 #A reminder: the camera is a long way away in the z direction
 
 import pylab, sys, os
