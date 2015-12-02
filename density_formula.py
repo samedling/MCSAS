@@ -59,6 +59,8 @@ def density(coords):
       return d20continuouscoreshell(coords)
    elif g.dictionary_SI['shape'] == 21:
       return d21coreshellcone(coords)
+   elif g.dictionary_SI['shape'] == 22:
+      return d22coreshellsmooth(coords) 
 
 
 
@@ -87,7 +89,9 @@ g.model_parameters=[
    (19,'Tapered Cylinder',('Radius (nm)','unused','Total Length (nm)','Density','unused','Taper Both Ends?','Cone Length (nm)')),
    (20,'Continuous Core Shell Cylinder',("Outer Radius (nm)","Inner Radius (nm)","Length (nm)","Extreme Core Density","Shell Density","unused","unused")),
    (21,'Core Shell Cone',("Outer Radius (nm)","Inner Radius (nm)","Length (nm)","Core Density","Shell Density","unused","Outer Radius - Far End")),
+   (22,'Smooth Core Shell Cylinder',('1.5*Outer Radius (nm)','Core Radius (nm)','Length (nm)','Core Density','Shell Density','Smoothness (Low=smoother)','unused')),
 ]
+
 #Template: fill in number, Name of Model, and useful descriptor or 'unused' in place of each variable name.
 #(n,'Name of Model',('radius_1','radius_2','z_dim','rho_1','rho_2','num','length_2'))
 
@@ -261,7 +265,8 @@ def d20continuouscoreshell(coords):
 def d21coreshellcone(coords):
     return [g.dictionary_SI['rho_1'] if np.sqrt(np.sum(coords[i,0:2]**2)) < coords[i,2:3]*(g.dictionary_SI['length_2']-g.dictionary_SI['radius_1'])*g.dictionary_SI['radius_2']/(g.dictionary_SI['z_dim']*g.dictionary_SI['radius_1'])+g.dictionary_SI['radius_2']+(g.dictionary_SI['length_2']-g.dictionary_SI['radius_1'])*g.dictionary_SI['radius_2']/(2*g.dictionary_SI['radius_1']) else g.dictionary_SI['rho_2'] if np.sqrt(np.sum(coords[i,0:2]**2)) < coords[i,2:3]*(g.dictionary_SI['length_2']-g.dictionary_SI['radius_1'])/g.dictionary_SI['z_dim']+(g.dictionary_SI['length_2']+g.dictionary_SI['radius_1'])/2 else 0 for i in range(coords.shape[0])]
 
-
+def d22coreshellsmooth(coords):
+    return [((g.dictionary_SI['rho_1']-g.dictionary_SI['rho_2'])*np.exp(-(np.sqrt(np.sum(coords[i,0:2]**2))/g.dictionary_SI['radius_2'])**g.dictionary_SI['num'])+ g.dictionary_SI['rho_2']*np.exp(-(np.sqrt(np.sum(coords[i,0:2]**2))/(g.dictionary_SI['radius_1']/1.5))**g.dictionary_SI['num'])) if np.sqrt(np.sum(coords[i,0:2]**2))<g.dictionary_SI['radius_1'] else 0 for i in range(coords.shape[0])]    
 
 
 
