@@ -335,8 +335,9 @@ def perform_fit():  #Gets run when you press the Button.
    elif plot_fit:
       fit_results=Average_Intensity()
       save(fit_results,"_fit")
-      print('Plotting difference.')
-      Intensity_plot(fit_results,"residuals",'Difference Plot',1)
+      print('Plotting intensity.')
+      #Intensity_plot(fit_results,"residuals",'Difference Plot',1)
+      multiplot((exp_data*mask,calc_intensity),titles=('Exp. Data','Calc. Intensity'))
    elif plot_diff:
       print('Plotting difference.')
       Intensity_plot(diff,"residuals",'Difference Plot',1)
@@ -427,8 +428,9 @@ def convert_from_SI():
 
 def plot_residuals():
    '''Loads exp data, calculates intensity, and plots the difference [as well as 2 original plots].'''
-   plot_all=g.dictionary['plot_fit_tick']
    get_numbers_from_gui()
+   plot_fit=g.dictionary['plot_fit_tick']
+   plot_diff=g.dictionary['plot_residuals_tick']
    filename = g.dictionary['fit_file']
    if not g.f2py_enabled and not g.opencl_enabled:
       print('Acceleration is NOT enabled!')
@@ -473,9 +475,12 @@ def plot_residuals():
    save(err,"_guess_residuals")
    plot_residuals=np.abs(err)*mask
    print('{0}: Total error = {1:.4}; sum of squares = {2:.4}'.format(time.strftime("%X"),plot_residuals.sum(),np.square(err).sum()))
-   if plot_all:
+   if plot_fit and plot_diff:
       Fit_plot(exp_data*mask,calc_intensity,plot_residuals)
-   else:
+   elif plot_fit:
+      print('Plotting intensity.')
+      multiplot((exp_data*mask,calc_intensity),titles=('Exp. Data','Calc. Intensity'))
+   elif plot_diff:
       print('Plotting difference.')
       Intensity_plot(plot_residuals,"residuals",'Difference Plot',1)
 
@@ -562,7 +567,7 @@ def select_fit_parameters():
    tick('plot_residuals_tick',"Plot Fit Residuals", fit_window,ROW, COL)
    COL-=1
    ROW += 1
-   Button(fit_window, text="Plot Residuals", command = plot_residuals, font = "Times 16 bold").grid(row=ROW, column=COL, pady=4)
+   Button(fit_window, text="Calc Residuals", command = plot_residuals, font = "Times 16 bold").grid(row=ROW, column=COL, pady=4)
    COL+= 1
    Button(fit_window, text="Fit Exp Data", command = perform_fit, font = "Times 16 bold").grid(row=ROW, column=COL, pady=4)
    COL -= 1
