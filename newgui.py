@@ -1,5 +1,5 @@
 #!/usr/bin/python
-version = '0.5.2'
+version = '0.5.3'
 updated = '2 Dec 2015'
 
 print('Starting MCSAS v{0} (updated {1}).'.format(version,updated))
@@ -14,6 +14,7 @@ import os, sys, pickle, random, pylab, time
 import numpy as np
 from scipy.special import *
 from mpl_toolkits.mplot3d import Axes3D
+import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib import cm
 

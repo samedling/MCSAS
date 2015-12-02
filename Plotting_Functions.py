@@ -137,7 +137,93 @@ def Intensity_plot(Intensity, name, title, show):
         plt.show()
 
 
+def multiplot(datasets,orientation=False,titles=[]):
+    '''Shows a multiplot containing residuals, experimental data, and fit results.'''
+    maximum = g.dictionary_SI['maximum']
+    minimum = g.dictionary_SI['minimum']
+    log_scale = g.dictionary_SI['log_scale']
+    bound = g.dictionary_SI['bound']
+    QSize = g.dictionary_SI['QSize']
+    save_name = g.dictionary['save_name']
+    num_plots = len(datasets)
+    #getting the dimentions of the Intensity array
+    pixels_row,pixels_col = np.array(datasets[0]).shape
+
+    #This creates new arrays which are bounded.
+    if bound:
+        limit = np.vectorize(lambda x: max(min(x,maximum), minimum))
+        plots = np.copy(datasets)
+        for i in range(num_plots):
+           plots[i] = limit(datasets[i])
+    else:
+        plots = datasets
+
+    if not orientation:
+        if pixels_row > pixels_col:
+            orientation = 'Horizontal'
+            arrangement = (1,num_plots)
+        else:
+            orientation = 'Vertical'
+            arrangement = (num_plots,1)
+
+    if orientation[0] in ('S','s'):    #If square (ie. 2x2)
+       s=int(np.sqrt(num_plots))
+       fig,axes = plt.subplots(nrows=s,ncols=s,figsize=(5,7))
+    elif orientation[0] in ('H','h'):    #If horizontal
+       if num_plots < 6:
+          fig,axes = plt.subplots(nrows=1,ncols=num_plots,figsize=(8,3))
+       else:
+          fig,axes = plt.subplots(nrows=2,ncols=(num_plots+1)/2,figsize=(8,3))
+    else:  #If vertical
+       if num_plots < 6:
+          fig,axes = plt.subplots(nrows=num_plots,ncols=1,figsize=(5,10))  #good for 3,1
+          #fig,axes = plt.subplots(nrows=num_plots,ncols=1,figsize=(5,10))  #good for 3,1
+       else:
+          fig,axes = plt.subplots(nrows=(num_plots+1)/2,ncols=2,figsize=(8,3))
+
+    #Pictures of the colour map are at: http://matplotlib.org/users/colormaps.html
+    #put _r at the end to reverse the direction of the colour.
+    #cmap = cm.get_cmap('gist_gray_r')
+    #cmap = cm.get_cmap('seismic_r')
+    cmap = cm.get_cmap('hot_r')
+
+    if log_scale == 1:
+      for i in range(num_plots):
+         im = axes[i].imshow(np.log10(plots[i]),cmap=cmap)
+    else:
+      for i in range(num_plots):
+         im = axes[i].imshow(plots[i],cmap=cmap)
+
+    if len(titles):
+       for i in range(num_plots):
+         axes[i].set_title(titles[i])
+    #axes[0].set_title('Exp. Data')
+    #axes[1].set_title('Calc. Intensity')
+    #axes[2].set_title('|Difference|')
+
+    for i in range(num_plots):
+        axes[i].set_xticklabels([])
+        axes[i].set_yticklabels([])
+
+    if orientation[0] in ('V','v'):    #If vertical
+       fig.subplots_adjust(right=0.75)  #Moves subplots to make room for color bar.
+       cbar_ax = fig.add_axes([0.80,0.15,0.05,0.7])
+    else:
+       #fig.subplots_adjust(right=0.92)  #Moves subplots to make room for color bar.
+       #cbar_ax = fig.add_axes([0.95,0.15,0.02,0.7])
+       fig.subplots_adjust(right=0.82)  #Moves subplots to make room for color bar.
+       cbar_ax = fig.add_axes([0.90,0.15,0.02,0.7])
+    fig.colorbar(im, cax=cbar_ax)        
+
+    #plt.savefig(g.dictionary_SI['path_to_subfolder']+save_name+".png")
+    plt.show()
+
+
+
+
+
 def Fit_plot(experimental,fit,residuals,orientation=False):
+   #multiplot((experimental,fit,residuals),orientation,titles=('Exp. Data','Calc. Intensity','|Difference|'))
     '''Shows a multiplot containing residuals, experimental data, and fit results.'''
     maximum = g.dictionary_SI['maximum']
     minimum = g.dictionary_SI['minimum']
