@@ -6,7 +6,7 @@ Method 1:
 
  * Install by running `git clone https://github.com/samedling/MCSAS.git` to download the entire repository.
  
- * For future updates, run `git pull origin master` from the MCSAS folder.  You may also need to manually remove your old fastmath.so file.
+ * For future updates, run `git pull origin master` from the MCSAS folder.
  
 Method 2:
 
@@ -15,9 +15,9 @@ Method 2:
 
 There are two optional but recommended ways of speeding up the code:
 
- 1. (Strongly recommended:) Install PyOpenCL following the directions at http://wiki.tiker.net/PyOpenCL/Installation and then the first time your run it, it will ask you which platform and device you want to use.  Try the GPU first; if it doesn't work, use the CPU.  On my dual core CPU, I obtained a 25x speedup (and during fitting enabled another 5x speedup for a total of ~125x); quad core CPUs should be nearly twice as fast and GPUs should be even faster!
+ 1. Install PyOpenCL following the directions at http://wiki.tiker.net/PyOpenCL/Installation and then the first time your run it, it will ask you which platform and device you want to use.  Try the GPU first; if it doesn't work, use the CPU.  On my dual core CPU, I obtained a 25x speedup; quad core CPUs should be nearly twice as fast and GPUs should be even faster!
  
- 2. F2Py acceleration should work automatically on OS X or Linux.  If not, or if you want to make sure you get every bit of performance you can and you have gfortran installed, run `make` to compile the Fortran code (or if you have ifort installed, edit the makefile before running `make`).  I've found this useful even if you are running OpenCL on the CPU (it might be unnecessary if running OpenCL on the GPU).  On my dual core CPU, I obtained an 8x speedup (and during fitting another 10x speedup for ~80x); quad core CPUs likely not much faster.  There is a small benefit to having this in addition to OpenCL.
+ 2. F2Py acceleration should work automatically on OS X or Linux.  If not, or if you want maximum performance and you have gfortran installed, run `make` to compile the Fortran code (or if you have ifort installed, edit the makefile before running `make`).  On my dual core CPU, I obtained a 10x speedup; quad core CPUs likely not much faster.
 
 Run `python newgui.py` on the command line or open it in Canopy and click run.  (Note: you may discover running `nice python newgui.py` results in your system being a lot more responsive.)
 
@@ -48,7 +48,7 @@ OS X/EPD/Tkinter: Make sure you have Canopy.  EPD might tell you it's updated ev
 
 If you receive compiler OpenCL compiler warnings when starting the program it's probably due to your OpenCL device not supporting 64-bit floating point numbers; it should be fine, but if you get errors later, try using a different OpenCL device.
 
-Linux/OpenCL: apt-get on Ubuntu wasn't helpful to me; follow the directions linked above for more success.
+Linux/OpenCL: apt-get on Ubuntu 14.04 wasn't helpful to me; follow the directions linked above for more success.
 
 PIL: On older systems you may need to manually remove PIL and install Pillow (`sudo pip uninstall PIL` and `sudo pip install Pillow`); newer systems should simply come with Pillow.  Otherwise Image won't be able to read the funny SAXS TIF files.
 
@@ -64,7 +64,7 @@ Due to the large number of shapes, it's possible some of the sped-up versions of
 
 ### Individual Monte Carlo Calculations ###
 
-After selecting the Monte Carlo model, pressing the Parameter Help button will rename individual model parameters to be more descriptive and grey out unused parameters.
+After selecting the Monte Carlo model, **press the Parameter Help button** to rename individual model parameters to be more descriptive and grey out unused parameters.
 
 
 'Real Space' will show you the points.
@@ -75,29 +75,29 @@ To activate the advanced options, click on the Pop-Up Window buttons at the righ
 
 If the Save Images box is checked it automatically overwrites anything with the same filename.
 
-
-* The Radial Symmetry checkbox speeds the program, so check if appropriate.
+* The Radial Symmetry checkbox speeds the program, so check if appropriate.  The Small Angle Approximation checkbox doesn't speed things up, so only check if necessary.
 
 * Neighboring point distance and z-direction scaling can provide speedups at the expense of decreased background contrast; doubling the neighboring point distance decreases the number of points by a factor of 8, while doubling z-direction scaling decreases it by a factor of 2.
 
-* Opening multiple copies of the same window is not recommended.  If you do, it will use the values in the one you opened most recently but it will constantly reopen uneditable old ones.  Or sometimes it will produce an error until you close them and reopen one.  Either way you'll get confused, so avoid opening more than one of each window.
+* **Opening multiple copies of the same window is not recommended.**  If you do, it will use the values in the one you opened most recently but it will constantly reopen uneditable old ones.  Or sometimes it will produce an error until you close them and reopen one.  Either way you'll get confused, so avoid opening more than one of each window.
 
 * Taking into account a non-infinte coherence length really complicates things.  By default, the code uses a rough approximation where the object is broken into chunks.  This should work reasonably well, but if you want to really calculate it the long way, there's a button for that in Detector Options and I recommend no more than 2500 (50x50) pixels and 5000 points if you want it to take less than an hour.
-
 
 
 ### Performing Fits ###
 
 1. Input the name of the experimental data file (relative to the directory the program is in) to fit and click "Plot Exp Data".  If "Center of Beamstop" is left blank ("0 0") then it will plot the original experimental data (which takes a minute).  The lower bounds option in the center column is quite useful here.  Try a value in the range 1e-8 to 1e-6.  Then, move the mouse over the center of the beamstop and read the x,y-coordinates from the plot screen.  Use these values and replot the experimental data.  It will crop a sqaure around the center and downsample it so the side length is equal to the Pixels parameter.
-2. Input known values, uncheck relevant parameter boxes, make a good guess of unknown parameters.  To see how good your guess is, press "Plot Residuals".
+2. Input known values, uncheck relevant parameter boxes, make a good guess of unknown parameters.  To see how good your guess is, press "Calc Residuals".
 3. When you have a satisfactory guess, click "Fit Exp Data".  Each iteration, it prints out the time and the sum of the residuals; be aware that it is normal for the sum of the residuals to go several iterations without changing significantly.
-4. Read the fit results from the terminal.  If you had a grid compression >1 (assuming you're using Fortran acceleration) and now you want more printable results, copy the fit results back into the GUI and Plot Residuals.
+4. **Read the fit results from the terminal.**  If you had a grid compression >1 and now you want more printable results, copy the fit results back into the GUI and Plot Residuals.  Or run again to verify you aren't in a local minimum.
+5. Images are not automatically saved, so save them yourself.
 
 Some comments:
 * Grid compression only works with reliably with fortran; it works with OpenCL if the number of points/pixels does not exceed OpenCL's capabilities.
 * If the fit steps are each taking less than 10 seconds, there would probably be very little additional time taken by increasing pixels by 40% or halving the grid compression or z_scaling.
 * Be careful when letting the background vary.  If the background gets set too high by the computer, it cannot normalize properly and all bets are off.
 * Checking the radial symmetry box decreases the time taken by 30-50% (30% for Fortran, 40% for OpenCL, 50% for pure Python).
+* When fitting or calculating residuals, the settings in the Sequence Options window will affect your fits.  It's relatively flexible in that if you set the length to 100nm in the main window, but tell the length to vary from 180 to 220 in the sequence window, it will use lengths of 90 to 110.
 
 
 ## Adding Models ##
