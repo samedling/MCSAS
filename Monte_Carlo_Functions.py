@@ -275,7 +275,7 @@ def Calculate_Intensity(Points,mask=[],coherence_dup = 1, coherence_taper = 0):
    #num_bunches = int(np.ceil(coherence_dup*length/coherence_length))   #worse than round, at least sometimes
    if num_bunches > coherence_dup:    #if length > coherence_length:
       piece_length = g.dictionary_SI['z_dim']/num_bunches
-      print("Object length ({0}) exceeds coherence length ({1})...".format(length,coherence_length))
+      print("Object length ({0:4.4} nm) exceeds coherence length ({1:4.4} nm)...".format(length*10**9,coherence_length*10**9))
       print("Will divide into {0} sections of length {1}.".format(num_bunches,piece_length))
       dividing_points = np.searchsorted(z_list,-length/2+(np.arange(num_bunches+1))*piece_length/coherence_dup)
       dividing_points[0] = 0    #Not sure why this isn't already 0.
@@ -311,7 +311,7 @@ def Calculate_Intensity(Points,mask=[],coherence_dup = 1, coherence_taper = 0):
       return intensity
    else:
       if coherence_length < 1:
-         g.vprint("Object length ({0}) is less than coherence length ({1})...".format(length,coherence_length))
+         g.vprint("Object length ({0:4.4} nm) is less than coherence length ({1:4.4} nm)...".format(length*10**9,coherence_length*10**9))
       return Detector_Intensity(Points,mask)
 
 if g.opencl_enabled:
