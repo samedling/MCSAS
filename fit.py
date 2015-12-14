@@ -333,7 +333,8 @@ def perform_fit():  #Gets run when you press the Button.
       #diff = abs(exp_data - (fit_results + g.dictionary_SI['background']))
       Fit_plot(exp_data*mask,fit_results,diff)
    elif plot_fit:
-      fit_results=Average_Intensity()
+      #fit_results=Average_Intensity()
+      fit_results=normalize(Average_Intensity(),mask=mask,background=True)
       save(fit_results,"_fit")
       print('Plotting intensity.')
       #Intensity_plot(fit_results,"residuals",'Difference Plot',1)
