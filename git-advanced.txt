@@ -45,6 +45,7 @@ Make sure you have edited newgui.py lines 2 & 3 to update the date and version n
 `git pull origin master`          #Update master branch.
 `git merge develop --no-ff`       #Merge while preserving commit history
 `git push --all`                  #Upload all branches.
+`git checkout develop`            #Switch back to develop branch.
 
 
 ## Other Useful Git Commands: ##

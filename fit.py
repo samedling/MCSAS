@@ -440,7 +440,7 @@ def plot_residuals():
    if g.dictionary['grid_compression'] > 1:
       fast_mask(exp_data,mask,g.dictionary['grid_compression'])
 
-   if g.debug and g.dictionary['s_var'] > 1:    #sequence fit
+   if g.dictionary['s_var'] > 1:    #sequence fit
       orig = g.dictionary[g.dictionary['s_var']]
       for i in range(g.dictionary['s_step']):
          #g.dictionary_SI[g.dictionary['s_var']] = np.random.normal(loc=g.dictionary_SI[g.dictionary['s_var']],scale=g.dictionary['SD'])
