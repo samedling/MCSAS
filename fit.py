@@ -109,7 +109,7 @@ def load_exp_image(preview=False,enlarge_mask=1):
          print("Cropped to {0}.".format(cropped.size))
          qsize_scale = (max(img.size)+0.)/max(r-l,t-b)
          g.dictionary_SI['QSize'] *= qsize_scale
-         print('Detector Q Range has been increased to {0} due to cropping.'.format(g.dictionary['QSize']*qsize_scale))
+         print('Detector Q Range has been increased to {0:4.4} due to cropping.'.format(g.dictionary['QSize']*qsize_scale))
       else:
          cropped=Image.open(filename)
       downsampled=cropped.resize((max(downsample),max(downsample)),Image.BICUBIC)      #NEAREST,BILINEAR,BICUBIC,ANTIALIAS (worst to best; fastest to slowest; except ANTIALIAS does weird things sometimes)
@@ -337,7 +337,7 @@ def perform_fit():  #Gets run when you press the Button.
       save(fit_results,"_fit")
       print('Plotting intensity.')
       #Intensity_plot(fit_results,"residuals",'Difference Plot',1)
-      multiplot((exp_data*mask,calc_intensity),titles=('Exp. Data','Calc. Intensity'))
+      multiplot((exp_data*mask,fit_results),titles=('Exp. Data','Calc. Intensity'))
    elif plot_diff:
       print('Plotting difference.')
       Intensity_plot(diff,"residuals",'Difference Plot',1)
