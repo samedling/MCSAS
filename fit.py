@@ -2,6 +2,8 @@ import numpy as np
 import global_vars as g
 import copy
 
+from scipy.optimize import curve_fit
+
 
 class Fit_Parameters():
    '''Class to keep track of which parameters are being varied, based on shape and checkboxes.
@@ -224,7 +226,19 @@ def residuals(param,exp_data,mask=[],random_seed=2015):
 
    #TODO: it shouldn't be able to set the background too high....???
    #err = mask*(exp_data - (calc_intensity + g.dictionary_SI['background']))
-   err = mask*(exp_data - calc_intensity)
+   weighted = True
+   if weighted:
+      #TODO: if masked, actually set weight = 0?
+      #sigma = sqrt(n) or sqrt(n)/n??!!
+      g.dprint('Using weighted least squares fitting.')
+      background=np.percentile(exp_data,20)
+      sigma = np.sqrt(exp_data+background)               #sqrt(n)+background error bars
+      sigma = np.sqrt(background)                        #background level error bars
+      #background=np.sqrt(np.percentile(exp_data,20))
+      #sigma = np.maximum(np.sqrt(exp_data),background)   #sqrt(n) error bars (with 0 correction)
+      err = mask*(exp_data - calc_intensity)/sigma
+   else:
+      err = mask*(exp_data - calc_intensity)
    #calc_intensity -= exp_data                                 #todo: might be faster
    #calc_intensity *= mask                                     #todo: might be faster
    try:
@@ -254,7 +268,21 @@ def fit_step(exp_data,mask=[],max_iter=0):
    #norm_exp_data = exp_data/np.sum(exp_data*mask) #data normalized taking mask into account.
    exp_data = normalize(exp_data,mask)
    random_seed = int(time.time())
-   fit_param = leastsq(residuals,guess,args=(exp_data,mask,random_seed),full_output=1,maxfev=max_iter)
+
+   #fit_method = 'leastsq'
+   fit_method = 'leastsq'
+   if fit_method == 'weighted':
+      g.dprint('Using weighted least squares fitting.')
+      fit_func = lambda params: residuals(params,exp_data,mask,random_seed)
+      fit_sigma = np.ravel(exp_data)   #TODO: CHECK!!
+      xdata=0
+      ydata=0
+      fit_param = curve_fit(fit_func,xdata,ydata,p0=guess,sigma=fit_sigma,absolute_sigma=True)
+      #absolute_sigma=True means sigma are 1SD errors; otherwise, sigma are relative weights
+   else:
+      g.dprint('Using least squares fitting.')
+      fit_param = leastsq(residuals,guess,args=(exp_data,mask,random_seed),full_output=1,maxfev=max_iter)
+
    with open(root_folder+"/default.txt", 'wb') as f:
       pickle.dump(g.dictionary, f)#Saving the infomation from g.dictionary so it can be loaded later
    with open(g.dictionary_SI['path_to_subfolder']+"default.txt", 'wb') as f:
