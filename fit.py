@@ -2,6 +2,8 @@ import numpy as np
 import global_vars as g
 import copy
 
+from scipy.optimize import curve_fit
+
 
 class Fit_Parameters():
    '''Class to keep track of which parameters are being varied, based on shape and checkboxes.
@@ -109,7 +111,7 @@ def load_exp_image(preview=False,enlarge_mask=1):
          print("Cropped to {0}.".format(cropped.size))
          qsize_scale = (max(img.size)+0.)/max(r-l,t-b)
          g.dictionary_SI['QSize'] *= qsize_scale
-         print('Detector Q Range has been increased to {0} due to cropping.'.format(g.dictionary['QSize']*qsize_scale))
+         print('Detector Q Range has been increased to {0:4.4} due to cropping.'.format(g.dictionary['QSize']*qsize_scale))
       else:
          cropped=Image.open(filename)
       downsampled=cropped.resize((max(downsample),max(downsample)),Image.BICUBIC)      #NEAREST,BILINEAR,BICUBIC,ANTIALIAS (worst to best; fastest to slowest; except ANTIALIAS does weird things sometimes)
@@ -197,7 +199,7 @@ def residuals(param,exp_data,mask=[],random_seed=2015):
    if not len(mask):
       mask = np.ones(exp_data.shape)
 
-   if g.dictionary['s_var'] > 1:    #sequence fit
+   if g.dictionary['s_step'] > 1:    #sequence fit
       convert_from_SI()
       orig = g.dictionary[g.dictionary['s_var']]
       for i in range(g.dictionary['s_step']):
@@ -224,7 +226,19 @@ def residuals(param,exp_data,mask=[],random_seed=2015):
 
    #TODO: it shouldn't be able to set the background too high....???
    #err = mask*(exp_data - (calc_intensity + g.dictionary_SI['background']))
-   err = mask*(exp_data - calc_intensity)
+   weighted = True
+   if weighted:
+      #TODO: if masked, actually set weight = 0?
+      #sigma = sqrt(n) or sqrt(n)/n??!!
+      g.dprint('Using weighted least squares fitting.')
+      background=np.percentile(exp_data,20)
+      sigma = np.sqrt(exp_data+background)               #sqrt(n)+background error bars
+      sigma = np.sqrt(background)                        #background level error bars
+      #background=np.sqrt(np.percentile(exp_data,20))
+      #sigma = np.maximum(np.sqrt(exp_data),background)   #sqrt(n) error bars (with 0 correction)
+      err = mask*(exp_data - calc_intensity)/sigma
+   else:
+      err = mask*(exp_data - calc_intensity)
    #calc_intensity -= exp_data                                 #todo: might be faster
    #calc_intensity *= mask                                     #todo: might be faster
    try:
@@ -254,7 +268,21 @@ def fit_step(exp_data,mask=[],max_iter=0):
    #norm_exp_data = exp_data/np.sum(exp_data*mask) #data normalized taking mask into account.
    exp_data = normalize(exp_data,mask)
    random_seed = int(time.time())
-   fit_param = leastsq(residuals,guess,args=(exp_data,mask,random_seed),full_output=1,maxfev=max_iter)
+
+   #fit_method = 'leastsq'
+   fit_method = 'leastsq'
+   if fit_method == 'weighted':
+      g.dprint('Using weighted least squares fitting.')
+      fit_func = lambda params: residuals(params,exp_data,mask,random_seed)
+      fit_sigma = np.ravel(exp_data)   #TODO: CHECK!!
+      xdata=0
+      ydata=0
+      fit_param = curve_fit(fit_func,xdata,ydata,p0=guess,sigma=fit_sigma,absolute_sigma=True)
+      #absolute_sigma=True means sigma are 1SD errors; otherwise, sigma are relative weights
+   else:
+      g.dprint('Using least squares fitting.')
+      fit_param = leastsq(residuals,guess,args=(exp_data,mask,random_seed),full_output=1,maxfev=max_iter)
+
    with open(root_folder+"/default.txt", 'wb') as f:
       pickle.dump(g.dictionary, f)#Saving the infomation from g.dictionary so it can be loaded later
    with open(g.dictionary_SI['path_to_subfolder']+"default.txt", 'wb') as f:
@@ -333,11 +361,12 @@ def perform_fit():  #Gets run when you press the Button.
       #diff = abs(exp_data - (fit_results + g.dictionary_SI['background']))
       Fit_plot(exp_data*mask,fit_results,diff)
    elif plot_fit:
-      fit_results=Average_Intensity()
+      #fit_results=Average_Intensity()
+      fit_results=normalize(Average_Intensity(),mask=mask,background=True)
       save(fit_results,"_fit")
       print('Plotting intensity.')
       #Intensity_plot(fit_results,"residuals",'Difference Plot',1)
-      multiplot((exp_data*mask,calc_intensity),titles=('Exp. Data','Calc. Intensity'))
+      multiplot((exp_data*mask,fit_results),titles=('Exp. Data','Calc. Intensity'))
    elif plot_diff:
       print('Plotting difference.')
       Intensity_plot(diff,"residuals",'Difference Plot',1)
@@ -439,7 +468,7 @@ def plot_residuals():
    if g.dictionary['grid_compression'] > 1:
       fast_mask(exp_data,mask,g.dictionary['grid_compression'])
 
-   if g.debug and g.dictionary['s_var'] > 1:    #sequence fit
+   if g.dictionary['s_step'] > 1:    #sequence fit
       orig = g.dictionary[g.dictionary['s_var']]
       for i in range(g.dictionary['s_step']):
          #g.dictionary_SI[g.dictionary['s_var']] = np.random.normal(loc=g.dictionary_SI[g.dictionary['s_var']],scale=g.dictionary['SD'])

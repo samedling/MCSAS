@@ -1,7 +1,6 @@
 #!/usr/bin/python
-
-version = '0.5.3'
-updated = '2 Dec 2015'
+version = '0.5.4'
+updated = '14 Dec 2015'
 
 print('Starting MCSAS v{0} (updated {1}).'.format(version,updated))
 
@@ -58,7 +57,7 @@ if g.f2py_enabled:
    except ImportError:
       g.f2py_enabled = False
    try:
-     if fastmath.version.number() < 0.40:     #Update this line to check for updates for f2py binary.
+     if fastmath.version.number() < 0.41:     #Update this line to check for updates for f2py binary.
         print('Existing f2py binary was out of date; newer version copied.')
         g.vprint('If you ran `make` yourself, run it again for optimal performance.')
         if sys.platform == 'darwin':

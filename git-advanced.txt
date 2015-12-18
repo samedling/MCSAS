@@ -1,17 +1,54 @@
-# Basic Git Use (do every time you edit): #
-`git pull origin master`    #Download latest changes.  Run this every time you start.
+# Basic Git Use: #
 
-`git add <filename>`        #Adds a filename
-`git add <filename2>`       #Adds another filename, etc.
+## Uploading Changes with Git ##
 
-`git status`                #Tells you which files have been changed and/or added.
+Make sure you have git and a github account.
+E-mail scott.medling@gmail.com with your username so I can add you as a collaborator.
 
-`git diff --cached`         #Displays diff between current state and last commit.
+Optionally, to configure your local git, run
 
+    git config --global user.name "<Name>"
+    git config --global user.email "<E-mail Address>"
+    git config --global color.ui auto       #Improves readability.
+    git config --global core.editor vim     #If you like vim.
+
+To download the respository, run
+
+    git clone https://github.com/samedling/MCSAS.git
+
+## Editing the Develop Branch ##
+
+Definitely use the develop branch for any potentially unstable changes.  Do not edit the master branch directly if you have potentially unstable changes.
+It's recommended you use this for minor stuff also, in order to keep it up-to-date.
+
+`git checkout develop`     #Switch to develop branch.
+`git pull origin develop`  #Download latest changes to develop branch.  Run this every time.
+
+Make your changes.
+
+`git status`                  #Tells you which files have been changed.
+`git diff <filename>`         #Displays diff (since last add or commit) for single modified file.
+`git add <filename>`          #Adds a filename
+`git add <filename2>`         #Adds another filename, etc.
+`git status`                  #Tells you which files have been changed and/or added.
+
+`git diff --cached`           #Displays diff between current state and last commit.
 `git commit -m "<Insert a short message about what you did here.>"  #Saves added changes locally.
-`git push -u origin master` #Uploads changes to respository.
+`git push -u origin develop`  #Uploads changes to respository.
 
-Other Useful Git Commands:
+At this point you can put easily pause, just remember to start from the beginning (with `git checkout develop`).
+Repeat this process until you are ready to send your changes to the master branch (the branch other people use).
+Make sure you have edited newgui.py lines 2 & 3 to update the date and version number manually.
+
+`git checkout master`             #Switch to master branch.
+`git branch`                      #Verify on master branch.
+`git pull origin master`          #Update master branch.
+`git merge develop --no-ff`       #Merge while preserving commit history
+`git push --all`                  #Upload all branches.
+`git checkout develop`            #Switch back to develop branch.
+
+
+## Other Useful Git Commands: ##
 `git log --oneline`     #Displays summary of each commit.
 `git log -<n>`          #Displays last n commit details.
 `git log --after="<yyyy-mm-dd>"`
@@ -23,7 +60,7 @@ Other Useful Git Commands:
 
 `git show <hex_number>:./<file>     #Shows contents of file from commit.  Redirect to new file if desired.
 
-`git checkout <hex_number>`         #Changes everything back to how it was after specified commit.
+`git checkout <hex_number>`         #Changes everything back to how it was after specified commit (just to look).
 `git checkout <branch_name>`        #Returns to current contents.
 
 `git checkout <hex_number> <file>`  #Changes single file back to how it was.
@@ -38,18 +75,8 @@ Other Useful Git Commands:
 `git branch -a`                   #Lists all branches
 `git checkout -b <branch name>`   #Makes new branch
 
-Switch back and forth with:
-`git checkout master` or `git checkout develop`
-
-To push the develop:
-`git push origin develop`
-
-merge code:
-`git checkout master`             #Switch to master branch
-`git pull origin master`          #Make sure master brach is up-to-date.
-`git branch`                      #Verify on master branch
-`git merge develop --no-ff`       #Merge while preserving commit history
-`git push --all` 
+Generally:
+`git checkout <branch_name>`
 
 To create a new branch so you can make commits based on an older version (again, make sure you've committed any changes), run
 
@@ -88,3 +115,6 @@ Or, you might need to run the following separately:
 
    git fetch origin master
    git merge
+
+
+
