@@ -1,18 +1,40 @@
 #!/bin/bash
 
 function mcsas-update {
-   original=`cat newgui.py |grep fastmath.version | awk '{print $4}'`
+   #original=`cat newgui.py |grep fastmath.version | awk '{print $4}'`
+   original=`cat fastmath.f90 |grep "version =" | awk '{print $3}'`
    git pull origin master
-   new=`cat newgui.py |grep fastmath.version | awk '{print $4}'`
+   #new=`cat newgui.py |grep fastmath.version | awk '{print $4}'`
+   new=`cat fastmath.f90 |grep "version =" | awk '{print $3}'`
    if [ $original != $new ]
       then
-         make
+         if [ `which f2py2.7 2>/dev/null` ]
+            then
+               make CC=f2py_2.7
+            elif [ `which f2py 2>/dev/null` ]
+            then
+               make CC=f2py
+            else
+               echo "No compiler found!"
+               if [ `echo $OSTYPE` == linux-gnu ]
+                  then
+                     echo "Copying Linux binary."
+                     cp fastmath-Ubuntu14.04_i7-4770.so fastmath.so
+               else
+                  echo "Copying Mac OS X binary."
+                  cp fastmath-OSX10.10_C2DP8700.so fastmath.so
+               exit 1
+               fi
+         fi
    fi
 }
 
 while getopts "u" opt; do
    case $option in
-      "u") mcsas-update;
+      u)
+          mcsas-update
+          exit 0
+          ;;
    esac
 done
 

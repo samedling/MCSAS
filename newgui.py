@@ -29,6 +29,11 @@ from scipy.optimize import leastsq
 
 import global_vars as g
 
+if sys.version_info[0] > 2:
+   print("This program has not been tested with Python 3. Python 2.7 is recommended.")
+elif sys.version_info[1] < 7:
+   print("This program requires Python version 2.7 or later to run. Exiting.")
+   sys.exit()
 
 #Looks for fastmath.so to speed up intensity calculation.
 if g.opencl_enabled:
