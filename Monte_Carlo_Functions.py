@@ -559,12 +559,10 @@ def inter_intensity(mask=[]):
 		AllPoints = np.array(np.append(TempPoints,points_to_keep, axis=0))
         except TypeError:
 		AllPoints = np.array(TempPoints)
-    #Points_Plot(AllPoints,'points',1)
-    sim_info.write("Total Points Used in Calculation:"+str(len(AllPoints)))
+    sim_info.write("\nTotal Points Used in Calculation:"+str(len(AllPoints)))
     sim_info.close()
-    Points_Plot(AllPoints,'points',1)
+    #Points_Plot(AllPoints,'points',1)
     Intensity = Calculate_Intensity(AllPoints,mask)
-    print Intensity
 
     print "END TIME: "+time.strftime("%X")
     sim_info = open(g.dictionary_SI['path_to_subfolder']+"simulation_infomation.txt","a")
