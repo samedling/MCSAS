@@ -1,6 +1,7 @@
 ## Basic Installation ##
 
-Download from https://www.enthought.com/products/canopy either the free or academic version of Enthought Canopy.  Your Python version must be 2.7 or newer.
+Your Python version must be 2.7 or newer and you'll need numpy and the python image library (Pillow). 
+Download both from https://www.enthought.com/products/canopy via either the free or academic version of Enthought Canopy.
 
 Method 1:
 
@@ -19,11 +20,19 @@ There are two optional but recommended ways of speeding up the code:
  
  2. F2Py acceleration should work automatically on OS X or Linux.  If not, or if you want maximum performance and you have gfortran installed, run `make` to compile the Fortran code (or if you have ifort installed, edit the makefile before running `make`).  On my dual core CPU, I obtained a 10x speedup; quad core CPUs likely not much faster.
 
-Run `python newgui.py` on the command line or open it in Canopy and click run.  (Note: you may discover running `nice python newgui.py` results in your system being a lot more responsive.)
+Run `./mcsas` on the command line or open it in Canopy and click run.  (Note: you may discover running `nice ./mcsas` results in your system being a lot more responsive.)
 
 If you want to try out the latest features, you can try the develop branch (by either running `git pull origin develop` or via the web GUI clicking on 'master', selecting 'develop', and then downloading the zip) but consider editing global_vars.py so debug = False.
 
 
+### Python Installation ###
+
+If you're trying to install the required python packages on a computer you don't have root access on, run these commands:
+
+   cd
+   mkdir python
+   echo "export PYTHONPATH=$PYTHONPATH:~/python" >> .bashrc
+   pip install --target=python Pillow
 
 ### OS X Fortran Installation ###
 Apple doesn't provide a recent version of gfortran, but you can download one from http://hpc.sourceforge.net

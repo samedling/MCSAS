@@ -1,5 +1,5 @@
 linux_so:
-	f2py -c --fcompiler=gnu95 --opt="-O3 -fopenmp" -lgomp -m fastmath fastmath.f90
+	f2py2.7 -c --fcompiler=gnu95 --opt="-O3 -fopenmp" -lgomp -m fastmath fastmath.f90
 	#f2py -c --fcompiler=intelem --opt="-O3 -openmp" -m fastmath fastmath.f90
 	#/usr/local/epd/bin/f2py -c --fcompiler=intelem --opt="-O3 -openmp" -m fastmath fastmath.f90
 
