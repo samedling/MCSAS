@@ -383,7 +383,7 @@ else:   #python only
                [(row-0.5*y_pixels)*QSize/max_pixels, (col-0.5*x_pixels)*QSize/max_pixels, 0.]
                *Points[:,0:3], axis = 1))*np.transpose(Points[:,3:4]))**2
                +np.sum(np.sin(np.sum(
-               [(row-0.5*y_pixels)*QSize/max_pixels, (col-0.5*x_pixels)*QSize/max_pixels, 2*EHC*np.sin((((row-0.5*y_pixels)**2 + (col-0.5*x_pixels)**2)**0.5)*QSize/max_pixels/2/EHC)**2]
+               [(row-0.5*y_pixels)*QSize/max_pixels, (col-0.5*x_pixels)*QSize/max_pixels, 0.]
                *Points[:,0:3], axis = 1))*np.transpose(Points[:,3:4]))**2
                for col in range(int(x_pixels))] for row in range(int(y_pixels))])
          else:

@@ -57,7 +57,7 @@ if g.f2py_enabled:
    except ImportError:
       g.f2py_enabled = False
    try:
-     if fastmath.version.number() < 0.40:     #Update this line to check for updates for f2py binary.
+     if fastmath.version.number() < 0.41:     #Update this line to check for updates for f2py binary.
         print('Existing f2py binary was out of date; newer version copied.')
         g.vprint('If you ran `make` yourself, run it again for optimal performance.')
         if sys.platform == 'darwin':
