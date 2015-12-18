@@ -520,7 +520,7 @@ def Average_Intensity(mask=[]):
             if g.verbose > 0:
                print("FINISHED CALCULATION {0}: {1}".format(plot_number+1,time.strftime("%X")))
             else:
-               print "FINISHED FIRST CALCULATION: "+time.strftime("%X")
+               print("FINISHED FIRST CALCULATION: "+time.strftime("%X"))
 
         
         try:
@@ -542,28 +542,28 @@ def inter_intensity(mask=[]):
     print "START TIME: "+time.strftime("%X")
     sim_info = open(g.dictionary_SI['path_to_subfolder']+"simulation_infomation.txt","a")
     sim_info.write("\nStart Time: "+time.strftime("%X"))
-    sim_info.close()
-    
+    sim_info.write("\nx centre,   ycentre")
+    AllPoints = None
     for temp in range(int(g.dictionary_SI['numinter'])):
 
         xcentre=np.random.random()*g.dictionary_SI['xinter']*10**-9
 	ycentre=np.random.random()*g.dictionary_SI['yinter']*10**-9
-        TempPoints = [x+[xcentre,ycentre,0,0] for x in Points_For_Calculation()]
-
+        sim_info.write("\n"+str(xcentre) + " ,    " + str(ycentre))
+        print xcentre,ycentre
+        TempPoints = np.array([x+[xcentre,ycentre,0,0] for x in Points_For_Calculation()])
         try:
 	        overlapdensity = density(np.array( [x[0:3]-[xcentre,ycentre,0] for x in AllPoints]))
 		points = np.c_[AllPoints, overlapdensity]
-		
 		inside = [i for i in range(points.shape[0]) if points [i,4] ]
-		points_to_keep = np.delete(points,points_inside,axis=0)
-		
-		AllPoints = np.array(np.append(points_to_keep, TempPoints))
-        except NameError:
+		points_to_keep = np.delete(AllPoints,inside,axis=0)
+		AllPoints = np.array(np.append(TempPoints,points_to_keep, axis=0))
+        except TypeError:
 		AllPoints = np.array(TempPoints)
-    print AllPoints
+    sim_info.write("\nTotal Points Used in Calculation:"+str(len(AllPoints)))
+    sim_info.close()
+    #Points_Plot(AllPoints,'points',1)
     Intensity = Calculate_Intensity(AllPoints,mask)
 
-    #this finds the average of all plots
     print "END TIME: "+time.strftime("%X")
     sim_info = open(g.dictionary_SI['path_to_subfolder']+"simulation_infomation.txt","a")
     sim_info.write("\nEnd Time: "+time.strftime("%X"))

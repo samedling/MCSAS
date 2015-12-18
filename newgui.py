@@ -410,7 +410,6 @@ def interparticle():
     save(radial_intensity, "radial_intensity")
     if g.dictionary_SI['save_img'] == 1:
       view_intensity()
-    Points_Plot(Points_For_Calculation(), 'points', 1)
     clear_mem()
  
 
