@@ -1,6 +1,6 @@
 #!/usr/bin/python
 version = '0.5.4'
-updated = '14 Dec 2015'
+updated = '18 Dec 2015'
 
 print('Starting MCSAS v{0} (updated {1}).'.format(version,updated))
 
@@ -48,16 +48,18 @@ if g.f2py_enabled:
          import fastmath
       elif sys.platform == 'darwin':
          os.system('cp fastmath-OSX10.10_C2DP8700.so fastmath.so')
+         print('No fortran binary found; copying mac binary.')
          import fastmath
       elif sys.platform == 'linux2':
          os.system('cp fastmath-Ubuntu14.04_i7-4770.so fastmath.so')
          #os.system('cp fastmath-Ubuntu14.10_i7M640.so fastmath.so')
+         print('No fortran binary found; copying linux binary.')
          import fastmath
       print("Accelerating using f2py.")
    except ImportError:
       g.f2py_enabled = False
    try:
-     if fastmath.version.number() < 0.41:     #Update this line to check for updates for f2py binary.
+     if fastmath.version.number() < 0.405:     #Update this to check f2py binary updates. Value should be 0.005 less than fortran.
         print('Existing f2py binary was out of date; newer version copied.')
         g.vprint('If you ran `make` yourself, run it again for optimal performance.')
         if sys.platform == 'darwin':
