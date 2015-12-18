@@ -1,4 +1,5 @@
 #!/usr/bin/python
+
 version = '0.5.3'
 updated = '2 Dec 2015'
 
@@ -97,7 +98,7 @@ g.dictionary = {'advanced':1, 'altitude':45, 'analytic': 2, 'ave_dist': 1.0, 'az
               's_stop': 1, 'subfolder':'subfolder', 's_var': 'x_theta', 'symmetric': 0, 'num':1, 'length_2':0,
               'theta_delta':20, 'ThreeD': 0, 'title': 'title', 'x_theta': 0,'y_theta': 0,'z_theta': 0,'z_dim': 100,'z_scale':1,#}
               'fit_file': 'fit_file', 'center': (0,0), 'border': 0, 'max_iter': 1000, 'update_freq': 0, 'plot_fit_tick': 1, 'plot_residuals_tick': 1, 'mask_threshold': 10, 'background': 2e-5, 'grid_compression': 0,
-              'fit_radius_1': 1, 'fit_radius_2': 0, 'fit_rho_1': 1, 'fit_rho_2': 0, 'fit_z_dim': 1, 'fit_x_theta': 1, 'fit_y_theta': 1, 'fit_z_theta': 1, 'fit_background': 1, 'fit_num': 0, 'fit_length_2':0
+              'fit_radius_1': 1, 'fit_radius_2': 0, 'fit_rho_1': 1, 'fit_rho_2': 0, 'fit_z_dim': 1, 'fit_x_theta': 1, 'fit_y_theta': 1, 'fit_z_theta': 1, 'fit_background': 1, 'fit_num': 0, 'fit_length_2':0,'xinter':100,'yinter':100,'numinter':10
               }
 
 #####            Importing data or using defaults              #############
@@ -392,6 +393,21 @@ def make_intensity(): #This makes an intensity
     clear_mem()
     print "Program Finished"
     
+def interparticle():
+    global sim_info
+    get_numbers_from_gui()
+    save_vars_to_file('Interparticle Scattering')
+    Intensity = inter_intensity()
+    print "END TIME: "+time.strftime("%X")
+    save(Intensity, "intensity")
+    radial_intensity = radial(Intensity)
+    save(radial_intensity, "radial_intensity")
+    if g.dictionary_SI['save_img'] == 1:
+      view_intensity()
+    Points_Plot(Points_For_Calculation(), 'points', 1)
+    clear_mem()
+ 
+
 def sequence(): #This makes a sequence of intensities
     global sim_info
     get_numbers_from_gui()
@@ -832,6 +848,21 @@ def ring_options():
 
     Button(ring_window, text='Plot a Ring', command=circ, font = "Times 16 bold").grid(row=ROW, column = COL,sticky=W, pady=2)
 
+def interparticle_options():
+    global inter_window, master
+    inter_window = Toplevel(master)
+    inter_window.title("Inter-Particle Scattering")
+    new_frame = Frame(inter_window)
+    ROW=0
+    COL=0
+    
+    enter_num('xinter','Box X Dimension (nm)',inter_window,ROW,COL)
+    ROW+=1
+    enter_num('yinter','Box Y Dimension (nm)',inter_window,ROW,COL)
+    ROW+=1
+    enter_num('numinter','Number of Particles',inter_window,ROW,COL)
+    ROW+=1
+    Button(inter_window,text='Calculate', command=interparticle, font = "Times 16 bold").grid(row=ROW,column=COL,sticky=W,pady=2)
 
 def run_file():
    global test_file
@@ -1069,6 +1100,10 @@ if __name__ == "__main__":
    ROW+=1
 
    Button(master, text='Ring Options', command=ring_options, font = "Times 14 bold").grid(row=ROW, column = COL, sticky=W, pady=2)   
+   ROW+=1
+
+   Button(master,text='Inter-Particle Scattering', command=interparticle_options, font = "Times 14 bold").grid(row=ROW, column = COL, sticky=W, pady=2)
+
    ROW+=1
    
    Button(master, text='Detector Options', command=detector_parameters, font = "Times 14 bold").grid(row=ROW, column = COL, sticky=W, pady=2)   

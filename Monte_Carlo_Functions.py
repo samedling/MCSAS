@@ -25,6 +25,7 @@ def Points_For_Calculation(seed=0,sort=0):
     if seed:
        np.random.seed([seed])
     
+    density(np.asarray([[1,1,1],[2,2,2]])) #This is so that you can manually redefine x_dim and y_dim in the density function. e.g. for the gaussian model, you may want to make more points.
     x_dim,y_dim,z_dim = g.dictionary_SI['x_dim'],g.dictionary_SI['y_dim'],g.dictionary_SI['z_dim']
     x_theta,y_theta,z_theta = g.dictionary_SI['x_theta'],g.dictionary_SI['y_theta'],g.dictionary_SI['z_theta']
     ave_dist = g.dictionary_SI['ave_dist']
@@ -496,15 +497,16 @@ def Average_Intensity(mask=[]):
         sim_info = open(g.dictionary_SI['path_to_subfolder']+"simulation_infomation.txt","a")
         sim_info.write("\nAverage Plot, plot " + str(plot_number+1) + " out of " + str(int(num_plots)) )
         sim_info.close()
-
         try:
             g.dictionary_SI['TEMP_VAR'] #This is here so it will only make the estimated time once.
             ##Intensity = Calculate_Intensity(Points_For_Calculation())  #Commented and separated so I can time these separately.
             Points = Points_For_Calculation()
+            print Points
             Intensity = Calculate_Intensity(Points,mask)
             g.vprint("FINISHED CALCULATION {0}: {1}".format(plot_number+1,time.strftime("%X")))
         except KeyError:
             Points = Points_For_Calculation()
+            print Points
             try:
                 g.dictionary_SI['current_value']
                 est_time = 0# 10**-7*len(Points)*g.dictionary_SI['pixels']**2*g.dictionary_SI['num_plots']*g.dictionary_SI['s_step']
@@ -533,6 +535,40 @@ def Average_Intensity(mask=[]):
     sim_info.write("\nEnd Time: "+time.strftime("%X"))
     sim_info.close()
     return cumulative/np.sum(cumulative)
+
+
+######################        Interparticle Scattering      #############################
+def inter_intensity(mask=[]):
+    print "START TIME: "+time.strftime("%X")
+    sim_info = open(g.dictionary_SI['path_to_subfolder']+"simulation_infomation.txt","a")
+    sim_info.write("\nStart Time: "+time.strftime("%X"))
+    sim_info.close()
+    
+    for temp in range(int(g.dictionary_SI['numinter'])):
+
+        xcentre=np.random.random()*g.dictionary_SI['xinter']*10**-9
+	ycentre=np.random.random()*g.dictionary_SI['yinter']*10**-9
+        TempPoints = [x+[xcentre,ycentre,0,0] for x in Points_For_Calculation()]
+
+        try:
+	        overlapdensity = density(np.array( [x[0:3]-[xcentre,ycentre,0] for x in AllPoints]))
+		points = np.c_[AllPoints, overlapdensity]
+		
+		inside = [i for i in range(points.shape[0]) if points [i,4] ]
+		points_to_keep = np.delete(points,points_inside,axis=0)
+		
+		AllPoints = np.array(np.append(points_to_keep, TempPoints))
+        except NameError:
+		AllPoints = np.array(TempPoints)
+    print AllPoints
+    Intensity = Calculate_Intensity(AllPoints,mask)
+
+    #this finds the average of all plots
+    print "END TIME: "+time.strftime("%X")
+    sim_info = open(g.dictionary_SI['path_to_subfolder']+"simulation_infomation.txt","a")
+    sim_info.write("\nEnd Time: "+time.strftime("%X"))
+    sim_info.close()
+    return Intensity/np.sum(Intensity)
 
 
 
