@@ -30,7 +30,7 @@ function mcsas-update {
 }
 
 while getopts "u" opt; do
-   case $option in
+   case $opt in
       u)
           mcsas-update
           exit 0
