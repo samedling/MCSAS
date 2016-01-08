@@ -110,7 +110,8 @@ def Points_For_Calculation(seed=0,sort=0):
           return np.asarray(points_inside.dot(np.transpose(rotz.dot(roty).dot(rotx))))
     except ValueError:
        if len(points_inside) == 0:
-          print("Error: shape has no points; check your parameters.")
+          print("Current length = {0}; radius = {1}".format(g.dictionary['z_dim'],g.dictionary['radius_1']))
+          print("Error: shape has no points. If you input manually, check your parameters; if fitting, try just running it again before varying initial parameters.")
        else:
           print("Unknown error: it might work if you just run it again without changing anything.  Sorry.")
           print points.shape
@@ -264,7 +265,8 @@ def Calculate_Intensity(Points,mask=[],coherence_dup = 1, coherence_taper = 0):
    #print(points_inside[points_inside[:,2].argsort()][::100,2])
    length = z_list[-1]-z_list[0]
    if len(z_list) == 0:
-      print("Error: shape has no points; check your parameters.")
+      print("Current length = {0}; radius = {1}".format(g.dictionary['z_dim'],g.dictionary['radius_1']))
+      print("Error: shape has no points. If you input manually, check your parameters; if fitting, try just running it again before varying initial parameters.")
       return
    elif len(z_list) < 100:
       print("Warning: shape has few points ({0}); check your parameters.".format(length))
@@ -279,7 +281,7 @@ def Calculate_Intensity(Points,mask=[],coherence_dup = 1, coherence_taper = 0):
    if num_bunches > coherence_dup:    #if length > coherence_length:
       piece_length = g.dictionary_SI['z_dim']/num_bunches
       print("Object length ({0:4.4} nm) exceeds coherence length ({1:4.4} nm)...".format(length*10**9,coherence_length*10**9))
-      print("Will divide into {0} sections of length {1}.".format(num_bunches,piece_length))
+      print("Will divide into {0} sections of length {1} nm.".format(num_bunches,piece_length*10**9))
       dividing_points = np.searchsorted(z_list,-length/2+(np.arange(num_bunches+1))*piece_length/coherence_dup)
       dividing_points[0] = 0    #Not sure why this isn't already 0.
       dividing_points[-1] = len(z_list)  #Should this be the last element or should I append?

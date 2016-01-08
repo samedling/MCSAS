@@ -1,38 +1,60 @@
 #!/bin/bash
+#Short script to run or update the program.
+#Usage: {0} to run MCSAS program
+# -u updates
+# -d updates develop branch
+# -c forces Fortran compilation
 
-function mcsas-update {
-   #original=`cat newgui.py |grep fastmath.version | awk '{print $4}'`
-   original=`cat fastmath.f90 |grep "version =" | awk '{print $3}'`
-   git pull origin master
-   #new=`cat newgui.py |grep fastmath.version | awk '{print $4}'`
-   new=`cat fastmath.f90 |grep "version =" | awk '{print $3}'`
-   if [ $original != $new ]
+function mcsas-compile {
+   if [ `which f2py2.7 2>/dev/null` ]
       then
-         if [ `which f2py2.7 2>/dev/null` ]
+         make CC=f2py_2.7
+      elif [ `which f2py 2>/dev/null` ]
+      then
+         make CC=f2py
+      else
+         echo "No compiler found!"
+         if [ `echo $OSTYPE` == linux-gnu ]
             then
-               make CC=f2py_2.7
-            elif [ `which f2py 2>/dev/null` ]
-            then
-               make CC=f2py
-            else
-               echo "No compiler found!"
-               if [ `echo $OSTYPE` == linux-gnu ]
-                  then
-                     echo "Copying Linux binary."
-                     cp fastmath-Ubuntu14.04_i7-4770.so fastmath.so
-               else
-                  echo "Copying Mac OS X binary."
-                  cp fastmath-OSX10.10_C2DP8700.so fastmath.so
-               exit 1
-               fi
+               echo "Copying Linux binary."
+               cp fastmath-Ubuntu14.04_i7-4770.so fastmath.so
+         else
+            echo "Copying Mac OS X binary."
+            cp fastmath-OSX10.10_C2DP8700.so fastmath.so
+         exit 1
          fi
    fi
 }
 
-while getopts "u" opt; do
+function mcsas-update {
+   #original=`cat newgui.py |grep fastmath.version | awk '{print $4}'`
+   original=`cat fastmath.f90 |grep "version =" | awk '{print $3}'`
+   git pull origin $1 
+   #new=`cat newgui.py |grep fastmath.version | awk '{print $4}'`
+   new=`cat fastmath.f90 |grep "version =" | awk '{print $3}'`
+   if [ $original != $new ]
+      then
+         mcsas-compile
+   fi
+}
+
+while getopts "udic" opt; do
    case $opt in
-      u)
-          mcsas-update
+      u)    #Update
+          mcsas-update master
+          exit 0
+          ;;
+      d)    #Update Develop
+          mcsas-update develop
+          exit 0
+          ;;
+      i)    #Install (Update & Compile)
+          git pull origin master
+          mcsas-compile
+          exit 0
+          ;;
+      c)    #Compile
+          mcsas-compile
           exit 0
           ;;
    esac

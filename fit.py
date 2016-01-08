@@ -226,7 +226,7 @@ def residuals(param,exp_data,mask=[],random_seed=2015):
 
    #TODO: it shouldn't be able to set the background too high....???
    #err = mask*(exp_data - (calc_intensity + g.dictionary_SI['background']))
-   weighted = True
+   weighted = False
    if weighted:
       #TODO: if masked, actually set weight = 0?
       #sigma = sqrt(n) or sqrt(n)/n??!!
@@ -243,10 +243,14 @@ def residuals(param,exp_data,mask=[],random_seed=2015):
       #else:
       err = [[ mask[i,j]*np.log(1+diff[i,j])/sigma[i,j] if (diff[i,j] > 0) else 0 for i in range(diff.shape[0]) ] for j in range(diff.shape[1])]
    else:
-      #if g.dictionary['log_scale']:
-      #   err = mask*np.log(np.abs(exp_data - calc_intensity))
-      #else:
-      err = mask*(exp_data - calc_intensity)
+      if g.dictionary['log_scale']:
+         #TODO!!!  I want log(a) - log(b) not log(a-b)!!
+         #err = mask*np.log(np.abs(exp_data - calc_intensity))*10**-4   #errors don't change much; only popcorn fit varies
+         #err[np.isnan(err)] = 0
+         diff = np.abs(exp_data - calc_intensity)*10**2     #fitting works
+         err = [[ mask[i,j]*np.log(1+diff[i,j]) if (diff[i,j] > 0) else 0 for i in range(diff.shape[0]) ] for j in range(diff.shape[1])]
+      else:
+         err = mask*(exp_data - calc_intensity)*10**2
    #calc_intensity -= exp_data                                 #todo: might be faster
    #calc_intensity *= mask                                     #todo: might be faster
    try:
@@ -257,6 +261,16 @@ def residuals(param,exp_data,mask=[],random_seed=2015):
          lprint('{0}: On function call {1}...'.format(time.strftime("%X"),total_steps),logfile,quiet=True)
          lprint('Current parameter values are:',logfile)
          parameters.print_param(logfile)
+         if g.dictionary['log_scale']:
+            if weighted:
+               print('Fit type: weighted logarithmic.')
+            else:
+               print('Fit type: logarithmic.')
+         else:
+            if weighted:
+               print('Fit type: weighted linear.')
+            else:
+               print('Fit type: linear.')
    except NameError:
       print('{0}: Total error = {1:.4}; sum of squares = {2:.4}'.format(time.strftime("%X"),np.abs(err).sum(),np.square(err).sum()))
    return np.ravel(err)     #flattens err since leastsq only takes 1D array
