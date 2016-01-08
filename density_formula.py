@@ -61,7 +61,8 @@ def density(coords):
       return d21coreshellcone(coords)
    elif g.dictionary_SI['shape'] == 22:
       return d22coreshellsmooth(coords) 
-
+   elif g.dictionary_SI['shape'] == 23:
+      return d23manualpoints(coords) 
 
 
 #This is a dictionary containing all of the useful descriptions for the variables for each model.
@@ -90,6 +91,7 @@ g.model_parameters=[
    (20,'Continuous Core Shell Cylinder',("Outer Radius (nm)","Inner Radius (nm)","Length (nm)","Extreme Core Density","Shell Density","unused","unused")),
    (21,'Core Shell Cone',("Outer Radius (nm)","Inner Radius (nm)","Length (nm)","Core Density","Shell Density","unused","Outer Radius - Far End")),
    (22,'Smooth Core Shell Cylinder',('Outer Radius (nm)','Core Radius (nm)','Length (nm)','Core Density','Shell Density','Smoothness (Low=smoother)','unused')),
+   (23,'Load from "import.csv"', ('unused','unused','unused','unused','unused','unused','unused')),
 ]
 
 #Template: fill in number, Name of Model, and useful descriptor or 'unused' in place of each variable name.
@@ -270,8 +272,8 @@ def d22coreshellsmooth(coords):
     g.dictionary_SI['y_dim']=1.5*g.dictionary_SI['y_dim']
     return [((g.dictionary_SI['rho_1']-g.dictionary_SI['rho_2'])*np.exp(-(np.sqrt(np.sum(coords[i,0:2]**2))/g.dictionary_SI['radius_2'])**g.dictionary_SI['num'])+ g.dictionary_SI['rho_2']*np.exp(-(np.sqrt(np.sum(coords[i,0:2]**2))/(g.dictionary_SI['radius_1']))**g.dictionary_SI['num'])) if np.sqrt(np.sum(coords[i,0:2]**2))<1.5*g.dictionary_SI['radius_1'] else 0 for i in range(coords.shape[0])]    
 
-
-
+def d23importpoints(coords):
+   None #In Monte_Carlo_Functions.py, we import points directly.
 
 #def density_slow_template(coords):
     #densities = np.empty(coords.shape[0])   #creates empty density array

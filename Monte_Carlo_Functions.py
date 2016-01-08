@@ -24,17 +24,17 @@ def rot_points(points,reverse=True):
 def Points_For_Calculation(seed=0,sort=0):
     if seed:
        np.random.seed([seed])
-    
     density(np.asarray([[1,1,1],[2,2,2]])) #This is so that you can manually redefine x_dim and y_dim in the density function. e.g. for the gaussian model, you may want to make more points.
     x_dim,y_dim,z_dim = g.dictionary_SI['x_dim'],g.dictionary_SI['y_dim'],g.dictionary_SI['z_dim']
     x_theta,y_theta,z_theta = g.dictionary_SI['x_theta'],g.dictionary_SI['y_theta'],g.dictionary_SI['z_theta']
     ave_dist = g.dictionary_SI['ave_dist']
     z_scale = g.dictionary_SI['z_scale']
     #I make a grid, then find a random number from a normal distribution with radius ave_dist. this gets added to the grid coordinates to randomise this.
-    RandomPoints = np.asarray([((np.random.normal()*g.dictionary_SI['travel']+x_coord)%x_dim - x_dim/2, (np.random.normal()*g.dictionary_SI['travel']+y_coord)%y_dim - y_dim/2, (np.random.normal()*g.dictionary_SI['travel']*z_scale+z_coord)%z_dim - z_dim/2)
-                    for z_coord in np.arange(-z_dim/2, z_dim/2, ave_dist*z_scale) for y_coord in np.arange(-y_dim/2, y_dim/2, ave_dist) for x_coord in np.arange(-x_dim/2, x_dim/2, ave_dist)])
+    if g.dictionary_SI['shape']!=23:
+       RandomPoints = np.asarray([((np.random.normal()*g.dictionary_SI['travel']+x_coord)%x_dim - x_dim/2, (np.random.normal()*g.dictionary_SI['travel']+y_coord)%y_dim - y_dim/2, (np.random.normal()*g.dictionary_SI['travel']*z_scale+z_coord)%z_dim - z_dim/2)
+                       for z_coord in np.arange(-z_dim/2, z_dim/2, ave_dist*z_scale) for y_coord in np.arange(-y_dim/2, y_dim/2, ave_dist) for x_coord in np.arange(-x_dim/2, x_dim/2, ave_dist)])
 
-    g.dprint("{0}: Generated {1} random points.".format(time.strftime("%X"),RandomPoints.shape[0]))
+       g.dprint("{0}: Generated {1} random points.".format(time.strftime("%X"),RandomPoints.shape[0]))
 
     #Fortran implementation about 8x faster than new python implementation.
     if g.accelerate_points and g.f2py_enabled and RandomPoints.shape[0] > 100000 and g.dictionary_SI['shape'] in (1,2,3,4,5,6,7,11,13,14,15,16):
@@ -80,10 +80,13 @@ def Points_For_Calculation(seed=0,sort=0):
         outside = [i for i in range(points.shape[0]) if not points[i,3]]
         points_inside = np.delete(points,outside,axis=0)
     else:
-        points = np.c_[RandomPoints,density(RandomPoints)]
-        outside = [i for i in range(points.shape[0]) if not points[i,3]]
-        points_inside = np.delete(points,outside,axis=0)
-        #points_inside = np.asarray([np.append(coords, [density(coords)]) for coords in RandomPoints if abs(density(coords))>0.00001])  #30% slower implementation
+        if g.dictionary_SI['shape']==23:
+            points_inside = 0 #Import Points!!!!!
+        else:
+            points = np.c_[RandomPoints,density(RandomPoints)]
+            outside = [i for i in range(points.shape[0]) if not points[i,3]]
+            points_inside = np.delete(points,outside,axis=0)
+            #points_inside = np.asarray([np.append(coords, [density(coords)]) for coords in RandomPoints if abs(density(coords))>0.00001])  #30% slower implementation
     
     RandomPoints = None         #To use less RAM, i am clearing this variable now.
 
@@ -264,8 +267,7 @@ def Calculate_Intensity(Points,mask=[],coherence_dup = 1, coherence_taper = 0):
       print("Error: shape has no points; check your parameters.")
       return
    elif len(z_list) < 100:
-      print length
-      print("Warning: shape has few points; check your parameters.")
+      print("Warning: shape has few points ({0}); check your parameters.".format(length))
    #coherence_length = 5e-7
    if not g.dictionary['d_lambda']:
       coherence_length = 1
@@ -506,7 +508,6 @@ def Average_Intensity(mask=[]):
             g.vprint("FINISHED CALCULATION {0}: {1}".format(plot_number+1,time.strftime("%X")))
         except KeyError:
             Points = Points_For_Calculation()
-            print Points
             try:
                 g.dictionary_SI['current_value']
                 est_time = 0# 10**-7*len(Points)*g.dictionary_SI['pixels']**2*g.dictionary_SI['num_plots']*g.dictionary_SI['s_step']
