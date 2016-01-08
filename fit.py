@@ -233,11 +233,19 @@ def residuals(param,exp_data,mask=[],random_seed=2015):
       g.dprint('Using weighted least squares fitting.')
       background=np.percentile(exp_data,20)
       sigma = np.sqrt(exp_data+background)               #sqrt(n)+background error bars
-      sigma = np.sqrt(background)                        #background level error bars
       #background=np.sqrt(np.percentile(exp_data,20))
       #sigma = np.maximum(np.sqrt(exp_data),background)   #sqrt(n) error bars (with 0 correction)
-      err = mask*(exp_data - calc_intensity)/sigma
+      #err = mask*(exp_data - calc_intensity)/sigma
+      #err = np.log(mask*(exp_data - calc_intensity)/sigma)
+      diff = np.abs(exp_data - calc_intensity)
+      #if g.dictionary['log_scale']:
+      #   err = mask*np.log(np.abs(exp_data - calc_intensity))/sigma
+      #else:
+      err = [[ mask[i,j]*np.log(1+diff[i,j])/sigma[i,j] if (diff[i,j] > 0) else 0 for i in range(diff.shape[0]) ] for j in range(diff.shape[1])]
    else:
+      #if g.dictionary['log_scale']:
+      #   err = mask*np.log(np.abs(exp_data - calc_intensity))
+      #else:
       err = mask*(exp_data - calc_intensity)
    #calc_intensity -= exp_data                                 #todo: might be faster
    #calc_intensity *= mask                                     #todo: might be faster
@@ -269,9 +277,9 @@ def fit_step(exp_data,mask=[],max_iter=0):
    exp_data = normalize(exp_data,mask)
    random_seed = int(time.time())
 
-   #fit_method = 'leastsq'
    fit_method = 'leastsq'
-   if fit_method == 'weighted':
+   #fit_method = 'weighted'
+   if fit_method == 'weighted':  #TODO: doesn't work; for now use manual weighting in residuals.
       g.dprint('Using weighted least squares fitting.')
       fit_func = lambda params: residuals(params,exp_data,mask,random_seed)
       fit_sigma = np.ravel(exp_data)   #TODO: CHECK!!
