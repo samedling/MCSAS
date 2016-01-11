@@ -104,7 +104,8 @@ g.dictionary = {'advanced':1, 'altitude':45, 'analytic': 2, 'ave_dist': 1.0, 'az
               's_stop': 1, 'subfolder':'subfolder', 's_var': 'x_theta', 'symmetric': 0, 'num':1, 'length_2':0,
               'theta_delta':20, 'ThreeD': 0, 'title': 'title', 'x_theta': 0,'y_theta': 0,'z_theta': 0,'z_dim': 100,'z_scale':1,#}
               'fit_file': 'fit_file', 'center': (0,0), 'border': 0, 'max_iter': 1000, 'update_freq': 0, 'plot_fit_tick': 1, 'plot_residuals_tick': 1, 'mask_threshold': 10, 'background': 2e-5, 'grid_compression': 0,
-              'fit_radius_1': 1, 'fit_radius_2': 0, 'fit_rho_1': 1, 'fit_rho_2': 0, 'fit_z_dim': 1, 'fit_x_theta': 1, 'fit_y_theta': 1, 'fit_z_theta': 1, 'fit_background': 1, 'fit_num': 0, 'fit_length_2':0,'xinter':100,'yinter':100,'numinter':10
+              'fit_radius_1': 1, 'fit_radius_2': 0, 'fit_rho_1': 1, 'fit_rho_2': 0, 'fit_z_dim': 1, 'fit_x_theta': 1, 'fit_y_theta': 1, 'fit_z_theta': 1, 'fit_background': 1, 'fit_num': 0, 'fit_length_2':0,
+              'xinter':100,'yinter':100,'numinter':10,'save_points':1,
               }
 
 #####            Importing data or using defaults              #############
@@ -431,7 +432,7 @@ def sequence(): #This makes a sequence of intensities
        else:
           current_value = np.random.normal(loc = g.dictionary[g.dictionary['s_var']], scale = g.dictionary['SD'])
        change_units(current_value)
-       Intensity = Average_Intensity()
+       Intensity = Average_Intensity(seqnum=str(frame_num+1))
        save(Intensity, "intensity"+str(frame_num+1))
        radial_intensity = radial(Intensity)
        save(radial_intensity, "radial_intensity"+str(frame_num+1))
@@ -818,6 +819,8 @@ def output_options():
    ROW=0
    COL=0
 
+   tick('save_points', "Save Points Used in Calculation", output_window,ROW,COL,2)
+   ROW+=1
    tick('scale', "Scale Axes When Plotting Real Space", output_window, ROW, COL, 2)
    ROW+=1
    tick('log_scale', "Plot on a Log Scale?", output_window, ROW, COL, 2)
