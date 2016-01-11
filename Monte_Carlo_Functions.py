@@ -24,13 +24,17 @@ def rot_points(points,reverse=True):
 def Points_For_Calculation(seed=0,sort=0):
     if seed:
        np.random.seed([seed])
-    density(np.asarray([[1,1,1],[2,2,2]])) #This is so that you can manually redefine x_dim and y_dim in the density function. e.g. for the gaussian model, you may want to make more points.
+    if g.dictionary_SI['shape']!=23:
+       density(np.asarray([[1,1,1],[2,2,2]])) #This is so that you can manually redefine x_dim and y_dim in the density function. e.g. for the gaussian model, you may want to make more points.
+
     x_dim,y_dim,z_dim = g.dictionary_SI['x_dim'],g.dictionary_SI['y_dim'],g.dictionary_SI['z_dim']
     x_theta,y_theta,z_theta = g.dictionary_SI['x_theta'],g.dictionary_SI['y_theta'],g.dictionary_SI['z_theta']
     ave_dist = g.dictionary_SI['ave_dist']
     z_scale = g.dictionary_SI['z_scale']
     #I make a grid, then find a random number from a normal distribution with radius ave_dist. this gets added to the grid coordinates to randomise this.
-    if g.dictionary_SI['shape']!=23:
+    if g.dictionary_SI['shape']==23:
+       RandomPoints = np.asarray([0,0])#this is to stop errors below, as it assumes RandomPoints is defined
+    else:
        RandomPoints = np.asarray([((np.random.normal()*g.dictionary_SI['travel']+x_coord)%x_dim - x_dim/2, (np.random.normal()*g.dictionary_SI['travel']+y_coord)%y_dim - y_dim/2, (np.random.normal()*g.dictionary_SI['travel']*z_scale+z_coord)%z_dim - z_dim/2)
                        for z_coord in np.arange(-z_dim/2, z_dim/2, ave_dist*z_scale) for y_coord in np.arange(-y_dim/2, y_dim/2, ave_dist) for x_coord in np.arange(-x_dim/2, x_dim/2, ave_dist)])
 
@@ -81,7 +85,10 @@ def Points_For_Calculation(seed=0,sort=0):
         points_inside = np.delete(points,outside,axis=0)
     else:
         if g.dictionary_SI['shape']==23:
-            points_inside = 0 #Import Points!!!!!
+            try:
+               points_inside =  np.asarray(pylab.loadtxt(os.path.join(root_folder,'import.csv'), delimiter=","))  #Import Points
+            except:
+               print "\n\nCould not find file, or file unreadable.\nMake sure 'import.csv' is in the main folder.\nTry saving 'import.csv' with a different character encoding.\nWestern(ISO-8859-15) works, but UTF-8 may not.\n\n"
         else:
             points = np.c_[RandomPoints,density(RandomPoints)]
             outside = [i for i in range(points.shape[0]) if not points[i,3]]
@@ -488,7 +495,7 @@ else:   #python only
 
 ###########          Average Intensity         #############
 
-def Average_Intensity(mask=[]):
+def Average_Intensity(mask=[],seqnum=""):#seqnum is a string that is appended to the points file name if you generate a sequence/etc.
     num_plots = g.dictionary_SI['num_plots']
     print "START TIME: "+time.strftime("%X")
     sim_info = open(g.dictionary_SI['path_to_subfolder']+"simulation_infomation.txt","a")
@@ -533,6 +540,10 @@ def Average_Intensity(mask=[]):
         except NameError:
             cumulative = np.asarray(Intensity)
     #this finds the average of all plots
+    if g.dictionary_SI['save_points']==1:
+         g.vprint("Saving Points")
+         save(Points,"Points"+seqnum)
+
     print "END TIME: "+time.strftime("%X")
     sim_info = open(g.dictionary_SI['path_to_subfolder']+"simulation_infomation.txt","a")
     sim_info.write("\nEnd Time: "+time.strftime("%X"))
@@ -565,6 +576,9 @@ def inter_intensity(mask=[]):
     sim_info.write("\nTotal Points Used in Calculation:"+str(len(AllPoints)))
     sim_info.close()
     #Points_Plot(AllPoints,'points',1)
+    if g.dictionary_SI['save_points']==1:
+      save(AllPoints,'Points')
+
     Intensity = Calculate_Intensity(AllPoints,mask)
 
     print "END TIME: "+time.strftime("%X")

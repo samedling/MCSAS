@@ -62,7 +62,9 @@ def density(coords):
    elif g.dictionary_SI['shape'] == 22:
       return d22coreshellsmooth(coords) 
    elif g.dictionary_SI['shape'] == 23:
-      return d23manualpoints(coords) 
+      g.dprint("Running density function when it should be importing points from file.")
+      return d23importpoints(coords) 
+      
 
 
 #This is a dictionary containing all of the useful descriptions for the variables for each model.
