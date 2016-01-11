@@ -224,11 +224,9 @@ def residuals(param,exp_data,mask=[],random_seed=2015):
    else:
       calc_intensity = normalize(Calculate_Intensity(Points_For_Calculation(seed=random_seed),mask),mask,True)
 
-   #TODO: it shouldn't be able to set the background too high....???
-   #err = mask*(exp_data - (calc_intensity + g.dictionary_SI['background']))
-   weighted = False
+   weighted = True
    if weighted:
-      #TODO: if masked, actually set weight = 0?
+      #todo: if masked, actually set weight = 0?
       #sigma = sqrt(n) or sqrt(n)/n??!!
       g.dprint('Using weighted least squares fitting.')
       background=np.percentile(exp_data,20)
@@ -237,22 +235,18 @@ def residuals(param,exp_data,mask=[],random_seed=2015):
       #sigma = np.maximum(np.sqrt(exp_data),background)   #sqrt(n) error bars (with 0 correction)
       #err = mask*(exp_data - calc_intensity)/sigma
       #err = np.log(mask*(exp_data - calc_intensity)/sigma)
-      diff = np.abs(exp_data - calc_intensity)
-      #if g.dictionary['log_scale']:
-      #   err = mask*np.log(np.abs(exp_data - calc_intensity))/sigma
-      #else:
-      err = [[ mask[i,j]*np.log(1+diff[i,j])/sigma[i,j] if (diff[i,j] > 0) else 0 for i in range(diff.shape[0]) ] for j in range(diff.shape[1])]
    else:
-      if g.dictionary['log_scale']:
-         #TODO!!!  I want log(a) - log(b) not log(a-b)!!
-         #err = mask*np.log(np.abs(exp_data - calc_intensity))*10**-4   #errors don't change much; only popcorn fit varies
-         #err[np.isnan(err)] = 0
-         diff = np.abs(exp_data - calc_intensity)*10**2     #fitting works
-         err = [[ mask[i,j]*np.log(1+diff[i,j]) if (diff[i,j] > 0) else 0 for i in range(diff.shape[0]) ] for j in range(diff.shape[1])]
-      else:
-         err = mask*(exp_data - calc_intensity)*10**2
-   #calc_intensity -= exp_data                                 #todo: might be faster
-   #calc_intensity *= mask                                     #todo: might be faster
+      sigma = 1
+
+   if g.dictionary['log_scale']:
+      #TODO: doesn't fit properly
+      #err = mask*np.log((exp_data / calc_intensity))/sigma
+      #err[np.isnan(err)] = 0
+      diff = exp_data / calc_intensity
+      err = np.asarray([[ mask[i,j]*np.log(diff[i,j]) if (diff[i,j] > 0) else 0 for i in range(diff.shape[0]) ] for j in range(diff.shape[1])]) / sigma
+   else:
+      err = mask*(exp_data - calc_intensity)/sigma
+
    try:
       print('{0}: Step {3} total error = {1:.4}; sum of squares = {2:.4}'.format(time.strftime("%X"),np.abs(err).sum(),np.square(err).sum(),total_steps))
       total_steps +=1
