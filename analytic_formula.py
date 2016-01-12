@@ -15,7 +15,7 @@ import global_vars as g
 def t1sphere(QRadius):     #TODO: check this; it no longer returns a 2D array instead of a 1D one, but it might not be correct
     QR = QRadius*g.dictionary_SI['radius_1']
     def function(x):
-        return ((3/(QR[x]**3))*(np.sin(QR[x])-(QR[x]*np.cos(QR[x]))))**2
+        return ((np.sin(x)-x*np.cos(x))/x**3)**2
     return np.asarray([function(QR[x]) if QR[x]!=0 else function(QR[x+1]) for x in range(len(QR))])
 
 def t2cylinder(distance_from_origin):
@@ -33,9 +33,9 @@ def t3coreshell(QRadius):
 def t4gaussian(QRadius):
     QR = QRadius*g.dictionary_SI['radius_2']
     def function(x):
-        return np.exp(-(x/4)**2)
+        return np.exp(-(x**2)/2.)
     b= np.asarray([function(QR[x]) if QR[x]!=0 else function(QR[x+1]) for x in range(len(QR))])
-    return b**2
+    return b
 
 
 
@@ -113,12 +113,12 @@ def theory(Q_radius):
 
 def theory_csv():
         QSize = g.dictionary_SI['QSize']
-        pixels = g.dictionary_SI['pixels']
+        xpixels,ypixels = g.dictionary_SI['pixels'].split()
         EHC = g.dictionary_SI['EHC']
         z_dim = g.dictionary_SI['z_dim']
         x_theta = g.dictionary_SI['x_theta']
 
-        Q = np.array([[[row*QSize/pixels-0.5*QSize, col*QSize/pixels-0.5*QSize] for col in range(int(pixels))] for row in range(int(pixels))])
+        Q = np.array([[[row*QSize/float(xpixels)-0.5*QSize, col*QSize/float(ypixels)-0.5*QSize] for col in range(int(ypixels))] for row in range(int(xpixels))])
 
         QRArray = np.array(Q[:,:,0]**2+Q[:,:,1]**2)**0.5
         alpha = np.angle( Q[:,:,0]+1j*Q[:,:,1] )
@@ -131,5 +131,5 @@ def theory_csv():
         
         Intensity = np.asarray([theory(np.cos(x_theta)*np.sum(QRadius**2, axis = 1)**0.5) for QRadius in Q])
         Intensity = Intensity*(L**2)
-        return Intensity/np.sum(Intensity)
+        return np.transpose(Intensity/np.sum(Intensity))#transpose is so that the rotations are in the same direction as the MC simulations
 

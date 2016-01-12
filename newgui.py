@@ -152,7 +152,7 @@ Analytic_options = np.array([["None",0],
                         ["Sphere",1],
                         ["Cylinder",2],
                         ["Core shell cylinder",3],
-                        ["Gaussian - check this formula",4]
+                        ["Gaussian",4]
                         ])
 Analytic_dict = {x[0]:x[1] for x in Analytic_options} #This is needed, so that when an option is chosen, we can find the shape number.
 
@@ -523,6 +523,7 @@ def circ(): #This plots a the angle at a fixed radius
    
 def calc_int():
    '''Calculates intensity (average if # plots > 1).'''
+   get_numbers_from_gui() #otherwise it uses the previous 'shape' number
    if g.dictionary['shape'] ==0:
       theory_plot()
    else:
@@ -530,6 +531,7 @@ def calc_int():
 
 def calc_seq():
    '''Calculates intensity for sequence (averaging each time if # plots > 1.'''
+   get_numbers_from_gui() #otherwise it uses the previous 'shape' number
    if g.dictionary['s_var'] in g.dictionary:
       if g.dictionary['shape']==0:
          theory_seq()
