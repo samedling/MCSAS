@@ -204,9 +204,9 @@ def get_numbers_from_gui():
                g.dictionary[x] = int(g.dictionary[x])
         except:
             None
-    if not os.path.exists(root_folder+'/'+g.dictionary_SI['subfolder']):#making the subfolder, if it doesn't exist
-       os.makedirs(root_folder+'/'+g.dictionary_SI['subfolder'])
-       time.sleep(2) #Making the subfolder takes a few seconds, so we need to delay the program, otherwise it will try save things into the folder before it is made.
+    if not os.path.exists(root_folder+'/'+g.dictionary['subfolder']):#making the subfolder, if it doesn't exist
+       os.makedirs(root_folder+'/'+g.dictionary['subfolder'])
+       #time.sleep(2) #Making the subfolder takes a few seconds, so we need to delay the program, otherwise it will try save things into the folder before it is made.
 
     make_SI_dict()
 
