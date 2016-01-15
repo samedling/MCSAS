@@ -512,7 +512,6 @@ def Average_Intensity(mask=[],seqnum=""):#seqnum is a string that is appended to
             g.dictionary_SI['TEMP_VAR'] #This is here so it will only make the estimated time once.
             ##Intensity = Calculate_Intensity(Points_For_Calculation())  #Commented and separated so I can time these separately.
             Points = Points_For_Calculation()
-            print Points
             Intensity = Calculate_Intensity(Points,mask)
             g.vprint("FINISHED CALCULATION {0}: {1}".format(plot_number+1,time.strftime("%X")))
         except KeyError:

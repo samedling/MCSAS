@@ -193,7 +193,7 @@ def get_numbers_from_gui():
        else:
           try:
              g.dictionary[x] = g.dictionary_in[x].get() 
-          except AttributeError:
+          except (TclError, AttributeError):#If it can't load it, if you open then close a window for example, it just uses the existing value.
              #g.dprint("{0} could not be imported from GUI.".format(x))
              pass
     
@@ -354,12 +354,17 @@ def plot_points(): #This runs the Real Space to plot the points in Real Space
     get_numbers_from_gui()
     save_vars_to_file("Plot Points")
     if g.dictionary['seq_hide'] == 1:
-       if g.dictionary['gauss']==0:
+       if g.dictionary['gauss']==0:#if 'gauss', it takes a random number from the gaussian distribution.
           current_value = g.dictionary['s_start']
        else:
           current_value = np.random.normal(loc = g.dictionary[g.dictionary['s_var']], scale = g.dictionary['SD'])
        change_units(current_value)
-    Points_Plot(Points_For_Calculation(), 'points', 1)
+    
+    Points = Points_For_Calculation()
+    if g.dictionary_SI['save_points']==1:
+          g.vprint("Saving Points")
+          save(Points,"Points")
+    Points_Plot(Points, 'points', 1)
     clear_mem()
     print "Program Finished"
 
@@ -973,9 +978,9 @@ if __name__ == "__main__":
    ROW+=1
    Label(master, text = "Model Parameters", font = "Times 16 bold").grid(row = ROW, column = COL, sticky = W)
    COL+=1
-   parameter_help = Button(master, text='Parameter Help', font = "Times 12 bold")
+   parameter_help = Button(master, text='Update Parameters', font = "Times 12 bold")
    parameter_help.bind("<Button-1>", rename_parameters)
-   parameter_help.grid(row=ROW, column = COL, sticky=W, pady=2)   
+   parameter_help.grid(row=ROW, column = COL, pady=2)   
    COL-=1
    ROW+=1
    parameter_start_row=ROW
