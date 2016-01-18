@@ -97,7 +97,7 @@ if g.debug:
 
 
 #These are the default settings
-g.dictionary = {'advanced':1, 'altitude':45, 'analytic': 2, 'ave_dist': 1.0, 'azimuth':45, 'bound': 1, 'circ_delta':5, 'comments':'',
+g.dictionary = {'advanced':1, 'altitude':45, 'analytic': 2, 'ave_dist': 2e5, 'azimuth':45, 'bound': 1, 'circ_delta':5, 'comments':'',
               'degrees': 1, 'energy_wavelength': 11, 'energy_wavelength_box': 0, 'gauss':0, 'log_scale': 1, 'maximum': 0.01, 'minimum': 1e-8, 'd_lambda': 2e-4,
               'num_plots': 1, 'pixels': (200,200), 'proportional_radius':0.5, 'QSize': 6,'Qz': 0, 'radius_1': 5.0, 'radius_2': 2.5, 'rho_1': 1.0, 'rho_2': -0.5,
               'save_img':1, 'save_name': 'save_name', 'scale': 1,'SD':1, 'seq_hide':1, 'shape': 2, 's_start': 0, 's_step': 2,
@@ -218,14 +218,15 @@ def make_SI_dict():
     #Converting to SI units.
     g.dictionary_SI["z_dim"] = g.dictionary["z_dim"]*10**-9
     g.dictionary_SI["length_2"] = g.dictionary["length_2"]*10**-9
-    g.dictionary_SI["ave_dist"] = g.dictionary["ave_dist"]*10**-9
-    g.dictionary_SI["travel"] = g.dictionary_SI["ave_dist"]
     g.dictionary_SI["radius_1"] = g.dictionary["radius_1"]*10**-9
     g.dictionary_SI["radius_2"] = g.dictionary["radius_2"]*10**-9
     xy_dim()#defining x_dim and y_dim - dependent of radius_1
-    g.dictionary_SI["QSize"] = g.dictionary["QSize"]*10**9
 
+    g.dictionary_SI["QSize"] = g.dictionary["QSize"]*10**9
+    g.dictionary_SI["ave_dist"] = (g.dictionary_SI['x_dim']*g.dictionary_SI['y_dim']*g.dictionary_SI['z_dim']/float(g.dictionary["ave_dist"]))**(1./3.)#I am converting from the approx. number of points to the average distance between points
+    g.dictionary_SI["travel"] = g.dictionary_SI["ave_dist"]#This is here, so that I can change how much each point randomly moves.
     #g.dictionary_SI['num_plot_points'] = int(g.dictionary_SI['pixels']/2.)
+
     g.dictionary_SI['num_plot_points'] = min([int(i) for i in g.dictionary['pixels'].split()])/2
     g.dictionary_SI['delta'] = 1. #number of pixels in width
 
@@ -259,9 +260,9 @@ def change_units(number): #Used for sequences. A value is converted to SI units.
            if x == g.dictionary_SI['s_var']:
               g.dictionary_SI[x] = number*10**-9
               if x == 'ave_dist':
-                 g.dictionary_SI['travel'] = g.dictionary_SI[x]
+                 g.dictionary_SI['travel'] = g.dictionary_SI[x]*10**9#to undo multiplying above
               if x == 'travel':
-                 g.dictionary_SI['ave_dist'] = g.dictionary_SI[x]
+                 g.dictionary_SI['ave_dist'] = g.dictionary_SI[x]*10**9#to undo multiplying above
               if g.dictionary_SI['s_var'] != 'y_dim' and g.dictionary_SI['s_var'] != 'x_dim':
                  xy_dim()#This is here, mainly for the double slit - if you want to make the slits higher, you can. Most other functions are radially symmetric.
                                
@@ -312,7 +313,7 @@ def clear_mem():#This function clears memory to try and reduce mem useage.
 
 #This is a list of some Common Variables for use in sequence.
 ALLVARIABLES = [['altitude', 'Altitude'],
-                ["ave_dist","Neighbouring Point Distance"],
+                ["ave_dist","Number of Points"],
                 ['azimuth', 'Azimuth'],
                 ["energy_wavelength","Energy/Wavelength"],
                 ["num","Number of Pieces"],
@@ -1074,10 +1075,10 @@ if __name__ == "__main__":
    #ROW+=1
    enter_num('pixels', "Number of Pixels (x y)", master, ROW, COL)
    ROW+=1
-   enter_num('ave_dist', "Neighbouring Point Distance (nm)", master, ROW, COL)
+   enter_num('ave_dist', "Approximate Number of Points", master, ROW, COL)
    ROW+=1
-   enter_num('z_scale','z-direction scaling of\nneighbouring point distance', master, ROW, COL)
-   ROW+=1
+#   enter_num('z_scale','z-direction scaling of\nneighbouring point distance', master, ROW, COL)
+#   ROW+=1
    tick('bound', "Upper / Lower Bounds?", master, ROW, COL)
    #g.dictionary_in['bound2']['font'] = "Times 11 underline"
    ROW+=1

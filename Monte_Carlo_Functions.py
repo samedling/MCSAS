@@ -30,13 +30,14 @@ def Points_For_Calculation(seed=0,sort=0):
     x_dim,y_dim,z_dim = g.dictionary_SI['x_dim'],g.dictionary_SI['y_dim'],g.dictionary_SI['z_dim']
     x_theta,y_theta,z_theta = g.dictionary_SI['x_theta'],g.dictionary_SI['y_theta'],g.dictionary_SI['z_theta']
     ave_dist = g.dictionary_SI['ave_dist']
-    z_scale = g.dictionary_SI['z_scale']
+    #z_scale = g.dictionary_SI['z_scale']
     #I make a grid, then find a random number from a normal distribution with radius ave_dist. this gets added to the grid coordinates to randomise this.
     if g.dictionary_SI['shape']==23:
        RandomPoints = np.asarray([0,0])#this is to stop errors below, as it assumes RandomPoints is defined
     else:
-       RandomPoints = np.asarray([((np.random.normal()*g.dictionary_SI['travel']+x_coord)%x_dim - x_dim/2, (np.random.normal()*g.dictionary_SI['travel']+y_coord)%y_dim - y_dim/2, (np.random.normal()*g.dictionary_SI['travel']*z_scale+z_coord)%z_dim - z_dim/2)
-                       for z_coord in np.arange(-z_dim/2, z_dim/2, ave_dist*z_scale) for y_coord in np.arange(-y_dim/2, y_dim/2, ave_dist) for x_coord in np.arange(-x_dim/2, x_dim/2, ave_dist)])
+       RandomPoints = np.asarray([((np.random.normal()*g.dictionary_SI['travel']+x_coord)%x_dim - x_dim/2, (np.random.normal()*g.dictionary_SI['travel']+y_coord)%y_dim - y_dim/2, (np.random.normal()*g.dictionary_SI['travel']+z_coord)%z_dim - z_dim/2)
+       #RandomPoints = np.asarray([((np.random.normal()*g.dictionary_SI['travel']+x_coord)%x_dim - x_dim/2, (np.random.normal()*g.dictionary_SI['travel']+y_coord)%y_dim - y_dim/2, (np.random.normal()*g.dictionary_SI['travel']*z_scale+z_coord)%z_dim - z_dim/2)
+                       for z_coord in np.arange(-z_dim/2, z_dim/2, ave_dist) for y_coord in np.arange(-y_dim/2, y_dim/2, ave_dist) for x_coord in np.arange(-x_dim/2, x_dim/2, ave_dist)])
 
        g.dprint("{0}: Generated {1} random points.".format(time.strftime("%X"),RandomPoints.shape[0]))
 
