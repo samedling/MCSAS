@@ -122,8 +122,9 @@ else:
 
 try:
     d = pickle.load(open(root_folder+"/default.txt", 'rb'))
-    if len(g.dictionary) != len(d): #I check that it is the same length - This is needed if any new variables are added to g.dictionary
-        a= 1/0
+    for x in g.dictionary:
+      if x not in d: 
+         d[x]=g.dictionary[x]
     g.dictionary = d
 except:
     print "Previously used variables could not be loaded. \nUsing default settings instead."
