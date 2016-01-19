@@ -134,6 +134,7 @@ g.MC_num_and_name_dict = {x[0]:x[1] for x in g.MC_num_and_name} #This is needed,
 
 
 def d1sphere(coords):
+    g.dictionary_SI['z_dim']=g.dictionary_SI['radius_1']*2.
     return [g.dictionary_SI['rho_1'] if np.sqrt(np.sum(coords[i,:]**2)) < g.dictionary_SI['radius_1'] else 0 for i in range(coords.shape[0])]
 
 def d2cylinder(coords):
