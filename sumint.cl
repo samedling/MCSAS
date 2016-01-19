@@ -200,16 +200,14 @@ __kernel void sumint_asym_small (
    int i = n/x_pixels;
    int j = n%x_pixels;
    float max_pixels = max(x_pixels,y_pixels);
-   float Q[3] = { (i-0.5*y_pixels)*qsize/max_pixels, (j-0.5*x_pixels)*qsize/max_pixels,
-        2*ehc*pow(sin(sqrt(pow((i-0.5*y_pixels),2)+pow(j-0.5*x_pixels,2))*qsize/(max_pixels*2*ehc)),2) };
+   float Q[2] = { (i-0.5*y_pixels)*qsize/max_pixels, (j-0.5*x_pixels)*qsize/max_pixels };
    temp_intensity = 0;
    temp_intensity_2 = 0;
    for ( int p = 0; p < npts; p++) {
-       float R[3] = {points[p][0],points[p][1],points[p][2]};
-       QdotR = my_dot(Q,R,3);
-       QPdotR = my_dot(Q,R,2);
+       float R[2] = {points[p][0],points[p][1]};
+       QdotR = my_dot(Q,R,2);
        temp_intensity += points[p][3]*cos(QdotR);
-       temp_intensity_2 += points[p][3]*sin(QPdotR);
+       temp_intensity_2 += points[p][3]*sin(QdotR);
    }
    intensity[n] = pow(temp_intensity,2)+pow(temp_intensity_2,2);
 }
@@ -224,16 +222,14 @@ __kernel void sumint_asym_small_mask (
    int i = xval[n];
    int j = yval[n];
    float max_pixels = max(x_pixels,y_pixels);
-   float Q[3] = { (i-0.5*y_pixels)*qsize/max_pixels, (j-0.5*x_pixels)*qsize/max_pixels,
-        2*ehc*pow(sin(sqrt(pow((i-0.5*x_pixels),2)+pow(j-0.5*y_pixels,2))*qsize/(max_pixels*2*ehc)),2) };
+   float Q[2] = { (i-0.5*y_pixels)*qsize/max_pixels, (j-0.5*x_pixels)*qsize/max_pixels };
    temp_intensity = 0;
    temp_intensity_2 = 0;
    for ( int p = 0; p < npts; p++) {
-       float R[3] = {points[p][0],points[p][1],points[p][2]};
-       QdotR = my_dot(Q,R,3);
-       QPdotR = my_dot(Q,R,2);
+       float R[2] = {points[p][0],points[p][1]};
+       QdotR = my_dot(Q,R,2);
        temp_intensity += points[p][3]*cos(QdotR);
-       temp_intensity_2 += points[p][3]*sin(QPdotR);
+       temp_intensity_2 += points[p][3]*sin(QdotR);
    }
    intensity[n] = pow(temp_intensity,2)+pow(temp_intensity_2,2);
 }

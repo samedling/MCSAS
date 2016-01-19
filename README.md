@@ -1,12 +1,13 @@
 ## Basic Installation ##
 
-Download from https://www.enthought.com/products/canopy either the free or academic version of Enthought Canopy.  Your Python version must be 2.7 or newer.
+Your Python version must be 2.7 or newer and you'll need numpy and the python image library (Pillow). 
+Download both from https://www.enthought.com/products/canopy via either the free or academic version of Enthought Canopy.
 
 Method 1:
 
  * Install by running `git clone https://github.com/samedling/MCSAS.git` to download the entire repository.
  
- * For future updates, run `git pull origin master` from the MCSAS folder.
+ * For future updates, run `./mcsas -u`. (Or run `git pull origin master` from the MCSAS folder and, if fastmath.f90 changed, also run `make`.)
  
 Method 2:
 
@@ -17,13 +18,21 @@ There are two optional but recommended ways of speeding up the code:
 
  1. Install PyOpenCL following the directions at http://wiki.tiker.net/PyOpenCL/Installation and then the first time your run it, it will ask you which platform and device you want to use.  Try the GPU first; if it doesn't work, use the CPU.  On my dual core CPU, I obtained a 25x speedup; quad core CPUs should be nearly twice as fast and GPUs should be even faster!
  
- 2. F2Py acceleration should work automatically on OS X or Linux.  If not, or if you want maximum performance and you have gfortran installed, run `make` to compile the Fortran code (or if you have ifort installed, edit the makefile before running `make`).  On my dual core CPU, I obtained a 10x speedup; quad core CPUs likely not much faster.
+ 2. F2Py acceleration should work automatically on OS X or Linux.  If not, or if you want maximum performance and you have gfortran installed, run `make` to compile the Fortran code (or if you have ifort installed, edit the makefile before running `make`).  On my dual core CPU, I obtained a 10x speedup.
 
-Run `python newgui.py` on the command line or open it in Canopy and click run.  (Note: you may discover running `nice python newgui.py` results in your system being a lot more responsive.)
+Run `./mcsas` on the command line or open it in Canopy and click run.  (Note: you may discover running `nice ./mcsas` results in your system being a lot more responsive.)
 
 If you want to try out the latest features, you can try the develop branch (by either running `git pull origin develop` or via the web GUI clicking on 'master', selecting 'develop', and then downloading the zip) but consider editing global_vars.py so debug = False.
 
 
+### Python Installation ###
+
+If you're trying to install the required python packages on a computer you don't have root access on, run these commands:
+
+   cd
+   mkdir python
+   echo "export PYTHONPATH=$PYTHONPATH:~/python" >> .bashrc
+   pip install --target=python Pillow
 
 ### OS X Fortran Installation ###
 Apple doesn't provide a recent version of gfortran, but you can download one from http://hpc.sourceforge.net

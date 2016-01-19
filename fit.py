@@ -2,6 +2,8 @@ import numpy as np
 import global_vars as g
 import copy
 
+from scipy.optimize import curve_fit
+
 
 class Fit_Parameters():
    '''Class to keep track of which parameters are being varied, based on shape and checkboxes.
@@ -197,7 +199,7 @@ def residuals(param,exp_data,mask=[],random_seed=2015):
    if not len(mask):
       mask = np.ones(exp_data.shape)
 
-   if g.dictionary['s_var'] > 1:    #sequence fit
+   if g.dictionary['s_step'] > 1:    #sequence fit
       convert_from_SI()
       orig = g.dictionary[g.dictionary['s_var']]
       for i in range(g.dictionary['s_step']):
@@ -222,11 +224,29 @@ def residuals(param,exp_data,mask=[],random_seed=2015):
    else:
       calc_intensity = normalize(Calculate_Intensity(Points_For_Calculation(seed=random_seed),mask),mask,True)
 
-   #TODO: it shouldn't be able to set the background too high....???
-   #err = mask*(exp_data - (calc_intensity + g.dictionary_SI['background']))
-   err = mask*(exp_data - calc_intensity)
-   #calc_intensity -= exp_data                                 #todo: might be faster
-   #calc_intensity *= mask                                     #todo: might be faster
+   weighted = True
+   if weighted:
+      #todo: if masked, actually set weight = 0?
+      #sigma = sqrt(n) or sqrt(n)/n??!!
+      g.dprint('Using weighted least squares fitting.')
+      background=np.percentile(exp_data,20)
+      sigma = np.sqrt(exp_data+background)               #sqrt(n)+background error bars
+      #background=np.sqrt(np.percentile(exp_data,20))
+      #sigma = np.maximum(np.sqrt(exp_data),background)   #sqrt(n) error bars (with 0 correction)
+      #err = mask*(exp_data - calc_intensity)/sigma
+      #err = np.log(mask*(exp_data - calc_intensity)/sigma)
+   else:
+      sigma = 1
+
+   if g.dictionary['log_scale']:
+      #TODO: doesn't fit properly
+      #err = mask*np.log((exp_data / calc_intensity))/sigma
+      #err[np.isnan(err)] = 0
+      diff = exp_data / calc_intensity
+      err = np.asarray([[ mask[i,j]*np.log(diff[i,j]) if (diff[i,j] > 0) else 0 for i in range(diff.shape[0]) ] for j in range(diff.shape[1])]) / sigma
+   else:
+      err = mask*(exp_data - calc_intensity)/sigma
+
    try:
       print('{0}: Step {3} total error = {1:.4}; sum of squares = {2:.4}'.format(time.strftime("%X"),np.abs(err).sum(),np.square(err).sum(),total_steps))
       total_steps +=1
@@ -235,6 +255,16 @@ def residuals(param,exp_data,mask=[],random_seed=2015):
          lprint('{0}: On function call {1}...'.format(time.strftime("%X"),total_steps),logfile,quiet=True)
          lprint('Current parameter values are:',logfile)
          parameters.print_param(logfile)
+         if g.dictionary['log_scale']:
+            if weighted:
+               print('Fit type: weighted logarithmic.')
+            else:
+               print('Fit type: logarithmic.')
+         else:
+            if weighted:
+               print('Fit type: weighted linear.')
+            else:
+               print('Fit type: linear.')
    except NameError:
       print('{0}: Total error = {1:.4}; sum of squares = {2:.4}'.format(time.strftime("%X"),np.abs(err).sum(),np.square(err).sum()))
    return np.ravel(err)     #flattens err since leastsq only takes 1D array
@@ -254,7 +284,21 @@ def fit_step(exp_data,mask=[],max_iter=0):
    #norm_exp_data = exp_data/np.sum(exp_data*mask) #data normalized taking mask into account.
    exp_data = normalize(exp_data,mask)
    random_seed = int(time.time())
-   fit_param = leastsq(residuals,guess,args=(exp_data,mask,random_seed),full_output=1,maxfev=max_iter)
+
+   fit_method = 'leastsq'
+   #fit_method = 'weighted'
+   if fit_method == 'weighted':  #TODO: doesn't work; for now use manual weighting in residuals.
+      g.dprint('Using weighted least squares fitting.')
+      fit_func = lambda params: residuals(params,exp_data,mask,random_seed)
+      fit_sigma = np.ravel(exp_data)   #TODO: CHECK!!
+      xdata=0
+      ydata=0
+      fit_param = curve_fit(fit_func,xdata,ydata,p0=guess,sigma=fit_sigma,absolute_sigma=True)
+      #absolute_sigma=True means sigma are 1SD errors; otherwise, sigma are relative weights
+   else:
+      g.dprint('Using least squares fitting.')
+      fit_param = leastsq(residuals,guess,args=(exp_data,mask,random_seed),full_output=1,maxfev=max_iter)
+
    with open(root_folder+"/default.txt", 'wb') as f:
       pickle.dump(g.dictionary, f)#Saving the infomation from g.dictionary so it can be loaded later
    with open(g.dictionary_SI['path_to_subfolder']+"default.txt", 'wb') as f:
@@ -440,7 +484,7 @@ def plot_residuals():
    if g.dictionary['grid_compression'] > 1:
       fast_mask(exp_data,mask,g.dictionary['grid_compression'])
 
-   if g.dictionary['s_var'] > 1:    #sequence fit
+   if g.dictionary['s_step'] > 1:    #sequence fit
       orig = g.dictionary[g.dictionary['s_var']]
       for i in range(g.dictionary['s_step']):
          #g.dictionary_SI[g.dictionary['s_var']] = np.random.normal(loc=g.dictionary_SI[g.dictionary['s_var']],scale=g.dictionary['SD'])

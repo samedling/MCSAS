@@ -20,7 +20,7 @@ module version
 contains
 subroutine number(version)
    real*4, intent(out) :: version
-   version = 0.40
+   version = 0.41
 end subroutine number
 end module version
 
@@ -73,8 +73,8 @@ subroutine asymmetric_small(qsize,ehc,mask,x_pixels,y_pixels,points,npts,intensi
    real*4, dimension(4,npts), intent(in) :: points
    real*4, dimension(x_pixels,y_pixels), intent(in) :: mask
    real*8, dimension(x_pixels,y_pixels), intent(out) :: intensity
-   real*8, dimension(3) :: Q
-   real*8 :: temp_intensity,temp_intensity_2,QdotR,QPdotR,max_pixels
+   real*8, dimension(2) :: Q
+   real*8 :: temp_intensity,temp_intensity_2,QdotR,max_pixels
    integer*4 :: p
    max_pixels=max(x_pixels,y_pixels)
    !'asymmetry'; no small angle approximation
@@ -82,17 +82,15 @@ subroutine asymmetric_small(qsize,ehc,mask,x_pixels,y_pixels,points,npts,intensi
    do j=1,y_pixels
       do i=1,x_pixels
          if (mask(i,j) > 0) then
-            Q = (/ (i-0.5*x_pixels)*qsize/max_pixels, (j-0.5*y_pixels)*qsize/max_pixels, &
-                2*ehc*sin(sqrt((i-0.5*x_pixels)**2+(j-0.5*y_pixels)**2)*qsize/(max_pixels*2*ehc))**2 /)
+            Q = (/ (i-0.5*x_pixels)*qsize/max_pixels, (j-0.5*y_pixels)*qsize/max_pixels /)
                 !!TODO: POSSIBLE FORMULA ERROR, CHECK PIXELS IN DENOMINATOR!!
             !intensity(i,j)= SUM(density(p)*COS(DOT_PRODUCT(Q,R(p))))**2 + SUM(density(p)*SIN(DOT_PRODUCT(Q,R(p))))**2
             temp_intensity = 0
             temp_intensity_2 = 0
             do p=1,npts
-               QdotR = DOT_PRODUCT(Q,points(1:3,p))
-               QPdotR = DOT_PRODUCT(Q(1:2),points(1:2,p))
+               QdotR = DOT_PRODUCT(Q,points(1:2,p))
                temp_intensity = temp_intensity + points(4,p)*COS(QdotR)
-               temp_intensity_2 = temp_intensity_2 + points(4,p)*SIN(QPdotR)
+               temp_intensity_2 = temp_intensity_2 + points(4,p)*SIN(QdotR)
             end do
             intensity(i,j) = temp_intensity**2 + temp_intensity_2**2
          else

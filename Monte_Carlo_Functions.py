@@ -24,16 +24,22 @@ def rot_points(points,reverse=True):
 def Points_For_Calculation(seed=0,sort=0):
     if seed:
        np.random.seed([seed])
-    
+    if g.dictionary_SI['shape']!=23:
+       density(np.asarray([[1,1,1],[2,2,2]])) #This is so that you can manually redefine x_dim and y_dim in the density function. e.g. for the gaussian model, you may want to make more points.
+
     x_dim,y_dim,z_dim = g.dictionary_SI['x_dim'],g.dictionary_SI['y_dim'],g.dictionary_SI['z_dim']
     x_theta,y_theta,z_theta = g.dictionary_SI['x_theta'],g.dictionary_SI['y_theta'],g.dictionary_SI['z_theta']
     ave_dist = g.dictionary_SI['ave_dist']
-    z_scale = g.dictionary_SI['z_scale']
+    #z_scale = g.dictionary_SI['z_scale']
     #I make a grid, then find a random number from a normal distribution with radius ave_dist. this gets added to the grid coordinates to randomise this.
-    RandomPoints = np.asarray([((np.random.normal()*g.dictionary_SI['travel']+x_coord)%x_dim - x_dim/2, (np.random.normal()*g.dictionary_SI['travel']+y_coord)%y_dim - y_dim/2, (np.random.normal()*g.dictionary_SI['travel']*z_scale+z_coord)%z_dim - z_dim/2)
-                    for z_coord in np.arange(-z_dim/2, z_dim/2, ave_dist*z_scale) for y_coord in np.arange(-y_dim/2, y_dim/2, ave_dist) for x_coord in np.arange(-x_dim/2, x_dim/2, ave_dist)])
+    if g.dictionary_SI['shape']==23:
+       RandomPoints = np.asarray([0,0])#this is to stop errors below, as it assumes RandomPoints is defined
+    else:
+       RandomPoints = np.asarray([((np.random.normal()*g.dictionary_SI['travel']+x_coord)%x_dim - x_dim/2, (np.random.normal()*g.dictionary_SI['travel']+y_coord)%y_dim - y_dim/2, (np.random.normal()*g.dictionary_SI['travel']+z_coord)%z_dim - z_dim/2)
+       #RandomPoints = np.asarray([((np.random.normal()*g.dictionary_SI['travel']+x_coord)%x_dim - x_dim/2, (np.random.normal()*g.dictionary_SI['travel']+y_coord)%y_dim - y_dim/2, (np.random.normal()*g.dictionary_SI['travel']*z_scale+z_coord)%z_dim - z_dim/2)
+                       for z_coord in np.arange(-z_dim/2, z_dim/2, ave_dist) for y_coord in np.arange(-y_dim/2, y_dim/2, ave_dist) for x_coord in np.arange(-x_dim/2, x_dim/2, ave_dist)])
 
-    g.dprint("{0}: Generated {1} random points.".format(time.strftime("%X"),RandomPoints.shape[0]))
+       g.dprint("{0}: Generated {1} random points.".format(time.strftime("%X"),RandomPoints.shape[0]))
 
     #Fortran implementation about 8x faster than new python implementation.
     if g.accelerate_points and g.f2py_enabled and RandomPoints.shape[0] > 100000 and g.dictionary_SI['shape'] in (1,2,3,4,5,6,7,11,13,14,15,16):
@@ -79,10 +85,16 @@ def Points_For_Calculation(seed=0,sort=0):
         outside = [i for i in range(points.shape[0]) if not points[i,3]]
         points_inside = np.delete(points,outside,axis=0)
     else:
-        points = np.c_[RandomPoints,density(RandomPoints)]
-        outside = [i for i in range(points.shape[0]) if not points[i,3]]
-        points_inside = np.delete(points,outside,axis=0)
-        #points_inside = np.asarray([np.append(coords, [density(coords)]) for coords in RandomPoints if abs(density(coords))>0.00001])  #30% slower implementation
+        if g.dictionary_SI['shape']==23:
+            try:
+               points_inside =  np.asarray(pylab.loadtxt(os.path.join(root_folder,'import.csv'), delimiter=","))  #Import Points
+            except:
+               print( "\n\nCould not find file, or file unreadable.\nMake sure 'import.csv' is in the main folder.\nTry saving 'import.csv' with a different character encoding.\nWestern(ISO-8859-15) works, but UTF-8 may not.\n\n")
+        else:
+            points = np.c_[RandomPoints,density(RandomPoints)]
+            outside = [i for i in range(points.shape[0]) if not points[i,3]]
+            points_inside = np.delete(points,outside,axis=0)
+            #points_inside = np.asarray([np.append(coords, [density(coords)]) for coords in RandomPoints if abs(density(coords))>0.00001])  #30% slower implementation
     
     RandomPoints = None         #To use less RAM, i am clearing this variable now.
 
@@ -106,15 +118,16 @@ def Points_For_Calculation(seed=0,sort=0):
           return np.asarray(points_inside.dot(np.transpose(rotz.dot(roty).dot(rotx))))
     except ValueError:
        if len(points_inside) == 0:
-          print("Error: shape has no points; check your parameters.")
+          print("Current length = {0}; radius = {1}".format(g.dictionary['z_dim'],g.dictionary['radius_1']))
+          print("Error: shape has no points. If you input manually, check your parameters; if fitting, try just running it again before varying initial parameters.")
        else:
           print("Unknown error: it might work if you just run it again without changing anything.  Sorry.")
-          print points.shape
-          print rotx.shape, roty.shape, rotz.shape
-          print rotz.dot(roty).dot(rotx).shape
-          print points_inside.shape
-          print np.transpose(rotz.dot(roty).dot(rotx)).shape
-          print points_inside.dot(np.transpose(rotz.dot(roty).dot(rotx))).shape
+          print( points.shape)
+          print( rotx.shape, roty.shape, rotz.shape)
+          print( rotz.dot(roty).dot(rotx).shape)
+          print( points_inside.shape)
+          print( np.transpose(rotz.dot(roty).dot(rotx)).shape)
+          print( points_inside.dot(np.transpose(rotz.dot(roty).dot(rotx))).shape)
        return np.asarray(points_inside.dot(np.transpose(rotz.dot(roty).dot(rotx))))
 
     #return np.asarray(points_inside.dot(np.transpose(rotz.dot(roty).dot(rotx))))
@@ -260,11 +273,11 @@ def Calculate_Intensity(Points,mask=[],coherence_dup = 1, coherence_taper = 0):
    #print(points_inside[points_inside[:,2].argsort()][::100,2])
    length = z_list[-1]-z_list[0]
    if len(z_list) == 0:
-      print("Error: shape has no points; check your parameters.")
+      print("Current length = {0}; radius = {1}".format(g.dictionary['z_dim'],g.dictionary['radius_1']))
+      print("Error: shape has no points. If you input manually, check your parameters; if fitting, try just running it again before varying initial parameters.")
       return
    elif len(z_list) < 100:
-      print length
-      print("Warning: shape has few points; check your parameters.")
+      print("Warning: shape has few points ({0}); check your parameters.".format(length))
    #coherence_length = 5e-7
    if not g.dictionary['d_lambda']:
       coherence_length = 1
@@ -276,7 +289,7 @@ def Calculate_Intensity(Points,mask=[],coherence_dup = 1, coherence_taper = 0):
    if num_bunches > coherence_dup:    #if length > coherence_length:
       piece_length = g.dictionary_SI['z_dim']/num_bunches
       print("Object length ({0:4.4} nm) exceeds coherence length ({1:4.4} nm)...".format(length*10**9,coherence_length*10**9))
-      print("Will divide into {0} sections of length {1}.".format(num_bunches,piece_length))
+      print("Will divide into {0} sections of length {1} nm.".format(num_bunches,piece_length*10**9))
       dividing_points = np.searchsorted(z_list,-length/2+(np.arange(num_bunches+1))*piece_length/coherence_dup)
       dividing_points[0] = 0    #Not sure why this isn't already 0.
       dividing_points[-1] = len(z_list)  #Should this be the last element or should I append?
@@ -383,7 +396,7 @@ else:   #python only
                [(row-0.5*y_pixels)*QSize/max_pixels, (col-0.5*x_pixels)*QSize/max_pixels, 0.]
                *Points[:,0:3], axis = 1))*np.transpose(Points[:,3:4]))**2
                +np.sum(np.sin(np.sum(
-               [(row-0.5*y_pixels)*QSize/max_pixels, (col-0.5*x_pixels)*QSize/max_pixels, 2*EHC*np.sin((((row-0.5*y_pixels)**2 + (col-0.5*x_pixels)**2)**0.5)*QSize/max_pixels/2/EHC)**2]
+               [(row-0.5*y_pixels)*QSize/max_pixels, (col-0.5*x_pixels)*QSize/max_pixels, 0.]
                *Points[:,0:3], axis = 1))*np.transpose(Points[:,3:4]))**2
                for col in range(int(x_pixels))] for row in range(int(y_pixels))])
          else:
@@ -483,20 +496,19 @@ else:   #python only
 
 ###########          Average Intensity         #############
 
-def Average_Intensity(mask=[]):
+def Average_Intensity(mask=[],seqnum=""):#seqnum is a string that is appended to the points file name if you generate a sequence/etc.
     num_plots = g.dictionary_SI['num_plots']
-    print "START TIME: "+time.strftime("%X")
+    print( "START TIME: "+time.strftime("%X"))
     sim_info = open(g.dictionary_SI['path_to_subfolder']+"simulation_infomation.txt","a")
     sim_info.write("\nStart Time: "+time.strftime("%X"))
     sim_info.close()
     for plot_number in range(int(num_plots)):
 
-        print "Average Plot " + str(plot_number+1) + " out of " + str(int(num_plots))
+        print( "Average Plot " + str(plot_number+1) + " out of " + str(int(num_plots)))
         
         sim_info = open(g.dictionary_SI['path_to_subfolder']+"simulation_infomation.txt","a")
         sim_info.write("\nAverage Plot, plot " + str(plot_number+1) + " out of " + str(int(num_plots)) )
         sim_info.close()
-
         try:
             g.dictionary_SI['TEMP_VAR'] #This is here so it will only make the estimated time once.
             ##Intensity = Calculate_Intensity(Points_For_Calculation())  #Commented and separated so I can time these separately.
@@ -518,7 +530,7 @@ def Average_Intensity(mask=[]):
             if g.verbose > 0:
                print("FINISHED CALCULATION {0}: {1}".format(plot_number+1,time.strftime("%X")))
             else:
-               print "FINISHED FIRST CALCULATION: "+time.strftime("%X")
+               print("FINISHED FIRST CALCULATION: "+time.strftime("%X"))
 
         
         try:
@@ -528,11 +540,51 @@ def Average_Intensity(mask=[]):
         except NameError:
             cumulative = np.asarray(Intensity)
     #this finds the average of all plots
-    print "END TIME: "+time.strftime("%X")
+    if g.dictionary_SI['save_points']==1:
+         g.vprint("Saving Points")
+         save(Points,"Points"+seqnum)
+
+    print( "END TIME: "+time.strftime("%X"))
     sim_info = open(g.dictionary_SI['path_to_subfolder']+"simulation_infomation.txt","a")
     sim_info.write("\nEnd Time: "+time.strftime("%X"))
     sim_info.close()
     return cumulative/np.sum(cumulative)
+
+
+######################        Interparticle Scattering      #############################
+def inter_intensity(mask=[]):
+    print( "START TIME: "+time.strftime("%X"))
+    sim_info = open(g.dictionary_SI['path_to_subfolder']+"simulation_infomation.txt","a")
+    sim_info.write("\nStart Time: "+time.strftime("%X"))
+    sim_info.write("\nx centre,   ycentre")
+    AllPoints = None
+    for temp in range(int(g.dictionary_SI['numinter'])):
+        xcentre=np.random.random()*g.dictionary_SI['xinter']*10**-9
+        ycentre=np.random.random()*g.dictionary_SI['yinter']*10**-9
+        sim_info.write("\n"+str(xcentre) + " ,    " + str(ycentre))
+        print( xcentre,ycentre)
+        TempPoints = np.array([x+[xcentre,ycentre,0,0] for x in Points_For_Calculation()])
+        try:
+	        overlapdensity = density(np.array( [x[0:3]-[xcentre,ycentre,0] for x in AllPoints]))
+	        points = np.c_[AllPoints, overlapdensity]
+	        inside = [i for i in range(points.shape[0]) if points [i,4] ]
+	        points_to_keep = np.delete(AllPoints,inside,axis=0)
+	        AllPoints = np.array(np.append(TempPoints,points_to_keep, axis=0))
+        except TypeError:
+                AllPoints = np.array(TempPoints)
+    sim_info.write("\nTotal Points Used in Calculation:"+str(len(AllPoints)))
+    sim_info.close()
+    #Points_Plot(AllPoints,'points',1)
+    if g.dictionary_SI['save_points']==1:
+      save(AllPoints,'Points')
+
+    Intensity = Calculate_Intensity(AllPoints,mask)
+
+    print( "END TIME: "+time.strftime("%X"))
+    sim_info = open(g.dictionary_SI['path_to_subfolder']+"simulation_infomation.txt","a")
+    sim_info.write("\nEnd Time: "+time.strftime("%X"))
+    sim_info.close()
+    return Intensity/np.sum(Intensity)
 
 
 

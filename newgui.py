@@ -1,6 +1,6 @@
 #!/usr/bin/python
-version = '0.5.4'
-updated = '14 Dec 2015'
+version = '0.5.5'
+updated = '19 Jan 2016'
 
 print('Starting MCSAS v{0} (updated {1}).'.format(version,updated))
 
@@ -29,6 +29,11 @@ from scipy.optimize import leastsq
 
 import global_vars as g
 
+if sys.version_info[0] > 2:
+   print("This program has not been tested with Python 3. Python 2.7 is recommended.")
+elif sys.version_info[1] < 7:
+   print("This program requires Python version 2.7 or later to run. Exiting.")
+   sys.exit()
 
 #Looks for fastmath.so to speed up intensity calculation.
 if g.opencl_enabled:
@@ -48,16 +53,18 @@ if g.f2py_enabled:
          import fastmath
       elif sys.platform == 'darwin':
          os.system('cp fastmath-OSX10.10_C2DP8700.so fastmath.so')
+         print('No fortran binary found; copying mac binary.')
          import fastmath
       elif sys.platform == 'linux2':
          os.system('cp fastmath-Ubuntu14.04_i7-4770.so fastmath.so')
          #os.system('cp fastmath-Ubuntu14.10_i7M640.so fastmath.so')
+         print('No fortran binary found; copying linux binary.')
          import fastmath
       print("Accelerating using f2py.")
    except ImportError:
       g.f2py_enabled = False
    try:
-     if fastmath.version.number() < 0.40:     #Update this line to check for updates for f2py binary.
+     if fastmath.version.number() < 0.405:     #Update this to check f2py binary updates. Value should be 0.005 less than fortran.
         print('Existing f2py binary was out of date; newer version copied.')
         g.vprint('If you ran `make` yourself, run it again for optimal performance.')
         if sys.platform == 'darwin':
@@ -90,14 +97,15 @@ if g.debug:
 
 
 #These are the default settings
-g.dictionary = {'advanced':1, 'altitude':45, 'analytic': 2, 'ave_dist': 1.0, 'azimuth':45, 'bound': 1, 'circ_delta':5, 'comments':'',
+g.dictionary = {'advanced':1, 'altitude':45, 'analytic': 2, 'ave_dist': 2e4, 'azimuth':45, 'bound': 1, 'circ_delta':5, 'comments':'',
               'degrees': 1, 'energy_wavelength': 11, 'energy_wavelength_box': 0, 'gauss':0, 'log_scale': 1, 'maximum': 0.01, 'minimum': 1e-8, 'd_lambda': 2e-4,
               'num_plots': 1, 'pixels': (200,200), 'proportional_radius':0.5, 'QSize': 6,'Qz': 0, 'radius_1': 5.0, 'radius_2': 2.5, 'rho_1': 1.0, 'rho_2': -0.5,
               'save_img':1, 'save_name': 'save_name', 'scale': 1,'SD':1, 'seq_hide':1, 'shape': 2, 's_start': 0, 's_step': 2,
               's_stop': 1, 'subfolder':'subfolder', 's_var': 'x_theta', 'symmetric': 0, 'num':1, 'length_2':0,
               'theta_delta':20, 'ThreeD': 0, 'title': 'title', 'x_theta': 0,'y_theta': 0,'z_theta': 0,'z_dim': 100,'z_scale':1,#}
               'fit_file': 'fit_file', 'center': (0,0), 'border': 0, 'max_iter': 1000, 'update_freq': 0, 'plot_fit_tick': 1, 'plot_residuals_tick': 1, 'mask_threshold': 10, 'background': 2e-5, 'grid_compression': 0,
-              'fit_radius_1': 1, 'fit_radius_2': 0, 'fit_rho_1': 1, 'fit_rho_2': 0, 'fit_z_dim': 1, 'fit_x_theta': 1, 'fit_y_theta': 1, 'fit_z_theta': 1, 'fit_background': 1, 'fit_num': 0, 'fit_length_2':0
+              'fit_radius_1': 1, 'fit_radius_2': 0, 'fit_rho_1': 1, 'fit_rho_2': 0, 'fit_z_dim': 1, 'fit_x_theta': 1, 'fit_y_theta': 1, 'fit_z_theta': 1, 'fit_background': 1, 'fit_num': 0, 'fit_length_2':0,
+              'xinter':100,'yinter':100,'numinter':10,'save_points':1,
               }
 
 #####            Importing data or using defaults              #############
@@ -114,11 +122,12 @@ else:
 
 try:
     d = pickle.load(open(root_folder+"/default.txt", 'rb'))
-    if len(g.dictionary) != len(d): #I check that it is the same length - This is needed if any new variables are added to g.dictionary
-        a= 1/0
+    for x in g.dictionary:
+      if x not in d: 
+         d[x]=g.dictionary[x]
     g.dictionary = d
 except:
-    print "Previously used variables could not be loaded. \nUsing default settings instead."
+    print("Previously used variables could not be loaded. \nUsing default settings instead.")
     with open(root_folder+"/default.txt", 'wb') as f:
        pickle.dump(g.dictionary, f)
 
@@ -131,12 +140,18 @@ g.dictionary_SI = {x:g.dictionary[x] for x in g.dictionary} #this g.dictionary h
 #from density_formula import *
 #from analytic_formula import *
 
-execfile(root_folder+"/Monte_Carlo_Functions.py",globals())
-execfile(root_folder+"/Plotting_Functions.py", globals())
-execfile(root_folder+"/density_formula.py", globals())
-execfile(root_folder+"/analytic_formula.py", globals())
-execfile(root_folder+"/fit.py", globals())
-
+try:
+   execfile(root_folder+"/Monte_Carlo_Functions.py",globals())
+   execfile(root_folder+"/Plotting_Functions.py", globals())
+   execfile(root_folder+"/density_formula.py", globals())
+   execfile(root_folder+"/analytic_formula.py", globals())
+   execfile(root_folder+"/fit.py", globals())
+except:
+   exec(open(root_folder+"/Monte_Carlo_Functions.py").read(),globals())
+   exec(open(root_folder+"/Plotting_Functions.py").read(),globals())
+   exec(open(root_folder+"/density_formula.py").read(),globals())
+   exec(open(root_folder+"/analytic_formula.py").read(),globals())
+   exec(open(root_folder+"/fit.py").read(),globals())
 
 #This is the list of all the analytic models that you choose from.
 ##TODO: move this to the same file as the Analytic Models (analytic_formula.py)
@@ -144,7 +159,7 @@ Analytic_options = np.array([["None",0],
                         ["Sphere",1],
                         ["Cylinder",2],
                         ["Core shell cylinder",3],
-                        ["Gaussian - check this formula",4]
+                        ["Gaussian",4]
                         ])
 Analytic_dict = {x[0]:x[1] for x in Analytic_options} #This is needed, so that when an option is chosen, we can find the shape number.
 
@@ -185,7 +200,7 @@ def get_numbers_from_gui():
        else:
           try:
              g.dictionary[x] = g.dictionary_in[x].get() 
-          except AttributeError:
+          except (TclError, AttributeError):#If it can't load it, if you open then close a window for example, it just uses the existing value.
              #g.dprint("{0} could not be imported from GUI.".format(x))
              pass
     
@@ -196,9 +211,9 @@ def get_numbers_from_gui():
                g.dictionary[x] = int(g.dictionary[x])
         except:
             None
-    if not os.path.exists(root_folder+'/'+g.dictionary_SI['subfolder']):#making the subfolder, if it doesn't exist
-       os.makedirs(root_folder+'/'+g.dictionary_SI['subfolder'])
-       time.sleep(2) #Making the subfolder takes a few seconds, so we need to delay the program, otherwise it will try save things into the folder before it is made.
+    if not os.path.exists(root_folder+'/'+g.dictionary['subfolder']):#making the subfolder, if it doesn't exist
+       os.makedirs(root_folder+'/'+g.dictionary['subfolder'])
+       #time.sleep(2) #Making the subfolder takes a few seconds, so we need to delay the program, otherwise it will try save things into the folder before it is made.
 
     make_SI_dict()
 
@@ -210,14 +225,15 @@ def make_SI_dict():
     #Converting to SI units.
     g.dictionary_SI["z_dim"] = g.dictionary["z_dim"]*10**-9
     g.dictionary_SI["length_2"] = g.dictionary["length_2"]*10**-9
-    g.dictionary_SI["ave_dist"] = g.dictionary["ave_dist"]*10**-9
-    g.dictionary_SI["travel"] = g.dictionary_SI["ave_dist"]
     g.dictionary_SI["radius_1"] = g.dictionary["radius_1"]*10**-9
     g.dictionary_SI["radius_2"] = g.dictionary["radius_2"]*10**-9
     xy_dim()#defining x_dim and y_dim - dependent of radius_1
-    g.dictionary_SI["QSize"] = g.dictionary["QSize"]*10**9
 
+    g.dictionary_SI["QSize"] = g.dictionary["QSize"]*10**9
+    g.dictionary_SI["ave_dist"] = 0.93*(g.dictionary_SI['x_dim']*g.dictionary_SI['y_dim']*g.dictionary_SI['z_dim']/float(g.dictionary["ave_dist"]))**(1./3.0)#I am converting from the approx. number of points to the average distance between points
+    g.dictionary_SI["travel"] = g.dictionary_SI["ave_dist"]#This is here, so that I can change how much each point randomly moves.
     #g.dictionary_SI['num_plot_points'] = int(g.dictionary_SI['pixels']/2.)
+
     g.dictionary_SI['num_plot_points'] = min([int(i) for i in g.dictionary['pixels'].split()])/2
     g.dictionary_SI['delta'] = 1. #number of pixels in width
 
@@ -251,9 +267,9 @@ def change_units(number): #Used for sequences. A value is converted to SI units.
            if x == g.dictionary_SI['s_var']:
               g.dictionary_SI[x] = number*10**-9
               if x == 'ave_dist':
-                 g.dictionary_SI['travel'] = g.dictionary_SI[x]
+                 g.dictionary_SI['travel'] = g.dictionary_SI[x]*10**9#to undo multiplying above
               if x == 'travel':
-                 g.dictionary_SI['ave_dist'] = g.dictionary_SI[x]
+                 g.dictionary_SI['ave_dist'] = g.dictionary_SI[x]*10**9#to undo multiplying above
               if g.dictionary_SI['s_var'] != 'y_dim' and g.dictionary_SI['s_var'] != 'x_dim':
                  xy_dim()#This is here, mainly for the double slit - if you want to make the slits higher, you can. Most other functions are radially symmetric.
                                
@@ -273,9 +289,9 @@ def save_vars_to_file(extra): #here I save all the infomation into a text file t
    sim_info = open(g.dictionary_SI['path_to_subfolder']+"simulation_infomation.txt","a")
    sim_info.write("\n\n\nDATE: "+time.strftime("%d")+time.strftime("%b")+time.strftime("%y")+"    TIME: "+time.strftime("%X")+"\n")
    sim_info.write(g.dictionary_SI['comments'])
-   print g.dictionary_SI['path_to_subfolder']
-   print g.dictionary['comments']
-   print extra
+   print( g.dictionary_SI['path_to_subfolder'])
+   print( g.dictionary['comments'])
+   print( extra)
    sim_info.write(extra+"\n")
    for x in sorted(g.dictionary, key=lambda x: x.lower()):
       if x != 'comments':
@@ -304,7 +320,7 @@ def clear_mem():#This function clears memory to try and reduce mem useage.
 
 #This is a list of some Common Variables for use in sequence.
 ALLVARIABLES = [['altitude', 'Altitude'],
-                ["ave_dist","Neighbouring Point Distance"],
+                ["ave_dist","Number of Points"],
                 ['azimuth', 'Azimuth'],
                 ["energy_wavelength","Energy/Wavelength"],
                 ["num","Number of Pieces"],
@@ -346,14 +362,19 @@ def plot_points(): #This runs the Real Space to plot the points in Real Space
     get_numbers_from_gui()
     save_vars_to_file("Plot Points")
     if g.dictionary['seq_hide'] == 1:
-       if g.dictionary['gauss']==0:
+       if g.dictionary['gauss']==0:#if 'gauss', it takes a random number from the gaussian distribution.
           current_value = g.dictionary['s_start']
        else:
           current_value = np.random.normal(loc = g.dictionary[g.dictionary['s_var']], scale = g.dictionary['SD'])
        change_units(current_value)
-    Points_Plot(Points_For_Calculation(), 'points', 1)
+    
+    Points = Points_For_Calculation()
+    if g.dictionary_SI['save_points']==1:
+          g.vprint("Saving Points")
+          save(Points,"Points")
+    Points_Plot(Points, 'points', 1)
     clear_mem()
-    print "Program Finished"
+    print("Program Finished")
 
 def view_intensity(): #This allows you to view a premade intensity
     get_numbers_from_gui()
@@ -362,16 +383,16 @@ def view_intensity(): #This allows you to view a premade intensity
     Intensity = pylab.loadtxt(g.dictionary_SI['path_to_subfolder']+"intensity.csv", delimiter=",")
     Intensity_plot(Intensity, "intensity", g.dictionary_SI['title'], 1)
     clear_mem()
-    print "Program Finished"
+    print( "Program Finished")
 
 
 def slow_intensity(): #This makes an intensity the accuate, slow way.
     global sim_info
     get_numbers_from_gui()
     save_vars_to_file("Monte Carlo Intensity")
-    print "START TIME: "+time.strftime("%X")
+    print( "START TIME: "+time.strftime("%X"))
     Intensity = normalize(Accurate_Intensity(Points_For_Calculation(sort=1)))
-    print "END TIME: "+time.strftime("%X")
+    print( "END TIME: "+time.strftime("%X"))
     save(Intensity, "intensity")
     radial_intensity = radial(Intensity)
     save(radial_intensity, "radial_intensity")
@@ -390,8 +411,22 @@ def make_intensity(): #This makes an intensity
     if g.dictionary_SI['save_img'] == 1:
       view_intensity()
     clear_mem()
-    print "Program Finished"
+    print( "Program Finished")
     
+def interparticle():
+    global sim_info
+    get_numbers_from_gui()
+    save_vars_to_file('Interparticle Scattering')
+    Intensity = inter_intensity()
+    print( "END TIME: "+time.strftime("%X"))
+    save(Intensity, "intensity")
+    radial_intensity = radial(Intensity)
+    save(radial_intensity, "radial_intensity")
+    if g.dictionary_SI['save_img'] == 1:
+      view_intensity()
+    clear_mem()
+ 
+
 def sequence(): #This makes a sequence of intensities
     global sim_info
     get_numbers_from_gui()
@@ -401,7 +436,7 @@ def sequence(): #This makes a sequence of intensities
        sim_info.write("\nFrame " + str(frame_num+1) + " of " + str(int(g.dictionary['s_step'])))
        sim_info.close()
 
-       print "\nmaking frame " + str(frame_num+1) + " of " + str(int(g.dictionary['s_step']))
+       print( "\nmaking frame " + str(frame_num+1) + " of " + str(int(g.dictionary['s_step'])))
        if g.dictionary['gauss']==0:
           try:
              current_value = (g.dictionary['s_stop']-g.dictionary['s_start'])*frame_num/(1.*g.dictionary['s_step']-1.)+1.*g.dictionary['s_start']
@@ -410,7 +445,7 @@ def sequence(): #This makes a sequence of intensities
        else:
           current_value = np.random.normal(loc = g.dictionary[g.dictionary['s_var']], scale = g.dictionary['SD'])
        change_units(current_value)
-       Intensity = Average_Intensity()
+       Intensity = Average_Intensity(seqnum=str(frame_num+1))
        save(Intensity, "intensity"+str(frame_num+1))
        radial_intensity = radial(Intensity)
        save(radial_intensity, "radial_intensity"+str(frame_num+1))
@@ -431,7 +466,7 @@ def sequence(): #This makes a sequence of intensities
     if g.dictionary_SI['save_img'] == 1:
       view_intensity()
     clear_mem()
-    print "Program Finished"
+    print( "Program Finished")
 
 
 def theory_plot(): #This plots an analytic model
@@ -444,7 +479,7 @@ def theory_plot(): #This plots an analytic model
    if g.dictionary_SI['save_img'] == 1:
       view_intensity()
    clear_mem()
-   print "Program Finished"
+   print( "Program Finished")
 
 
 
@@ -457,7 +492,7 @@ def theory_seq(): #This plots a sequence created with the analytic model
        sim_info.write("\nFrame " + str(frame_num+1) + " of " + str(int(g.dictionary['s_step'])))
        sim_info.close()
 
-       print "\nmaking frame " + str(frame_num+1) + " of " + str(int(g.dictionary['s_step']))
+       print( "\nmaking frame " + str(frame_num+1) + " of " + str(int(g.dictionary['s_step'])))
        if g.dictionary['gauss']==0:
           try:
              current_value = (g.dictionary['s_stop']-g.dictionary['s_start'])*frame_num/(1.*g.dictionary['s_step']-1.)+1.*g.dictionary['s_start']
@@ -487,7 +522,7 @@ def theory_seq(): #This plots a sequence created with the analytic model
     if g.dictionary_SI['save_img'] == 1:
       view_intensity()
     clear_mem()
-    print "Program Finished"
+    print( "Program Finished")
 
 
 
@@ -497,10 +532,11 @@ def circ(): #This plots a the angle at a fixed radius
    data = plotting_circle(Intensity)
    radial_intensity_plot(data, "theta"+str(g.dictionary['radius_2']), g.dictionary['title']+" "+str(g.dictionary['radius_2']), 0)
    angle_plot(data, "Angle"+str(g.dictionary['radius_2']), g.dictionary['title']+" "+str(g.dictionary['radius_2']), 1)
-   print "finshied"
+   print( "finshied")
    
 def calc_int():
    '''Calculates intensity (average if # plots > 1).'''
+   get_numbers_from_gui() #otherwise it uses the previous 'shape' number
    if g.dictionary['shape'] ==0:
       theory_plot()
    else:
@@ -508,6 +544,7 @@ def calc_int():
 
 def calc_seq():
    '''Calculates intensity for sequence (averaging each time if # plots > 1.'''
+   get_numbers_from_gui() #otherwise it uses the previous 'shape' number
    if g.dictionary['s_var'] in g.dictionary:
       if g.dictionary['shape']==0:
          theory_seq()
@@ -797,6 +834,8 @@ def output_options():
    ROW=0
    COL=0
 
+   tick('save_points', "Save Points Used in Calculation", output_window,ROW,COL,2)
+   ROW+=1
    tick('scale', "Scale Axes When Plotting Real Space", output_window, ROW, COL, 2)
    ROW+=1
    tick('log_scale', "Plot on a Log Scale?", output_window, ROW, COL, 2)
@@ -832,6 +871,21 @@ def ring_options():
 
     Button(ring_window, text='Plot a Ring', command=circ, font = "Times 16 bold").grid(row=ROW, column = COL,sticky=W, pady=2)
 
+def interparticle_options():
+    global inter_window, master
+    inter_window = Toplevel(master)
+    inter_window.title("Inter-Particle Scattering")
+    new_frame = Frame(inter_window)
+    ROW=0
+    COL=0
+    
+    enter_num('xinter','Box X Dimension (nm)',inter_window,ROW,COL)
+    ROW+=1
+    enter_num('yinter','Box Y Dimension (nm)',inter_window,ROW,COL)
+    ROW+=1
+    enter_num('numinter','Number of Particles',inter_window,ROW,COL)
+    ROW+=1
+    Button(inter_window,text='Calculate', command=interparticle, font = "Times 16 bold").grid(row=ROW,column=COL,sticky=W,pady=2)
 
 def run_file():
    global test_file
@@ -847,7 +901,7 @@ def run_code():
    print('Printing code:')
    print(test_code.get(1.0,END).rstrip())
    print('Running code...')
-   exec test_code.get(1.0,END).rstrip()
+   exec( test_code.get(1.0,END).rstrip())
    print('Done.')
 
 
@@ -932,9 +986,9 @@ if __name__ == "__main__":
    ROW+=1
    Label(master, text = "Model Parameters", font = "Times 16 bold").grid(row = ROW, column = COL, sticky = W)
    COL+=1
-   parameter_help = Button(master, text='Parameter Help', font = "Times 12 bold")
+   parameter_help = Button(master, text='Update Parameters', font = "Times 12 bold")
    parameter_help.bind("<Button-1>", rename_parameters)
-   parameter_help.grid(row=ROW, column = COL, sticky=W, pady=2)   
+   parameter_help.grid(row=ROW, column = COL, pady=2)   
    COL-=1
    ROW+=1
    parameter_start_row=ROW
@@ -1028,10 +1082,10 @@ if __name__ == "__main__":
    #ROW+=1
    enter_num('pixels', "Number of Pixels (x y)", master, ROW, COL)
    ROW+=1
-   enter_num('ave_dist', "Neighbouring Point Distance (nm)", master, ROW, COL)
+   enter_num('ave_dist', "Approximate Number of Points", master, ROW, COL)
    ROW+=1
-   enter_num('z_scale','z-direction scaling of\nneighbouring point distance', master, ROW, COL)
-   ROW+=1
+#   enter_num('z_scale','z-direction scaling of\nneighbouring point distance', master, ROW, COL)
+#   ROW+=1
    tick('bound', "Upper / Lower Bounds?", master, ROW, COL)
    #g.dictionary_in['bound2']['font'] = "Times 11 underline"
    ROW+=1
@@ -1069,6 +1123,10 @@ if __name__ == "__main__":
    ROW+=1
 
    Button(master, text='Ring Options', command=ring_options, font = "Times 14 bold").grid(row=ROW, column = COL, sticky=W, pady=2)   
+   ROW+=1
+
+   Button(master,text='Inter-Particle Scattering', command=interparticle_options, font = "Times 14 bold").grid(row=ROW, column = COL, sticky=W, pady=2)
+
    ROW+=1
    
    Button(master, text='Detector Options', command=detector_parameters, font = "Times 14 bold").grid(row=ROW, column = COL, sticky=W, pady=2)   
