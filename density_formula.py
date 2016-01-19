@@ -80,7 +80,7 @@ g.model_parameters=[
    (7,'Rectangular Prism',("Long Side (nm)","Short Side (nm)","Length (nm)","Density","unused","unused","unused")),
    (8,'String of Bubbles',("Radius (nm)","Space Btwn Centers (nm)","Length (nm)","Density","unused","unused","unused")),
    (9,'Random Chopped Cylinder',("Radius (nm)","Gap Width (nm)","Length (nm)","Density","Number of Gaps","currently unused","unused")),
-   (10,'Custom CSV',('radius_1','radius_2','z_dim','rho_1','rho_2','num','length_2')),
+   (10,'CSV For Radius',('radius_1','radius_2','z_dim','rho_1','rho_2','num','length_2')),
    (11,'Double Slit',("Outside Distance (nm)","Inside Distance (nm)","Length (nm)","Density","unused","unused","unused")),
    (12,'N-gon Truncated Cone',("Radius for Large n (nm)","Radius for Small n (nm)","Length (nm)","Density","Number of Sides","currently unused","unused")),
    (13,'Sine Oscillation',("Origin to Peak","Origin to Trough","Length (nm)","Density","Number of Oscillations","currently unused","unused")),

@@ -89,7 +89,7 @@ def Points_For_Calculation(seed=0,sort=0):
             try:
                points_inside =  np.asarray(pylab.loadtxt(os.path.join(root_folder,'import.csv'), delimiter=","))  #Import Points
             except:
-               print "\n\nCould not find file, or file unreadable.\nMake sure 'import.csv' is in the main folder.\nTry saving 'import.csv' with a different character encoding.\nWestern(ISO-8859-15) works, but UTF-8 may not.\n\n"
+               print( "\n\nCould not find file, or file unreadable.\nMake sure 'import.csv' is in the main folder.\nTry saving 'import.csv' with a different character encoding.\nWestern(ISO-8859-15) works, but UTF-8 may not.\n\n")
         else:
             points = np.c_[RandomPoints,density(RandomPoints)]
             outside = [i for i in range(points.shape[0]) if not points[i,3]]
@@ -122,12 +122,12 @@ def Points_For_Calculation(seed=0,sort=0):
           print("Error: shape has no points. If you input manually, check your parameters; if fitting, try just running it again before varying initial parameters.")
        else:
           print("Unknown error: it might work if you just run it again without changing anything.  Sorry.")
-          print points.shape
-          print rotx.shape, roty.shape, rotz.shape
-          print rotz.dot(roty).dot(rotx).shape
-          print points_inside.shape
-          print np.transpose(rotz.dot(roty).dot(rotx)).shape
-          print points_inside.dot(np.transpose(rotz.dot(roty).dot(rotx))).shape
+          print( points.shape)
+          print( rotx.shape, roty.shape, rotz.shape)
+          print( rotz.dot(roty).dot(rotx).shape)
+          print( points_inside.shape)
+          print( np.transpose(rotz.dot(roty).dot(rotx)).shape)
+          print( points_inside.dot(np.transpose(rotz.dot(roty).dot(rotx))).shape)
        return np.asarray(points_inside.dot(np.transpose(rotz.dot(roty).dot(rotx))))
 
     #return np.asarray(points_inside.dot(np.transpose(rotz.dot(roty).dot(rotx))))
@@ -498,13 +498,13 @@ else:   #python only
 
 def Average_Intensity(mask=[],seqnum=""):#seqnum is a string that is appended to the points file name if you generate a sequence/etc.
     num_plots = g.dictionary_SI['num_plots']
-    print "START TIME: "+time.strftime("%X")
+    print( "START TIME: "+time.strftime("%X"))
     sim_info = open(g.dictionary_SI['path_to_subfolder']+"simulation_infomation.txt","a")
     sim_info.write("\nStart Time: "+time.strftime("%X"))
     sim_info.close()
     for plot_number in range(int(num_plots)):
 
-        print "Average Plot " + str(plot_number+1) + " out of " + str(int(num_plots))
+        print( "Average Plot " + str(plot_number+1) + " out of " + str(int(num_plots)))
         
         sim_info = open(g.dictionary_SI['path_to_subfolder']+"simulation_infomation.txt","a")
         sim_info.write("\nAverage Plot, plot " + str(plot_number+1) + " out of " + str(int(num_plots)) )
@@ -544,7 +544,7 @@ def Average_Intensity(mask=[],seqnum=""):#seqnum is a string that is appended to
          g.vprint("Saving Points")
          save(Points,"Points"+seqnum)
 
-    print "END TIME: "+time.strftime("%X")
+    print( "END TIME: "+time.strftime("%X"))
     sim_info = open(g.dictionary_SI['path_to_subfolder']+"simulation_infomation.txt","a")
     sim_info.write("\nEnd Time: "+time.strftime("%X"))
     sim_info.close()
@@ -553,26 +553,25 @@ def Average_Intensity(mask=[],seqnum=""):#seqnum is a string that is appended to
 
 ######################        Interparticle Scattering      #############################
 def inter_intensity(mask=[]):
-    print "START TIME: "+time.strftime("%X")
+    print( "START TIME: "+time.strftime("%X"))
     sim_info = open(g.dictionary_SI['path_to_subfolder']+"simulation_infomation.txt","a")
     sim_info.write("\nStart Time: "+time.strftime("%X"))
     sim_info.write("\nx centre,   ycentre")
     AllPoints = None
     for temp in range(int(g.dictionary_SI['numinter'])):
-
         xcentre=np.random.random()*g.dictionary_SI['xinter']*10**-9
-	ycentre=np.random.random()*g.dictionary_SI['yinter']*10**-9
+        ycentre=np.random.random()*g.dictionary_SI['yinter']*10**-9
         sim_info.write("\n"+str(xcentre) + " ,    " + str(ycentre))
-        print xcentre,ycentre
+        print( xcentre,ycentre)
         TempPoints = np.array([x+[xcentre,ycentre,0,0] for x in Points_For_Calculation()])
         try:
 	        overlapdensity = density(np.array( [x[0:3]-[xcentre,ycentre,0] for x in AllPoints]))
-		points = np.c_[AllPoints, overlapdensity]
-		inside = [i for i in range(points.shape[0]) if points [i,4] ]
-		points_to_keep = np.delete(AllPoints,inside,axis=0)
-		AllPoints = np.array(np.append(TempPoints,points_to_keep, axis=0))
+	        points = np.c_[AllPoints, overlapdensity]
+	        inside = [i for i in range(points.shape[0]) if points [i,4] ]
+	        points_to_keep = np.delete(AllPoints,inside,axis=0)
+	        AllPoints = np.array(np.append(TempPoints,points_to_keep, axis=0))
         except TypeError:
-		AllPoints = np.array(TempPoints)
+                AllPoints = np.array(TempPoints)
     sim_info.write("\nTotal Points Used in Calculation:"+str(len(AllPoints)))
     sim_info.close()
     #Points_Plot(AllPoints,'points',1)
@@ -581,7 +580,7 @@ def inter_intensity(mask=[]):
 
     Intensity = Calculate_Intensity(AllPoints,mask)
 
-    print "END TIME: "+time.strftime("%X")
+    print( "END TIME: "+time.strftime("%X"))
     sim_info = open(g.dictionary_SI['path_to_subfolder']+"simulation_infomation.txt","a")
     sim_info.write("\nEnd Time: "+time.strftime("%X"))
     sim_info.close()

@@ -127,7 +127,7 @@ try:
          d[x]=g.dictionary[x]
     g.dictionary = d
 except:
-    print "Previously used variables could not be loaded. \nUsing default settings instead."
+    print("Previously used variables could not be loaded. \nUsing default settings instead.")
     with open(root_folder+"/default.txt", 'wb') as f:
        pickle.dump(g.dictionary, f)
 
@@ -140,12 +140,18 @@ g.dictionary_SI = {x:g.dictionary[x] for x in g.dictionary} #this g.dictionary h
 #from density_formula import *
 #from analytic_formula import *
 
-execfile(root_folder+"/Monte_Carlo_Functions.py",globals())
-execfile(root_folder+"/Plotting_Functions.py", globals())
-execfile(root_folder+"/density_formula.py", globals())
-execfile(root_folder+"/analytic_formula.py", globals())
-execfile(root_folder+"/fit.py", globals())
-
+try:
+   execfile(root_folder+"/Monte_Carlo_Functions.py",globals())
+   execfile(root_folder+"/Plotting_Functions.py", globals())
+   execfile(root_folder+"/density_formula.py", globals())
+   execfile(root_folder+"/analytic_formula.py", globals())
+   execfile(root_folder+"/fit.py", globals())
+except:
+   exec(open(root_folder+"/Monte_Carlo_Functions.py").read(),globals())
+   exec(open(root_folder+"/Plotting_Functions.py").read(),globals())
+   exec(open(root_folder+"/density_formula.py").read(),globals())
+   exec(open(root_folder+"/analytic_formula.py").read(),globals())
+   exec(open(root_folder+"/fit.py").read(),globals())
 
 #This is the list of all the analytic models that you choose from.
 ##TODO: move this to the same file as the Analytic Models (analytic_formula.py)
@@ -283,9 +289,9 @@ def save_vars_to_file(extra): #here I save all the infomation into a text file t
    sim_info = open(g.dictionary_SI['path_to_subfolder']+"simulation_infomation.txt","a")
    sim_info.write("\n\n\nDATE: "+time.strftime("%d")+time.strftime("%b")+time.strftime("%y")+"    TIME: "+time.strftime("%X")+"\n")
    sim_info.write(g.dictionary_SI['comments'])
-   print g.dictionary_SI['path_to_subfolder']
-   print g.dictionary['comments']
-   print extra
+   print( g.dictionary_SI['path_to_subfolder'])
+   print( g.dictionary['comments'])
+   print( extra)
    sim_info.write(extra+"\n")
    for x in sorted(g.dictionary, key=lambda x: x.lower()):
       if x != 'comments':
@@ -368,7 +374,7 @@ def plot_points(): #This runs the Real Space to plot the points in Real Space
           save(Points,"Points")
     Points_Plot(Points, 'points', 1)
     clear_mem()
-    print "Program Finished"
+    print("Program Finished")
 
 def view_intensity(): #This allows you to view a premade intensity
     get_numbers_from_gui()
@@ -377,16 +383,16 @@ def view_intensity(): #This allows you to view a premade intensity
     Intensity = pylab.loadtxt(g.dictionary_SI['path_to_subfolder']+"intensity.csv", delimiter=",")
     Intensity_plot(Intensity, "intensity", g.dictionary_SI['title'], 1)
     clear_mem()
-    print "Program Finished"
+    print( "Program Finished")
 
 
 def slow_intensity(): #This makes an intensity the accuate, slow way.
     global sim_info
     get_numbers_from_gui()
     save_vars_to_file("Monte Carlo Intensity")
-    print "START TIME: "+time.strftime("%X")
+    print( "START TIME: "+time.strftime("%X"))
     Intensity = normalize(Accurate_Intensity(Points_For_Calculation(sort=1)))
-    print "END TIME: "+time.strftime("%X")
+    print( "END TIME: "+time.strftime("%X"))
     save(Intensity, "intensity")
     radial_intensity = radial(Intensity)
     save(radial_intensity, "radial_intensity")
@@ -405,14 +411,14 @@ def make_intensity(): #This makes an intensity
     if g.dictionary_SI['save_img'] == 1:
       view_intensity()
     clear_mem()
-    print "Program Finished"
+    print( "Program Finished")
     
 def interparticle():
     global sim_info
     get_numbers_from_gui()
     save_vars_to_file('Interparticle Scattering')
     Intensity = inter_intensity()
-    print "END TIME: "+time.strftime("%X")
+    print( "END TIME: "+time.strftime("%X"))
     save(Intensity, "intensity")
     radial_intensity = radial(Intensity)
     save(radial_intensity, "radial_intensity")
@@ -430,7 +436,7 @@ def sequence(): #This makes a sequence of intensities
        sim_info.write("\nFrame " + str(frame_num+1) + " of " + str(int(g.dictionary['s_step'])))
        sim_info.close()
 
-       print "\nmaking frame " + str(frame_num+1) + " of " + str(int(g.dictionary['s_step']))
+       print( "\nmaking frame " + str(frame_num+1) + " of " + str(int(g.dictionary['s_step'])))
        if g.dictionary['gauss']==0:
           try:
              current_value = (g.dictionary['s_stop']-g.dictionary['s_start'])*frame_num/(1.*g.dictionary['s_step']-1.)+1.*g.dictionary['s_start']
@@ -460,7 +466,7 @@ def sequence(): #This makes a sequence of intensities
     if g.dictionary_SI['save_img'] == 1:
       view_intensity()
     clear_mem()
-    print "Program Finished"
+    print( "Program Finished")
 
 
 def theory_plot(): #This plots an analytic model
@@ -473,7 +479,7 @@ def theory_plot(): #This plots an analytic model
    if g.dictionary_SI['save_img'] == 1:
       view_intensity()
    clear_mem()
-   print "Program Finished"
+   print( "Program Finished")
 
 
 
@@ -486,7 +492,7 @@ def theory_seq(): #This plots a sequence created with the analytic model
        sim_info.write("\nFrame " + str(frame_num+1) + " of " + str(int(g.dictionary['s_step'])))
        sim_info.close()
 
-       print "\nmaking frame " + str(frame_num+1) + " of " + str(int(g.dictionary['s_step']))
+       print( "\nmaking frame " + str(frame_num+1) + " of " + str(int(g.dictionary['s_step'])))
        if g.dictionary['gauss']==0:
           try:
              current_value = (g.dictionary['s_stop']-g.dictionary['s_start'])*frame_num/(1.*g.dictionary['s_step']-1.)+1.*g.dictionary['s_start']
@@ -516,7 +522,7 @@ def theory_seq(): #This plots a sequence created with the analytic model
     if g.dictionary_SI['save_img'] == 1:
       view_intensity()
     clear_mem()
-    print "Program Finished"
+    print( "Program Finished")
 
 
 
@@ -526,7 +532,7 @@ def circ(): #This plots a the angle at a fixed radius
    data = plotting_circle(Intensity)
    radial_intensity_plot(data, "theta"+str(g.dictionary['radius_2']), g.dictionary['title']+" "+str(g.dictionary['radius_2']), 0)
    angle_plot(data, "Angle"+str(g.dictionary['radius_2']), g.dictionary['title']+" "+str(g.dictionary['radius_2']), 1)
-   print "finshied"
+   print( "finshied")
    
 def calc_int():
    '''Calculates intensity (average if # plots > 1).'''
@@ -895,7 +901,7 @@ def run_code():
    print('Printing code:')
    print(test_code.get(1.0,END).rstrip())
    print('Running code...')
-   exec test_code.get(1.0,END).rstrip()
+   exec( test_code.get(1.0,END).rstrip())
    print('Done.')
 
 
