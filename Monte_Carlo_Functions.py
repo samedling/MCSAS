@@ -35,6 +35,7 @@ def Points_For_Calculation(seed=0,sort=0):
     if g.dictionary_SI['shape']==23:
        RandomPoints = np.asarray([0,0])#this is to stop errors below, as it assumes RandomPoints is defined
     else:
+       #RandomPoints = np.asarray([(x_coord - x_dim/2, y_coord - y_dim/2, z_coord - z_dim/2) #To remove the randomness, and keep it in a regular grid
        RandomPoints = np.asarray([((np.random.normal()*g.dictionary_SI['travel']+x_coord)%x_dim - x_dim/2, (np.random.normal()*g.dictionary_SI['travel']+y_coord)%y_dim - y_dim/2, (np.random.normal()*g.dictionary_SI['travel']+z_coord)%z_dim - z_dim/2)
        #RandomPoints = np.asarray([((np.random.normal()*g.dictionary_SI['travel']+x_coord)%x_dim - x_dim/2, (np.random.normal()*g.dictionary_SI['travel']+y_coord)%y_dim - y_dim/2, (np.random.normal()*g.dictionary_SI['travel']*z_scale+z_coord)%z_dim - z_dim/2)
                        for z_coord in np.arange(-z_dim/2, z_dim/2, ave_dist) for y_coord in np.arange(-y_dim/2, y_dim/2, ave_dist) for x_coord in np.arange(-x_dim/2, x_dim/2, ave_dist)])

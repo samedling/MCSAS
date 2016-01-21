@@ -105,7 +105,7 @@ g.dictionary = {'advanced':1, 'altitude':45, 'analytic': 2, 'ave_dist': 2e4, 'az
               'theta_delta':20, 'ThreeD': 0, 'title': 'title', 'x_theta': 0,'y_theta': 0,'z_theta': 0,'z_dim': 100,'z_scale':1,#}
               'fit_file': 'fit_file', 'center': (0,0), 'border': 0, 'max_iter': 1000, 'update_freq': 0, 'plot_fit_tick': 1, 'plot_residuals_tick': 1, 'mask_threshold': 10, 'background': 2e-5, 'grid_compression': 0,
               'fit_radius_1': 1, 'fit_radius_2': 0, 'fit_rho_1': 1, 'fit_rho_2': 0, 'fit_z_dim': 1, 'fit_x_theta': 1, 'fit_y_theta': 1, 'fit_z_theta': 1, 'fit_background': 1, 'fit_num': 0, 'fit_length_2':0,
-              'xinter':100,'yinter':100,'numinter':10,'save_points':1,
+              'xinter':100,'yinter':100,'numinter':10,'save_points':0,
               }
 
 #####            Importing data or using defaults              #############
