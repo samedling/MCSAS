@@ -24,7 +24,7 @@ def rot_points(points,reverse=True):
 def Points_For_Calculation(seed=0,sort=0):
     if seed:
        np.random.seed([seed])
-    if g.dictionary_SI['shape']!=23:
+    if g.dictionary_SI['shape'] not in (18,23):
        density(np.asarray([[1,1,1],[2,2,2]])) #This is so that you can manually redefine x_dim and y_dim in the density function. e.g. for the gaussian model, you may want to make more points.
 
     x_dim,y_dim,z_dim = g.dictionary_SI['x_dim'],g.dictionary_SI['y_dim'],g.dictionary_SI['z_dim']

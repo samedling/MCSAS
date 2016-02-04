@@ -250,6 +250,12 @@ def d17choppedcoreshell(coords):
       return [rho2 if r2<np.sqrt(np.sum(coords[i,0:2]**2))<r1 and (np.abs(coords[i,2])-piece_l/2)%(piece_l+gap_l) > gap_l else rho1 if np.sqrt(np.sum(coords[i,0:2]**2))<r1 and (np.abs(coords[i,2])-piece_l/2)%(piece_l+gap_l) > gap_l else 0 for i in range(coords.shape[0])]
 
 def d18doublecone_track(coords):
+    r1=g.dictionary_SI['radius_1']
+    r2=g.dictionary_SI['radius_2']
+    z_dim=g.dictionary_SI['z_dim']
+    if g.dictionary_SI['radius_2'] < 0:
+        print('Individual cone height is {0} nm.'.format(10**9*r1/(r1-r2)*z_dim/2))
+        print('Space between cones is is {0} nm.'.format(10**9*-r2/(r1-r2)*z_dim))
     return [g.dictionary_SI['rho_1'] if ((np.sqrt(np.sum(coords[i,0:2]**2)) < np.abs(coords[i,2])*(g.dictionary_SI['radius_1']-g.dictionary_SI['radius_2'])/(g.dictionary_SI['z_dim']/2.)+g.dictionary_SI['radius_2']) or (np.sqrt(np.sum(coords[i,0:2]**2)) < g.dictionary_SI['length_2']) ) else 0 for i in range(coords.shape[0])]
 
 def d19taperedcylinder(coords):

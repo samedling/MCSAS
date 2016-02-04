@@ -1084,8 +1084,8 @@ if __name__ == "__main__":
    ROW+=1
    enter_num('ave_dist', "Approximate Number of Points", master, ROW, COL)
    ROW+=1
-#   enter_num('z_scale','z-direction scaling of\nneighbouring point distance', master, ROW, COL)
-#   ROW+=1
+   enter_num('z_scale','z-direction scaling', master, ROW, COL)
+   ROW+=1
    tick('bound', "Upper / Lower Bounds?", master, ROW, COL)
    #g.dictionary_in['bound2']['font'] = "Times 11 underline"
    ROW+=1
@@ -1171,7 +1171,7 @@ if __name__ == "__main__":
    Button(master, text='Fitting Options', command=select_fit_parameters, font = "Times 14 bold").grid(row=ROW, column = COL, sticky=W, pady=2)
    ROW+=1
 
-   Button(master, text='Output Options', command=output_options, font = "Times 14 bold").grid(row=ROW, column = COL, sticky=W, pady=2)   
+   Button(master, text='More Output Options', command=output_options, font = "Times 14 bold").grid(row=ROW, column = COL, sticky=W, pady=2)   
    ROW+=1
 
 
