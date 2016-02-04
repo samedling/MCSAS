@@ -1,5 +1,5 @@
-CC=f2py2.7  #needed for scucomp
-#CC=f2py     #needed for OS X
+CC=f2py     #general needed for OSX
+#CC=f2py2.7  #specific needed for scucomp
 
 linux_so:
 	$(CC) -c --fcompiler=gnu95 --opt="-O3 -fopenmp" -lgomp -m fastmath fastmath.f90

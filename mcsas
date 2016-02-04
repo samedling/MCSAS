@@ -5,13 +5,21 @@
 # -d updates develop branch
 # -c forces Fortran compilation
 
-function mcsas-compile {
+
+
+function mcsas-compile-old {
    if [ `which f2py2.7 2>/dev/null` ]
       then
-         make CC=f2py_2.7
+         #make CC=f2py_2.7
+         sed -i '' 's/^CC/#CC/g' makefile
+         sed -i '' '/specific/s/^#//' makefile
+         make
       elif [ `which f2py 2>/dev/null` ]
       then
-         make CC=f2py
+         #make CC=f2py
+         sed -i '' 's/^CC/#CC/g' makefile
+         sed -i '' '/general/s/^#//' makefile
+         make
       else
          echo "No compiler found!"
          if [ `echo $OSTYPE` == linux-gnu ]
@@ -23,6 +31,35 @@ function mcsas-compile {
             cp fastmath-OSX10.10_C2DP8700.so fastmath.so
          exit 1
          fi
+   fi
+}
+
+function mcsas-compile {
+   if [ `echo $OSTYPE` == linux-gnu ]
+   then
+      if [ `which f2py2.7 2>/dev/null` ]
+      then
+         #make CC=f2py
+         sed -i '' 's/^CC/#CC/g' makefile
+         sed -i '' '/general/s/^#//' makefile
+         make
+      else
+         echo "No compiler found!"
+         echo "Copying Linux binary."
+         cp fastmath-Ubuntu14.04_i7-4770.so fastmath.so
+      fi
+   else
+      if [ `which f2py 2>/dev/null` ]
+      then
+         #make CC=f2py
+         sed -i '' 's/^CC/#CC/g' makefile
+         sed -i '' '/general/s/^#//' makefile
+         make
+      else
+         echo "No compiler found!"
+         echo "Copying Mac OS X binary."
+         cp fastmath-OSX10.10_C2DP8700.so fastmath.so
+      fi
    fi
 }
 
@@ -60,4 +97,10 @@ while getopts "udic" opt; do
    esac
 done
 
-python2.7 newgui.py
+if [ `which python |grep Canopy` ]
+   then
+      python newgui.py
+   else
+      python2.7 newgui.py
+fi
+#python2.7 newgui.py
