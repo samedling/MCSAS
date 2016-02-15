@@ -140,4 +140,4 @@ Optionally: If you want to speed up the calculation using Fortan, edit fastmath.
 
 ## Copyright ##
 
-Copyright 2015 Max Proft and Scott Medling, Australian National University.  All rights reserved.
+Copyright 2015 Max Proft, Scott Medling, and Patrick Kluth, Australian National University.  All rights reserved.
