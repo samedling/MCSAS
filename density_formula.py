@@ -90,7 +90,7 @@ g.model_parameters=[
    (17,'Chopped Core Shell',("Outer Radius (nm)","Inner Radius (nm)","Length (nm)","Core Density","Shell Density","Number of Gaps","Gap Length (nm)")),
    (18,'Double Cone with Track',("End Cone Radius (nm)","Central Cone Radius (nm)","Total Length (nm)","Density","unused","unused","Track Radius (nm)")),
    (19,'Tapered Cylinder',('Radius (nm)','unused','Total Length (nm)','Density','unused','Taper Both Ends?','Cone Length (nm)')),
-   (20,'Continuous Core Shell Cylinder',("Outer Radius (nm)","Inner Radius (nm)","Length (nm)","Extreme Core Density","Shell Density","unused","unused")),
+   (20,'Continuous Core Shell Cylinder',("Outer Radius (nm)","Inner Radius (nm)","Length (nm)","Core Density","Shell Density","unused","Transition Outer Radius (nm)")),
    (21,'Core Shell Cone',("Outer Radius (nm)","Inner Radius (nm)","Length (nm)","Core Density","Shell Density","unused","Outer Radius - Far End")),
    (22,'Smooth Core Shell Cylinder',('Outer Radius (nm)','Core Radius (nm)','Length (nm)','Core Density','Shell Density','Smoothness (Low=smoother)','unused')),
    (23,'Load from "import.csv"', ('unused','unused','unused','unused','unused','unused','unused')),
@@ -250,6 +250,12 @@ def d17choppedcoreshell(coords):
       return [rho2 if r2<np.sqrt(np.sum(coords[i,0:2]**2))<r1 and (np.abs(coords[i,2])-piece_l/2)%(piece_l+gap_l) > gap_l else rho1 if np.sqrt(np.sum(coords[i,0:2]**2))<r1 and (np.abs(coords[i,2])-piece_l/2)%(piece_l+gap_l) > gap_l else 0 for i in range(coords.shape[0])]
 
 def d18doublecone_track(coords):
+    r1=g.dictionary_SI['radius_1']
+    r2=g.dictionary_SI['radius_2']
+    z_dim=g.dictionary_SI['z_dim']
+    if g.dictionary_SI['radius_2'] < 0:
+        print('Individual cone height is {0} nm.'.format(10**9*r1/(r1-r2)*z_dim/2))
+        print('Space between cones is is {0} nm.'.format(10**9*-r2/(r1-r2)*z_dim))
     return [g.dictionary_SI['rho_1'] if ((np.sqrt(np.sum(coords[i,0:2]**2)) < np.abs(coords[i,2])*(g.dictionary_SI['radius_1']-g.dictionary_SI['radius_2'])/(g.dictionary_SI['z_dim']/2.)+g.dictionary_SI['radius_2']) or (np.sqrt(np.sum(coords[i,0:2]**2)) < g.dictionary_SI['length_2']) ) else 0 for i in range(coords.shape[0])]
 
 def d19taperedcylinder(coords):
@@ -263,9 +269,14 @@ def d19taperedcylinder(coords):
        return [rho if ((np.sqrt(np.sum(coords[i,0:2]**2)) < radius) and (np.sqrt(np.sum(coords[i,0:2]**2)) < -radius*coords[i,2]/length_2+0.5*radius*length/length_2)) else 0 for i in range(coords.shape[0])]
 
 def d20continuouscoreshell(coords):
-    return [g.dictionary_SI['rho_2'] if g.dictionary_SI['radius_2']<np.sqrt(np.sum(coords[i,0:2]**2))<g.dictionary_SI['radius_1'] else
-    (g.dictionary_SI['rho_2']-g.dictionary_SI['rho_1']/g.dictionary['radius_2'])*np.sqrt(np.sum(coords[i,0:2]**2))+g.dictionary_SI['rho_1']
-    if np.sqrt(np.sum(coords[i,0:2]**2))<g.dictionary_SI['radius_2'] else 0 for i in range(coords.shape[0])]
+    rho1=g.dictionary_SI['rho_1']
+    rho2=g.dictionary_SI['rho_2']
+    r1=g.dictionary_SI['radius_1']
+    r2=g.dictionary_SI['radius_2']
+    r3=g.dictionary_SI['length_2']
+    return [rho1 if np.sqrt(np.sum(coords[i,0:2]**2))<r2 else
+    rho1 + (rho2-rho1)*(np.sqrt(np.sum(coords[i,0:2]**2))-r2)/(r3-r2) if np.sqrt(np.sum(coords[i,0:2]**2))<r3 else
+    rho2 if np.sqrt(np.sum(coords[i,0:2]**2))<r1 else 0 for i in range(coords.shape[0])]
 
 def d21coreshellcone(coords):
     return [g.dictionary_SI['rho_1'] if np.sqrt(np.sum(coords[i,0:2]**2)) < coords[i,2:3]*(g.dictionary_SI['length_2']-g.dictionary_SI['radius_1'])*g.dictionary_SI['radius_2']/(g.dictionary_SI['z_dim']*g.dictionary_SI['radius_1'])+g.dictionary_SI['radius_2']+(g.dictionary_SI['length_2']-g.dictionary_SI['radius_1'])*g.dictionary_SI['radius_2']/(2*g.dictionary_SI['radius_1']) else g.dictionary_SI['rho_2'] if np.sqrt(np.sum(coords[i,0:2]**2)) < coords[i,2:3]*(g.dictionary_SI['length_2']-g.dictionary_SI['radius_1'])/g.dictionary_SI['z_dim']+(g.dictionary_SI['length_2']+g.dictionary_SI['radius_1'])/2 else 0 for i in range(coords.shape[0])]
