@@ -1,6 +1,6 @@
 #!/usr/bin/python
-version = '0.5.6'
-updated = '17 Feb 2016'
+version = '0.5.7'
+updated = '25 Feb 2016'
 
 print('Starting MCSAS v{0} (updated {1}).'.format(version,updated))
 
@@ -385,6 +385,15 @@ def view_intensity(): #This allows you to view a premade intensity
     clear_mem()
     print( "Program Finished")
 
+def calc_coherence_length():
+   get_numbers_from_gui()
+   if g.dictionary['d_lambda']:
+      coherence_length = 2*np.pi/(g.dictionary_SI['EHC']*g.dictionary['d_lambda'])
+      print('Coherence length is {0:6.4} nm.'.format(coherence_length*10**9))
+   else:
+      coherence_length = 1
+      print('Coherence length is {0} m.'.format(coherence_length))
+
 
 def slow_intensity(): #This makes an intensity the accuate, slow way.
     global sim_info
@@ -676,7 +685,6 @@ def radio(variable_name, MODES, window, ROW, COL): #Radiobutton
 
 
 
-
 def save_fitparam():
    get_num_from_gui()
 
@@ -695,12 +703,14 @@ def detector_parameters():
     ROW+=1
     enter_num('QSize', "Detector Q Range (nm^-1)", det_window, ROW, COL)
     ROW+=1
-    Label(det_window, text="Coherence Length").grid(row= ROW, column=COL, columnspan=2, sticky = W) 
+    Label(det_window, text="Coherence Length", font = "Times 16 bold").grid(row= ROW, column=COL, columnspan=2, sticky = W) 
+    ROW+=1
+    enter_num('d_lambda', "Wavelength Spread (2e-4)", det_window, ROW, COL)
+    ROW+=1
+    Button(det_window, text='Print Coherence Length', command=calc_coherence_length, font = "Times 16 bold").grid(row=ROW, column = COL,sticky=W, pady=2)
     COL+=1
     Button(det_window, text='SLOW Calculate', command=slow_intensity, font = "Times 16 bold").grid(row=ROW, column = COL,sticky=W, pady=2)
     COL-=1
-    ROW+=1
-    enter_num('d_lambda', "Wavelength Spread (2e-4)", det_window, ROW, COL)
 
 
 
@@ -726,41 +736,6 @@ def rename_parameters(event):
     #print g.dictionary_in['shape'].get()
     shape = np.int(g.MC_num_and_name_dict[g.dictionary_in['shape'].get()])
     g.var_names=g.model_parameters[shape][2]
-#    if shape == 1:  #sphere
-#        g.var_names=("Radius (nm)","unused","unused","Density","unused","unused","unused")
-#    elif shape == 2: #cylinder
-#        g.var_names=("Radius (nm)","unused","Length (nm)","Density","unused","unused","unused")
-#    elif shape ==3: #core shell cylinder
-#        g.var_names=("Outer Radius (nm)","Inner Radius (nm)","Length (nm)","Core Density","Shell Density","unused","unused")
-#    elif shape ==4: #gaussian cylinder
-#        g.var_names=("Radius (nm)","Std. Dev. (nm)","Length (nm)","Density","unused","unused","unused")
-#    elif shape ==5: #chopped cone
-#        g.var_names=("Max Radius (nm)","Min Radius (nm)","Length (nm)","Density","unused","unused","unused")
-#    elif shape ==6: #hex prism
-#        g.var_names=("Side Length (nm)","unused","Length (nm)","Density","unused","unused","unused")
-#    elif shape ==7: #rect prism
-#        g.var_names=("Long Side (nm)","Short Side (nm)","Length (nm)","Density","unused","unused","unused")
-#    elif shape ==8: #bubble string
-#        g.var_names=("Radius (nm)","Space Btwn Centers (nm)","Length (nm)","Density","unused","unused","unused")
-#    elif shape ==9: #random chopped cylinder
-#        g.var_names=("Radius (nm)","Gap Width (nm)","Length (nm)","Density","Number of Gaps","currently unused","unused")
-#    elif shape ==11:    #double slit
-#        g.var_names=("Outside Distance (nm)","Inside Distance (nm)","Length (nm)","Density","unused","unused","unused")
-#    elif shape ==12:    #n-gon truncated cone
-#        g.var_names=("Radius for Large n (nm)","Radius for Small n (nm)","Length (nm)","Density","Number of Sides","currently unused","unused")
-#    elif shape ==13:    #sine oscillation
-#        g.var_names=("Origin to Peak","Origin to Trough","Length (nm)","Density","Number of Oscillations","currently unused","unused")
-#    elif shape ==14:    #double cone
-#        g.var_names=("End Radius (nm)","Central Radius (nm)","Length (nm)","Density","unused","unused","unused")
-#    elif shape ==15:    #elliptical cylinder
-#        g.var_names=("x Radius (nm)","y Radius (nm)","Length (nm)","Density","unused","unused","unused")
-#    elif shape ==16:    #asymm hex pyr
-#        g.var_names=("Orig. Side Length (nm)","Side Adjustment (nm)","Length (nm)","Density","unused","unused","unused")
-#    elif shape ==17:    #chopped core shell
-#        g.var_names=("Outer Radius (nm)","Inner Radius (nm)","Length (nm)","Core Density","Shell Density","Number of Gaps","Gap Length (nm)")
-#    else:
-#        g.vprint("Shape {0} does not have custom names.".format(shape))
-#        g.var_names=("Radius 1 (nm)","Radius 2 (nm)","Length (nm)","Rho 1","Rho 2","Number","Length 2 (nm)")
     for i in range(len(g.var_list)):
         g.labels[g.var_list[i]].config(text=g.var_names[i])
         if g.var_names[i] == "unused":
