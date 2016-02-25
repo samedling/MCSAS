@@ -97,7 +97,7 @@ if g.debug:
 
 
 #These are the default settings
-g.dictionary = {'advanced':1, 'altitude':45, 'analytic': 2, 'ave_dist': 2e4, 'azimuth':45, 'bound': 1, 'circ_delta':5, 'comments':'',
+g.dictionary = {'advanced':1, 'altitude':45, 'analytic': 2, 'ave_dist': 2e5, 'azimuth':45, 'bound': 1, 'circ_delta':5, 'comments':'',
               'degrees': 1, 'energy_wavelength': 11, 'energy_wavelength_box': 0, 'gauss':0, 'log_scale': 1, 'maximum': 0.01, 'minimum': 1e-8, 'd_lambda': 2e-4,
               'num_plots': 1, 'pixels': (200,200), 'proportional_radius':0.5, 'QSize': 6,'Qz': 0, 'radius_1': 5.0, 'radius_2': 2.5, 'rho_1': 1.0, 'rho_2': -0.5,
               'save_img':1, 'save_name': 'save_name', 'scale': 1,'SD':1, 'seq_hide':1, 'shape': 2, 's_start': 0, 's_step': 2,
