@@ -230,7 +230,7 @@ def make_SI_dict():
     xy_dim()#defining x_dim and y_dim - dependent of radius_1
 
     g.dictionary_SI["QSize"] = g.dictionary["QSize"]*10**9
-    g.dictionary_SI["ave_dist"] = 0.93*(g.dictionary_SI['x_dim']*g.dictionary_SI['y_dim']*g.dictionary_SI['z_dim']/float(g.dictionary["ave_dist"]))**(1./3.0)#I am converting from the approx. number of points to the average distance between points
+    g.dictionary_SI["ave_dist"] = (g.dictionary_SI['x_dim']*g.dictionary_SI['y_dim']*g.dictionary_SI['z_dim']/float(g.dictionary["ave_dist"]))**(1./3.)#I am converting from the approx. number of points to the average distance between points
     g.dictionary_SI["travel"] = g.dictionary_SI["ave_dist"]#This is here, so that I can change how much each point randomly moves.
     #g.dictionary_SI['num_plot_points'] = int(g.dictionary_SI['pixels']/2.)
 
