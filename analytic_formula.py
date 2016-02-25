@@ -115,6 +115,7 @@ def theory(Q_radius):
 
 
 def theory_csv():
+    g.dprint('Calling theory_csv.')
     QSize = g.dictionary_SI['QSize']
     xpixels,ypixels = g.dictionary_SI['pixels'].split()
     EHC = g.dictionary_SI['EHC']

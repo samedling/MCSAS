@@ -1,6 +1,6 @@
 #!/usr/bin/python
-version = '0.5.6'
-updated = '17 Feb 2016'
+version = '0.5.7'
+updated = '25 Feb 2016'
 
 print('Starting MCSAS v{0} (updated {1}).'.format(version,updated))
 
@@ -97,7 +97,7 @@ if g.debug:
 
 
 #These are the default settings
-g.dictionary = {'advanced':1, 'altitude':45, 'analytic': 2, 'ave_dist': 2e4, 'azimuth':45, 'bound': 1, 'circ_delta':5, 'comments':'',
+g.dictionary = {'advanced':1, 'altitude':45, 'analytic': 2, 'ave_dist': 1.0, 'azimuth':45, 'bound': 1, 'circ_delta':5, 'comments':'',
               'degrees': 1, 'energy_wavelength': 11, 'energy_wavelength_box': 0, 'gauss':0, 'log_scale': 1, 'maximum': 0.01, 'minimum': 1e-8, 'd_lambda': 2e-4,
               'num_plots': 1, 'pixels': (200,200), 'proportional_radius':0.5, 'QSize': 6,'Qz': 0, 'radius_1': 5.0, 'radius_2': 2.5, 'rho_1': 1.0, 'rho_2': -0.5,
               'save_img':1, 'save_name': 'save_name', 'scale': 1,'SD':1, 'seq_hide':1, 'shape': 2, 's_start': 0, 's_step': 2,
@@ -225,15 +225,14 @@ def make_SI_dict():
     #Converting to SI units.
     g.dictionary_SI["z_dim"] = g.dictionary["z_dim"]*10**-9
     g.dictionary_SI["length_2"] = g.dictionary["length_2"]*10**-9
+    g.dictionary_SI["ave_dist"] = g.dictionary["ave_dist"]*10**-9
+    g.dictionary_SI["travel"] = g.dictionary_SI["ave_dist"]
     g.dictionary_SI["radius_1"] = g.dictionary["radius_1"]*10**-9
     g.dictionary_SI["radius_2"] = g.dictionary["radius_2"]*10**-9
     xy_dim()#defining x_dim and y_dim - dependent of radius_1
-
     g.dictionary_SI["QSize"] = g.dictionary["QSize"]*10**9
-    g.dictionary_SI["ave_dist"] = 0.93*(g.dictionary_SI['x_dim']*g.dictionary_SI['y_dim']*g.dictionary_SI['z_dim']/float(g.dictionary["ave_dist"]))**(1./3.0)#I am converting from the approx. number of points to the average distance between points
-    g.dictionary_SI["travel"] = g.dictionary_SI["ave_dist"]#This is here, so that I can change how much each point randomly moves.
-    #g.dictionary_SI['num_plot_points'] = int(g.dictionary_SI['pixels']/2.)
 
+    #g.dictionary_SI['num_plot_points'] = int(g.dictionary_SI['pixels']/2.)
     g.dictionary_SI['num_plot_points'] = min([int(i) for i in g.dictionary['pixels'].split()])/2
     g.dictionary_SI['delta'] = 1. #number of pixels in width
 
@@ -267,9 +266,9 @@ def change_units(number): #Used for sequences. A value is converted to SI units.
            if x == g.dictionary_SI['s_var']:
               g.dictionary_SI[x] = number*10**-9
               if x == 'ave_dist':
-                 g.dictionary_SI['travel'] = g.dictionary_SI[x]*10**9#to undo multiplying above
+                 g.dictionary_SI['travel'] = g.dictionary_SI[x]
               if x == 'travel':
-                 g.dictionary_SI['ave_dist'] = g.dictionary_SI[x]*10**9#to undo multiplying above
+                 g.dictionary_SI['ave_dist'] = g.dictionary_SI[x]
               if g.dictionary_SI['s_var'] != 'y_dim' and g.dictionary_SI['s_var'] != 'x_dim':
                  xy_dim()#This is here, mainly for the double slit - if you want to make the slits higher, you can. Most other functions are radially symmetric.
                                
@@ -320,7 +319,7 @@ def clear_mem():#This function clears memory to try and reduce mem useage.
 
 #This is a list of some Common Variables for use in sequence.
 ALLVARIABLES = [['altitude', 'Altitude'],
-                ["ave_dist","Number of Points"],
+                ["ave_dist","Neighbouring Point Distance"],
                 ['azimuth', 'Azimuth'],
                 ["energy_wavelength","Energy/Wavelength"],
                 ["num","Number of Pieces"],
@@ -384,6 +383,15 @@ def view_intensity(): #This allows you to view a premade intensity
     Intensity_plot(Intensity, "intensity", g.dictionary_SI['title'], 1)
     clear_mem()
     print( "Program Finished")
+
+def calc_coherence_length():
+   get_numbers_from_gui()
+   if g.dictionary['d_lambda']:
+      coherence_length = 2*np.pi/(g.dictionary_SI['EHC']*g.dictionary['d_lambda'])
+      print('Coherence length is {0:6.4} nm.'.format(coherence_length*10**9))
+   else:
+      coherence_length = 1
+      print('Coherence length is {0} m.'.format(coherence_length))
 
 
 def slow_intensity(): #This makes an intensity the accuate, slow way.
@@ -676,7 +684,6 @@ def radio(variable_name, MODES, window, ROW, COL): #Radiobutton
 
 
 
-
 def save_fitparam():
    get_num_from_gui()
 
@@ -695,12 +702,14 @@ def detector_parameters():
     ROW+=1
     enter_num('QSize', "Detector Q Range (nm^-1)", det_window, ROW, COL)
     ROW+=1
-    Label(det_window, text="Coherence Length").grid(row= ROW, column=COL, columnspan=2, sticky = W) 
+    Label(det_window, text="Coherence Length", font = "Times 16 bold").grid(row= ROW, column=COL, columnspan=2, sticky = W) 
+    ROW+=1
+    enter_num('d_lambda', "Wavelength Spread (2e-4)", det_window, ROW, COL)
+    ROW+=1
+    Button(det_window, text='Print Coherence Length', command=calc_coherence_length, font = "Times 16 bold").grid(row=ROW, column = COL,sticky=W, pady=2)
     COL+=1
     Button(det_window, text='SLOW Calculate', command=slow_intensity, font = "Times 16 bold").grid(row=ROW, column = COL,sticky=W, pady=2)
     COL-=1
-    ROW+=1
-    enter_num('d_lambda', "Wavelength Spread (2e-4)", det_window, ROW, COL)
 
 
 
@@ -726,41 +735,6 @@ def rename_parameters(event):
     #print g.dictionary_in['shape'].get()
     shape = np.int(g.MC_num_and_name_dict[g.dictionary_in['shape'].get()])
     g.var_names=g.model_parameters[shape][2]
-#    if shape == 1:  #sphere
-#        g.var_names=("Radius (nm)","unused","unused","Density","unused","unused","unused")
-#    elif shape == 2: #cylinder
-#        g.var_names=("Radius (nm)","unused","Length (nm)","Density","unused","unused","unused")
-#    elif shape ==3: #core shell cylinder
-#        g.var_names=("Outer Radius (nm)","Inner Radius (nm)","Length (nm)","Core Density","Shell Density","unused","unused")
-#    elif shape ==4: #gaussian cylinder
-#        g.var_names=("Radius (nm)","Std. Dev. (nm)","Length (nm)","Density","unused","unused","unused")
-#    elif shape ==5: #chopped cone
-#        g.var_names=("Max Radius (nm)","Min Radius (nm)","Length (nm)","Density","unused","unused","unused")
-#    elif shape ==6: #hex prism
-#        g.var_names=("Side Length (nm)","unused","Length (nm)","Density","unused","unused","unused")
-#    elif shape ==7: #rect prism
-#        g.var_names=("Long Side (nm)","Short Side (nm)","Length (nm)","Density","unused","unused","unused")
-#    elif shape ==8: #bubble string
-#        g.var_names=("Radius (nm)","Space Btwn Centers (nm)","Length (nm)","Density","unused","unused","unused")
-#    elif shape ==9: #random chopped cylinder
-#        g.var_names=("Radius (nm)","Gap Width (nm)","Length (nm)","Density","Number of Gaps","currently unused","unused")
-#    elif shape ==11:    #double slit
-#        g.var_names=("Outside Distance (nm)","Inside Distance (nm)","Length (nm)","Density","unused","unused","unused")
-#    elif shape ==12:    #n-gon truncated cone
-#        g.var_names=("Radius for Large n (nm)","Radius for Small n (nm)","Length (nm)","Density","Number of Sides","currently unused","unused")
-#    elif shape ==13:    #sine oscillation
-#        g.var_names=("Origin to Peak","Origin to Trough","Length (nm)","Density","Number of Oscillations","currently unused","unused")
-#    elif shape ==14:    #double cone
-#        g.var_names=("End Radius (nm)","Central Radius (nm)","Length (nm)","Density","unused","unused","unused")
-#    elif shape ==15:    #elliptical cylinder
-#        g.var_names=("x Radius (nm)","y Radius (nm)","Length (nm)","Density","unused","unused","unused")
-#    elif shape ==16:    #asymm hex pyr
-#        g.var_names=("Orig. Side Length (nm)","Side Adjustment (nm)","Length (nm)","Density","unused","unused","unused")
-#    elif shape ==17:    #chopped core shell
-#        g.var_names=("Outer Radius (nm)","Inner Radius (nm)","Length (nm)","Core Density","Shell Density","Number of Gaps","Gap Length (nm)")
-#    else:
-#        g.vprint("Shape {0} does not have custom names.".format(shape))
-#        g.var_names=("Radius 1 (nm)","Radius 2 (nm)","Length (nm)","Rho 1","Rho 2","Number","Length 2 (nm)")
     for i in range(len(g.var_list)):
         g.labels[g.var_list[i]].config(text=g.var_names[i])
         if g.var_names[i] == "unused":
@@ -1082,7 +1056,7 @@ if __name__ == "__main__":
    #ROW+=1
    enter_num('pixels', "Number of Pixels (x y)", master, ROW, COL)
    ROW+=1
-   enter_num('ave_dist', "Approximate Number of Points", master, ROW, COL)
+   enter_num('ave_dist', "Neighbouring Point Distance (nm)", master, ROW, COL)
    ROW+=1
    enter_num('z_scale','z-direction scaling', master, ROW, COL)
    ROW+=1

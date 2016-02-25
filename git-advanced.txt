@@ -70,6 +70,8 @@ Make sure you have edited newgui.py lines 2 & 3 to update the date and version n
 
 `git log -g --grep=<search>`        #Searches all git commit messages for instances of <search>.
 
+`git revert -n <hex_number>`        #Revert specific commit (-n also tells it not to commit the change)
+
 ## Branches ##
 
 `git branch -a`                   #Lists all branches

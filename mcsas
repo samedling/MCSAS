@@ -11,14 +11,14 @@ function mcsas-compile-old {
    if [ `which f2py2.7 2>/dev/null` ]
       then
          #make CC=f2py_2.7
-         sed -i '' 's/^CC/#CC/g' makefile
-         sed -i '' '/specific/s/^#//' makefile
+         sed -i '' 's/^CC/#CC/g' makefile       #comments any uncommented CC line
+         sed -i '' '/specific/s/^#//' makefile  #uncomments f2py_2.7 line
          make
       elif [ `which f2py 2>/dev/null` ]
       then
          #make CC=f2py
-         sed -i '' 's/^CC/#CC/g' makefile
-         sed -i '' '/general/s/^#//' makefile
+         sed -i '' 's/^CC/#CC/g' makefile       #comments any uncommented CC line
+         sed -i '' '/general/s/^#//' makefile   #uncomments f2py line
          make
       else
          echo "No compiler found!"
@@ -40,15 +40,15 @@ function mcsas-compile {
       if [ `which f2py2.7 2>/dev/null` ]
       then
          #make CC=f2py
-         sed -i '' 's/^CC/#CC/g' makefile
-         sed -i '' '/general/s/^#//' makefile
+         sed -i 's/^CC/#CC/g' makefile
+         sed -i '/general/s/^#//' makefile
          make
       else
          echo "No compiler found!"
          echo "Copying Linux binary."
          cp fastmath-Ubuntu14.04_i7-4770.so fastmath.so
       fi
-   else
+   else  #OS X
       if [ `which f2py 2>/dev/null` ]
       then
          #make CC=f2py
