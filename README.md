@@ -1,7 +1,7 @@
 ## Basic Installation ##
 
-Your Python version must be 2.7 or newer and you'll need numpy and the python image library (Pillow). 
-Download both from https://www.enthought.com/products/canopy via either the free or academic version of Enthought Canopy or see the section on Python Installation below.
+Your Python version must be 2.7 or newer and various Python packages (numpy, scipy, pil, tk, matplotlib). 
+Download everything from https://www.enthought.com/products/canopy via either the free or academic version of Enthought Canopy or see the section on Python Installation below.
 
 Installation Method 1 (Linux or OS X):
 
