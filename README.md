@@ -16,9 +16,9 @@ Installation Method 2:
 
 There are two optional but recommended ways of speeding up the code:
 
- 1. Install PyOpenCL following the directions at http://wiki.tiker.net/PyOpenCL/Installation and then the first time your run it, it will ask you which platform and device you want to use.  Try the GPU first; if it doesn't work, use the CPU.  On my dual core CPU, I obtained a 25x speedup; quad core CPUs should be nearly twice as fast and GPUs should be even faster!
+ 1. Install PyOpenCL following the directions at http://wiki.tiker.net/PyOpenCL/Installation and then the first time your run it, it will ask you which platform and device you want to use.  Try the GPU first; if it doesn't work, use the CPU.  On my CPU, I obtained a 25x speedup; on my GPU, I got 130x!
  
- 2. F2Py acceleration should work automatically on OS X or Linux.  If not, or if you want maximum performance and you have gfortran installed, run `make` to compile the Fortran code (or if you have ifort installed, edit the makefile before running `make`).  On my dual core CPU, I obtained a 10x speedup.
+ 2. F2Py acceleration should work automatically on OS X or Linux.  If not, or if you want maximum performance and you have gfortran installed, run `make` to compile the Fortran code (or if you have ifort installed, edit the makefile before running `make`).  On my dual core CPU, I obtained a 10x speedup; on my quad core CPU, I got a 16x speedup.
 
 Run `./mcsas` on the command line or open `newgui.py` in Canopy and click run.  (Note: you may discover running `nice ./mcsas` results in your system being a lot more responsive.)
 
