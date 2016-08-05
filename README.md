@@ -1,6 +1,6 @@
 ## Basic Installation ##
 
-Your Python version must be 2.7 or newer and various Python packages (numpy, scipy, pil, tk, matplotlib). 
+Your Python version must be 2.7 or newer and various Python packages (numpy, scipy, pil/Image, tk, matplotlib). 
 Download everything from https://www.enthought.com/products/canopy via either the free or academic version of Enthought Canopy or see the section on Python Installation below.
 
 Installation Method 1 (Linux or OS X):
@@ -40,11 +40,19 @@ Apple doesn't provide a recent version of gfortran, but you can download one fro
 If you also don't have Xcode Tools, follow the directions at
 https://wiki.helsinki.fi/display/HUGG/Installing+the+GNU+compilers+on+Mac+OS+X
 
-1. Install XCode Tools from the App Store.
+1. Install XCode Tools from the App Store. (this step may be unnecessary)
 2. Install the Command Line Tools by running xcode-select --install
-3. Download the latest stable gfortran version from http://hpc.sourceforge.net
+3. Download the latest stable gfortran (or gcc) version from http://hpc.sourceforge.net
 
 Tested on OS X 10.10 "Yosemite".
+
+
+More recent note: on a fresh Mac OS "El Capitan", it was only necessary to run the following:
+
+ sudo easy_install pip
+ sudo pip instal Image
+
+To make f2py work, you may need to find the f2py binary in your python installation and add its location to your PATH.
 
 
 ### Some Troubleshooting ###
