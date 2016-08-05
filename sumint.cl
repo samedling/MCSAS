@@ -63,7 +63,7 @@ __kernel void sumint_sym (
 
 //Pass in separate x and y arrays.//
 __kernel void sumint_asym_mask (
-   const float qsize, const float ehc, const int x_pixels, const int y_pixels, __constant int* xval, __constant int* yval,
+   const float qsize, const float ehc, const int x_pixels, const int y_pixels, __global const int* xval, __global const int* yval,
    __global const float4* points, const int npts, __global float* intensity)
 {
 // For no symmetry and no small angle approximation
@@ -87,7 +87,7 @@ __kernel void sumint_asym_mask (
 
 
 __kernel void sumint_sym_mask (
-   const float qsize, const float ehc, const int x_pixels, const int y_pixels, __constant int* xval, __constant int* yval,
+   const float qsize, const float ehc, const int x_pixels, const int y_pixels, __global const int* xval, __global const int* yval,
    __global const float4* points, const int npts, __global float* intensity)
 {
 // For symmetry but no small angle approximation
@@ -107,7 +107,7 @@ __kernel void sumint_sym_mask (
 }
 
 __kernel void sumint_long_mask (
-    const float qsize, const float ehc, const float coherence_length, const int x_pixels, const int y_pixels, __constant int* xval, __constant int* yval,
+    const float qsize, const float ehc, const float coherence_length, const int x_pixels, const int y_pixels, __global const int* xval, __global const int* yval,
     __global const float4* points, const int npts, __global float* intensity)
 {
 	float temp_intensity;
@@ -173,7 +173,7 @@ __kernel void sumint_sym_small (
 
 
 __kernel void sumint_sym_small_mask (
-   const float qsize, const int x_pixels, const int y_pixels, __constant int* xval, __constant int* yval,
+   const float qsize, const int x_pixels, const int y_pixels, __global const int* xval, __global const int* yval,
    __global const float4* points, const int npts, __global float* intensity)
 {
 // For symmetry and small angle approximation
@@ -216,7 +216,7 @@ __kernel void sumint_asym_small (
 }
 
 __kernel void sumint_asym_small_mask (
-   const float qsize, const float ehc, const int x_pixels, const int y_pixels, __constant int* xval, __constant int* yval,
+   const float qsize, const float ehc, const int x_pixels, const int y_pixels, __global const int* xval, __global const int* yval,
    __global const float4* points, const int npts, __global float* intensity)
 {
 // For no symmetry and small angle approximation
