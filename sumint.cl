@@ -4,7 +4,10 @@
 // The second number in the title indicates if the small-angle approximation is used.
 
 #define PYOPENCL_DEFINE_CDOUBLE
-#pragma OPENCL EXTENSION cl_khr_fp64: enable
+
+//This line must be commented out to work on HD4000 graphics.
+//#pragma OPENCL EXTENSION cl_khr_fp64: enable
+
 
 inline float my_dot (float* a, float*b, int length) {
    float c = 0;

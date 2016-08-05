@@ -3,7 +3,11 @@
 
 
 #define PYOPENCL_DEFINE_CDOUBLE
-#pragma OPENCL EXTENSION cl_khr_fp64: enable
+
+//This line must be commented out to work on HD4000 graphics.
+//#pragma OPENCL EXTENSION cl_khr_fp64: enable//
+//This line must be uncommented to work on HD4000 graphics.
+#define M_PI 3.14159265358979323846
 
 inline float my_dot (float4 a, float4 b, int length) {
     float c = 0;

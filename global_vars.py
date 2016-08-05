@@ -5,7 +5,7 @@
 
 # Feel free to edit these settings:
 
-opencl_enabled = False
+opencl_enabled = True
 f2py_enabled = True
 accelerate_points = True   #In case there are bugs and you want to disable only this portion of the acceleration.
 
