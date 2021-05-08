@@ -17,6 +17,12 @@ inline float my_dot (float* a, float*b, int length) {
    return c;
 }
 
+inline float square (float x) {
+    float y = x*x;
+    return y;
+}
+
+
 __kernel void sumint_asym (
    const float qsize, const float ehc, const int x_pixels, const int y_pixels,
    __global const float4* points, const int npts, __global float* intensity)
@@ -28,7 +34,7 @@ __kernel void sumint_asym (
    int j = n%x_pixels;
    float max_pixels = max(x_pixels,y_pixels);
    float Q[3] = { (i-0.5*y_pixels)*qsize/max_pixels, (j-0.5*x_pixels)*qsize/max_pixels,
-        2*ehc*pow(sin(sqrt(pow((i-0.5*y_pixels),2)+pow(j-0.5*x_pixels,2))*qsize/(max_pixels*2*ehc)),2) };
+        2*ehc*pow(sin(sqrt(square(i-0.5*y_pixels)+square(j-0.5*x_pixels))*qsize/(max_pixels*2*ehc)),2) };
    temp_intensity = 0;
    temp_intensity_2 = 0;
    for ( int p = 0; p < npts; p++) {
@@ -51,7 +57,7 @@ __kernel void sumint_sym (
    int j = n%x_pixels;
    float max_pixels = max(x_pixels,y_pixels);
    float Q[3] = { (i-0.5*y_pixels)*qsize/max_pixels, (j-0.5*x_pixels)*qsize/max_pixels,
-        2*ehc*pow(sin(sqrt(pow((i-0.5*y_pixels),2)+pow(j-0.5*x_pixels,2))*qsize/(max_pixels*2*ehc)),2) };
+        2*ehc*pow(sin(sqrt(square(i-0.5*y_pixels)+square(j-0.5*x_pixels))*qsize/(max_pixels*2*ehc)),2) };
    temp_intensity = 0;
    for ( int p = 0; p < npts; p++) {
        float R[3] = {points[p][0],points[p][1],points[p][2]};
@@ -73,7 +79,7 @@ __kernel void sumint_asym_mask (
    int j = yval[n];
    float max_pixels = max(x_pixels,y_pixels);
    float Q[3] = { (i-0.5*y_pixels)*qsize/max_pixels, (j-0.5*x_pixels)*qsize/max_pixels,
-        2*ehc*pow(sin(sqrt(pow((i-0.5*x_pixels),2)+pow(j-0.5*y_pixels,2))*qsize/(max_pixels*2*ehc)),2) };
+        2*ehc*pow(sin(sqrt(square(i-0.5*x_pixels)+square(j-0.5*y_pixels))*qsize/(max_pixels*2*ehc)),2) };
    temp_intensity = 0;
    temp_intensity_2 = 0;
    for ( int p = 0; p < npts; p++) {
@@ -97,7 +103,7 @@ __kernel void sumint_sym_mask (
    int j = yval[n];
    float max_pixels = max(x_pixels,y_pixels);
    float Q[3] = { (i-0.5*y_pixels)*qsize/max_pixels, (j-0.5*x_pixels)*qsize/max_pixels,
-        2*ehc*pow(sin(sqrt(pow((i-0.5*x_pixels),2)+pow(j-0.5*y_pixels,2))*qsize/(max_pixels*2*ehc)),2) };
+        2*ehc*pow(sin(sqrt(square(i-0.5*x_pixels)+square(j-0.5*y_pixels))*qsize/(max_pixels*2*ehc)),2) };
    temp_intensity = 0;
    for ( int p = 0; p < npts; p++) {
        float R[3] = {points[p][0],points[p][1],points[p][2]};
@@ -116,7 +122,7 @@ __kernel void sumint_long_mask (
 	int j = yval[n];
    float max_pixels = max(x_pixels,y_pixels);
    float Q[3] = { (i-0.5*y_pixels)*qsize/max_pixels, (j-0.5*x_pixels)*qsize/max_pixels,
-		2*ehc*pow(sin(sqrt(pow((i-0.5*x_pixels),2)+pow(j-0.5*y_pixels,2))*qsize/(max_pixels*2*ehc)),2) };
+		2*ehc*pow(sin(sqrt(square(i-0.5*x_pixels)+square(j-0.5*y_pixels))*qsize/(max_pixels*2*ehc)),2) };
 	temp_intensity = 0;
 	for ( int p1 = 0; p1 < npts; p1++) {
 		for ( int p2 = 0; p2 < npts; p2++) {
@@ -139,7 +145,7 @@ __kernel void sumint_long (
    int j = n%x_pixels;
    float max_pixels = max(x_pixels,y_pixels);
    float Q[3] = { (i-0.5*y_pixels)*qsize/max_pixels, (j-0.5*x_pixels)*qsize/max_pixels,
-   		2*ehc*pow(sin(sqrt(pow((i-0.5*x_pixels),2)+pow(j-0.5*y_pixels,2))*qsize/(max_pixels*2*ehc)),2) };
+   		2*ehc*pow(sin(sqrt(square(i-0.5*x_pixels)+square(j-0.5*y_pixels))*qsize/(max_pixels*2*ehc)),2) };
 	temp_intensity = 0;
 	for ( int p1 = 0; p1 < npts; p1++) {
 		for ( int p2 = 0; p2 < npts; p2++) {

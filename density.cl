@@ -85,7 +85,7 @@ __kernel void d6hexprism (
 {
    int n = get_global_id(0);
    density[n] = rho_1;
-   float sqrt3over2 = sqrt(3.0)*0.5;
+   float sqrt3over2 = sqrt(3.0f)*0.5;
    float coords[] = {points[n][0]/radius_1, points[n][1]/radius_1};
    if ((pow(coords[1],2) > 0.75) || (coords[1]+(coords[0]-1)*sqrt3over2 > 0) || (coords[1]+(coords[0]+1)*sqrt3over2 < 0) || (coords[1]-(coords[0]-1)*sqrt3over2 < 0) || (coords[1]-(coords[0]+1)*sqrt3over2 > 0)) {  //???//
       density[n] = 0;
@@ -121,7 +121,7 @@ __kernel void d13sine (
    int n = get_global_id(0);
    float dist = pow(points[n][0],2)+pow(points[n][1],2);
    density[n] = 0;
-   if (sqrt(dist) < (radius_1+radius_2)*0.5 + (radius_1-radius_2)*sin(points[n][2]*rho_2*2*M_PI/z_dim)*0.5) {  //TODO: Define pi?? sin??//
+   if (sqrt(dist) < (radius_1+radius_2)*0.5 + (radius_1-radius_2)*sin(float(points[n][2]*rho_2*2*M_PI/z_dim))*0.5) {  //TODO: Define pi?? sin??//
       density[n] = rho_1;
    }
 }
