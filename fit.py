@@ -36,7 +36,7 @@ class Fit_Parameters():
       #self.density_params=[g.var_list[i] if g.model_parameters[shape][2][i] for i in range(len(g.var_list))]
       self.density_params=[]
       for i in range(len(g.var_list)):
-         if g.model_parameters[shape][2][i] is not 'unused':
+         if g.model_parameters[shape][2][i] != 'unused':
             self.density_params.append(g.var_list[i])
       always=['x_theta','y_theta','z_theta','background']
 

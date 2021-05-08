@@ -97,10 +97,10 @@ while getopts "udic" opt; do
    esac
 done
 
-if [ `which python |grep Canopy` ]
-   then
-      python newgui.py
-   else
-      python2.7 newgui.py
-fi
-#python2.7 newgui.py
+#if [ `which python |grep Canopy` ]
+#   then
+#      python newgui.py
+#   else
+#      python2.7 newgui.py
+#fi
+python newgui.py

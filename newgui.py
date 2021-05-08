@@ -1,6 +1,6 @@
 #!/usr/bin/python
-version = '0.6.0'
-updated = '5 Aug 2016'
+version = '0.7.0'
+updated = '7 May 2021'
 
 print('Starting MCSAS v{0} (updated {1}).'.format(version,updated))
 
@@ -29,11 +29,11 @@ from scipy.optimize import leastsq
 
 import global_vars as g
 
-if sys.version_info[0] > 2:
-   print("This program has not been tested with Python 3. Python 2.7 is recommended.")
-elif sys.version_info[1] < 7:
-   print("This program requires Python version 2.7 or later to run. Exiting.")
-   sys.exit()
+#if sys.version_info[0] > 2:
+#   print("This program has not been tested with Python 3. Sorry about that...")
+#elif sys.version_info[1] < 7:
+#   print("This program requires Python version 2.7 or later to run. Exiting.")
+#   sys.exit()
 
 #Looks for fastmath.so to speed up intensity calculation.
 if g.opencl_enabled:
